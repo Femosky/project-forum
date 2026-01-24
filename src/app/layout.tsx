@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { APP_NAME, APP_DESCRIPTION } from '@/lib/constants';
 import Header from '@/components/layout/Header';
+import LeftSidebar from '@/components/layout/LeftSidebar';
+import RightSidebar from '@/components/layout/RightSidebar';
 import { AuthStateProvider } from '@/contexts/AuthState';
 
 const geistSans = Geist({
@@ -31,7 +33,12 @@ export default function RootLayout({
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <AuthStateProvider>
                     <Header />
-                    {children}
+
+                    <div className="flex">
+                        <LeftSidebar />
+                        {children}
+                        {/* <RightSidebar /> */}
+                    </div>
                 </AuthStateProvider>
             </body>
         </html>
