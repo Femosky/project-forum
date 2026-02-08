@@ -24,19 +24,30 @@ export function useLogin() {
                 password: password,
             };
 
+            console.log(payload);
+
             const response = await fetch(`${APIUtility.getApiUrl()}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify(payload),
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const data = await response.json();
-                setError(data.error || 'Failed to login');
+                setError(data.error.message || 'Failed to login');
                 return false;
             }
+
+            if (data.error) {
+                setError(data.error.message);
+                return false;
+            }
+
+            console.log(data);
 
             return true;
         } catch (error) {
