@@ -1,9 +1,13 @@
+'use client';
+
 import Link from 'next/link';
 import TextUtility from '@/lib/utils/TextUtility';
 import { SidebarListProps, SidebarRouteProps } from '@/data/ui/leftSidebarList';
 import { DividerLine } from '../ui/DividerLine';
+import { useState } from 'react';
 
 export default function SidebarList({ list }: { list: SidebarListProps[] }) {
+    const [loading, setLoading] = useState(false);
     return (
         <>
             {list.map((group: SidebarListProps, index: number) => {
@@ -13,11 +17,14 @@ export default function SidebarList({ list }: { list: SidebarListProps[] }) {
                             {group.titleVisible && (
                                 <h2 className="text-lg font-medium">{TextUtility.capitalize(group.title)}</h2>
                             )}
-                            <ul className="flex flex-col">
-                                {group.routes?.map((route: SidebarRouteProps) => {
-                                    return <SidebarItem key={route.href} route={route as SidebarRouteProps} />;
-                                })}
-                            </ul>
+                            {group.type === 'static' && (
+                                <ul className="flex flex-col">
+                                    {group.routes?.map((route: SidebarRouteProps) => {
+                                        return <SidebarItem key={route.href} route={route as SidebarRouteProps} />;
+                                    })}
+                                </ul>
+                            )}
+                            {group.type === 'dynamic' && loading ? <div>Loading...</div> : <div>No data</div>}
                         </div>
 
                         {index < list.length - 1 && <DividerLine />}

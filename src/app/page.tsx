@@ -1,4 +1,4 @@
-import Header from '@/components/layout/Header';
+'use client';
 
 export default function Home() {
     return <div>Hi</div>;
