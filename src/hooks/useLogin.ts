@@ -8,6 +8,36 @@ export function useLogin() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    async function logout(): Promise<boolean> {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`${APIUtility.getApiUrl()}/auth/logout`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                const errorMessage =
+                    data.error.message === 'Failed to authenticate token.'
+                        ? 'User already logged out.'
+                        : data.error.message;
+                setError(errorMessage);
+                console.log('Logout response: ', data);
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            setError(error instanceof Error ? error.message : 'Failed to logout');
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
     async function login(email: string | undefined, username: string | undefined, password: string): Promise<boolean> {
         setIsLoading(true);
         setError(null);
@@ -43,16 +73,21 @@ export function useLogin() {
             }
 
             if (data.error) {
-                setError(data.error.message);
+                const errorMessage = typeof data.error === 'string' ? data.error : data.error.message;
+                console.log('data from error: ', data);
+                console.log('error message: ', errorMessage);
+                setError(errorMessage);
                 return false;
             }
 
-            console.log(data);
+            console.log('data: ', data);
 
             return true;
         } catch (error) {
-            setError(error instanceof Error ? error.message : 'An error occurred');
+            setError(error instanceof Error ? error.message : 'Failed to login');
             return false;
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -61,5 +96,5 @@ export function useLogin() {
         setIsLoading(false);
     }
 
-    return { isLoading, error, login, reset };
+    return { isLoading, error, login, logout, reset };
 }
