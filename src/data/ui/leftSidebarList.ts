@@ -1,8 +1,8 @@
 export interface SidebarListProps {
-    type: 'static' | 'dynamic';
+    type: 'static' | 'api';
     title: string;
     titleVisible: boolean;
-    routes: SidebarRouteProps[];
+    routes?: SidebarRouteProps[];
 }
 
 export interface SidebarRouteProps {
@@ -23,14 +23,8 @@ export const LEFT_SIDEBAR_LIST: SidebarListProps[] = [
         ],
     },
     {
-        type: 'dynamic',
+        type: 'api',
         title: 'Your communities',
         titleVisible: true,
-        routes: [
-            { href: '/community-1', icon: '🏠', label: 'Community 1' },
-            { href: '/community-2', icon: '🔥', label: 'Community 2' },
-            { href: '/community-3', icon: '🔖', label: 'Community 3' },
-            { href: '/community-4', icon: '🌍', label: 'Community 4' },
-        ],
     },
 ];

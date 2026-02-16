@@ -13,6 +13,7 @@
     --color-normal: #adefd1;
     --color-disabled: #89909f;
     --color-hover: #b6f8da;
+    --color-active: var(--color-gray-300);
     --color-hot: var(--color-red-700);
     --color-hot-hover: var(--color-red-500);
     --color-translucent: var(--color-neutral-100);

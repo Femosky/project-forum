@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuthStateStore } from '@/lib/stateStore';
+import APIService from '@/lib/services/APIService';
 import { APIUtility } from '@/lib/utils/APIUtility';
 import ErrorUtility from '@/lib/utils/ErrorUtility';
 import { useRouter } from 'next/navigation';
@@ -13,36 +14,6 @@ export function usePOST<T = unknown>() {
 
     const logout = useAuthStateStore((state) => state.logout);
     const router = useRouter();
-
-    async function refreshAccessToken(): Promise<T | Error> {
-        try {
-            const response = await fetch(`${APIUtility.getApiUrl()}/auth/refresh-token`, {
-                method: 'GET',
-                credentials: 'include',
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-
-                if (response.status === 401) {
-                    console.log('REFRESH', data);
-                    throw new Error(data?.error?.message || 'Failed to refresh token');
-                }
-
-                throw new Error('Failed to refresh token');
-            }
-
-            const data = await response.json();
-
-            if (data.error) {
-                throw new Error(data.error || data.error.message);
-            }
-
-            return data;
-        } catch (error) {
-            return error as Error;
-        }
-    }
 
     async function triggerLogout(): Promise<void> {
         try {
@@ -77,25 +48,35 @@ export function usePOST<T = unknown>() {
                 throw new Error('URL is required');
             }
 
-            if (ErrorUtility.isNullOrUndefined(payload)) {
-                throw new Error('Payload is required');
-            }
+            let response;
 
-            const response = await fetch(url, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+            if (ErrorUtility.isNullOrUndefined(payload)) {
+                // GET Request
+                response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+            } else {
+                // POST Request
+                response = await fetch(url, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+            }
 
             const data = await response.json();
 
             if (!response.ok) {
                 // If the status is 401 (Unauthorized), refresh the access token
                 if (response.status === 401) {
-                    const refreshedData = await refreshAccessToken();
+                    const refreshedData = await APIService.refreshAccessToken();
 
                     if (refreshedData instanceof Error) {
                         // If the refresh token fails, logout the user TODO: Get error types from backend

@@ -4,10 +4,23 @@ import Link from 'next/link';
 import TextUtility from '@/lib/utils/TextUtility';
 import { SidebarListProps, SidebarRouteProps } from '@/data/ui/leftSidebarList';
 import { DividerLine } from '../ui/DividerLine';
-import { useState } from 'react';
+import { usePOST } from '@/hooks/usePOST';
+import { useEffect } from 'react';
+import { APIUtility } from '@/lib/utils/APIUtility';
 
 export default function SidebarList({ list }: { list: SidebarListProps[] }) {
-    const [loading, setLoading] = useState(false);
+    const { data, isLoading, sendData } = usePOST();
+
+    useEffect(() => {
+        async function fetchCommunities() {
+            await sendData(`${APIUtility.getApiUrl()}/community/get/communities`);
+        }
+
+        console.log('data: ', data);
+
+        fetchCommunities();
+    }, []);
+
     return (
         <>
             {list.map((group: SidebarListProps, index: number) => {
@@ -17,14 +30,30 @@ export default function SidebarList({ list }: { list: SidebarListProps[] }) {
                             {group.titleVisible && (
                                 <h2 className="text-lg font-medium">{TextUtility.capitalize(group.title)}</h2>
                             )}
-                            {group.type === 'static' && (
+                            {group.type === 'static' ? (
                                 <ul className="flex flex-col">
                                     {group.routes?.map((route: SidebarRouteProps) => {
                                         return <SidebarItem key={route.href} route={route as SidebarRouteProps} />;
                                     })}
                                 </ul>
+                            ) : isLoading ? (
+                                <div>Loading...</div>
+                            ) : (
+                                data &&
+                                'communities' in data &&
+                                data.communities?.map((community) => {
+                                    return (
+                                        <SidebarItem
+                                            key={community.id}
+                                            route={{
+                                                href: `/community/${community.name}`,
+                                                icon: '🏠',
+                                                label: community.name,
+                                            }}
+                                        />
+                                    );
+                                })
                             )}
-                            {group.type === 'dynamic' && loading ? <div>Loading...</div> : <div>No data</div>}
                         </div>
 
                         {index < list.length - 1 && <DividerLine />}
