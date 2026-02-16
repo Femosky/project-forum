@@ -6,7 +6,7 @@ const buttonStyles = cva(['transition-colors', 'cursor-pointer', 'rounded-4xl'],
     variants: {
         variant: {
             default: ['bg-normal', 'hover:bg-hover', 'text-dark'],
-            disabled: ['bg-disabled', 'text-dark'],
+            disabled: ['bg-disabled', 'text-dark', 'cursor-not-allowed'],
             dark: ['bg-dark', 'hover:bg-dark-hover', 'text-normal'],
             hot: ['bg-hot', 'text-white', 'hover:bg-hot-hover'],
             transparent: ['hover:bg-translucent'],

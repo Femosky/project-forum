@@ -1,58 +1,33 @@
-'use client';
+import { APIUtility } from '@/lib/utils/APIUtility';
+import { PostPreview } from './_components/PostPreview';
 
-import { useLogin } from '@/hooks/useLogin';
-import { useState } from 'react';
+export default async function Home() {
+    // const params = {
+    //     community_name: 'hi',
+    // };
 
-export default function Home() {
-    const { login, error, logout } = useLogin();
+    // const url = new URL(`${APIUtility.getApiUrl()}/hi/posts`);
+    // url.search = new URLSearchParams(params).toString();
 
-    const [email, setEmail] = useState('');
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [clientError, setClientError] = useState('');
+    const response = await fetch(`${APIUtility.getApiUrl()}/community/hi/posts`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
 
-    const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setClientError('');
-        if (email.length > 0) {
-            login(email, undefined, password);
-        } else if (username.length > 0) {
-            login(undefined, username, password);
-        } else {
-            setClientError('Email or username is required');
-        }
-    };
-
-    const handleLogout = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setClientError('');
-        logout();
-    };
+    if (!response.ok) {
+        throw new Error('Failed to fetch posts');
+    }
+    const data = await response.json();
+    const posts = data.posts;
+    // console.log('data: ', data);
 
     return (
-        <div className="flex flex-col gap-10">
-            <form onSubmit={handleLogin}>
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                <input
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                <button type="submit">Login</button>
-                {clientError && <p className="text-red-500">{clientError}</p>}
-                {error && <p className="text-red-500">{error}</p>}
-            </form>
-
-            <form onSubmit={handleLogout}>
-                <button type="submit">Logout</button>
-            </form>
+        <div className="borderborder-green-500 flex flex-col gap-2 items-center justify-center ">
+            {posts.map((post: unknown) => {
+                return <PostPreview key={post.id} post={post} />;
+            })}
         </div>
     );
 }
