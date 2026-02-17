@@ -27,4 +27,74 @@ export const LEFT_SIDEBAR_LIST: SidebarListProps[] = [
         title: 'Your communities',
         titleVisible: true,
     },
+    {
+        type: 'static',
+        title: 'routes1',
+        titleVisible: false,
+        routes: [
+            { href: '/', icon: '🏠', label: 'Home' },
+            { href: '/trending', icon: '🔥', label: 'Trending' },
+            { href: '/saved', icon: '🔖', label: 'Saved' },
+        ],
+    },
+    {
+        type: 'static',
+        title: 'routes2',
+        titleVisible: false,
+        routes: [
+            { href: '/', icon: '🏠', label: 'Home' },
+            { href: '/trending', icon: '🔥', label: 'Trending' },
+            { href: '/saved', icon: '🔖', label: 'Saved' },
+        ],
+    },
+    {
+        type: 'static',
+        title: 'routes3',
+        titleVisible: false,
+        routes: [
+            { href: '/', icon: '🏠', label: 'Home' },
+            { href: '/trending', icon: '🔥', label: 'Trending' },
+            { href: '/saved', icon: '🔖', label: 'Saved' },
+        ],
+    },
+    {
+        type: 'static',
+        title: 'routes4',
+        titleVisible: false,
+        routes: [
+            { href: '/', icon: '🏠', label: 'Home' },
+            { href: '/trending', icon: '🔥', label: 'Trending' },
+            { href: '/saved', icon: '🔖', label: 'Saved' },
+        ],
+    },
+    {
+        type: 'static',
+        title: 'routes5',
+        titleVisible: false,
+        routes: [
+            { href: '/', icon: '🏠', label: 'Home' },
+            { href: '/trending', icon: '🔥', label: 'Trending' },
+            { href: '/saved', icon: '🔖', label: 'Saved' },
+        ],
+    },
+    {
+        type: 'static',
+        title: 'routes6',
+        titleVisible: false,
+        routes: [
+            { href: '/', icon: '🏠', label: 'Home' },
+            { href: '/trending', icon: '🔥', label: 'Trending' },
+            { href: '/saved', icon: '🔖', label: 'Saved' },
+        ],
+    },
+    {
+        type: 'static',
+        title: 'routes7',
+        titleVisible: false,
+        routes: [
+            { href: '/', icon: '🏠', label: 'Home' },
+            { href: '/trending', icon: '🔥', label: 'Trending' },
+            { href: '/saved', icon: '🔖', label: 'Saved' },
+        ],
+    },
 ];

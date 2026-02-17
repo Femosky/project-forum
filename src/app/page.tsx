@@ -17,11 +17,11 @@ export default async function Home() {
     });
 
     if (!response.ok) {
-        throw new Error('Failed to fetch posts');
+        return <div>Failed to fetch posts</div>;
     }
     const data = await response.json();
     const posts = data.posts;
-    // console.log('data: ', data);
+    console.log('data: ', data);
 
     return (
         <div className="borderborder-green-500 flex flex-col gap-2 items-center justify-center ">
