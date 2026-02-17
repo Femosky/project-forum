@@ -37,10 +37,10 @@ export default async function RootLayout({
                 <AuthHydrator isAuthenticated={hasRefreshToken} />
 
                 <Header className="z-50 fixed h-(--header-height) bg-white" />
-                <LeftSidebar className="z-10 fixed top-(--header-height) left-0 h-[calc(100vh-var(--header-height))] w-(--left-sidebar-width) overflow-y-auto bg-white" />
+                <LeftSidebar className="z-10 hidden md:block fixed top-(--header-height) left-0 h-[calc(100vh-var(--header-height))] w-(--left-sidebar-width) overflow-y-auto bg-white" />
 
                 <div
-                    className={`z-1 absolute top-(--header-height) left-(--left-sidebar-width) right-0 bottom-0 h-[calc(100vh-4rem)]`}
+                    className={`z-1 absolute top-(--header-height) left-0 md:left-(--left-sidebar-width) right-0 bottom-0 h-[calc(100vh-4rem)]`}
                 >
                     <main className="">{children}</main>
                 </div>
