@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import { Ellipsis, Flag } from 'lucide-react';
 
-export function PostPreviewOptions({ buttonZIndex }: { buttonZIndex: string }) {
+export function PostOptions({ buttonZIndex }: { buttonZIndex: string }) {
     const [isOpen, setIsOpen] = useState(false);
     function handleClick() {
         setIsOpen(!isOpen);

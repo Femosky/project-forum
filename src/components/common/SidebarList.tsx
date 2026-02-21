@@ -27,9 +27,14 @@ export default function SidebarList({ list }: { list: SidebarListProps[] }) {
                 return (
                     <div key={group.title} className="flex flex-col gap-4">
                         <div className="rounded-lg flex flex-col mt-4 gap-2">
-                            {group.titleVisible && (
+                            {group.titleVisible && group.type === 'static' && (
                                 <h2 className="text-lg font-medium">{TextUtility.capitalize(group.title)}</h2>
                             )}
+
+                            {group.titleVisible && group.type === 'api' && data !== null && (
+                                <h2 className="text-lg font-medium">{TextUtility.capitalize(group.title)}</h2>
+                            )}
+
                             {group.type === 'static' ? (
                                 <ul className="flex flex-col">
                                     {group.routes?.map((route: SidebarRouteProps) => {
@@ -56,7 +61,8 @@ export default function SidebarList({ list }: { list: SidebarListProps[] }) {
                             )}
                         </div>
 
-                        {index < list.length - 1 && <DividerLine />}
+                        {index < list.length - 1 && group.type === 'static' && <DividerLine />}
+                        {index < list.length - 1 && group.type === 'api' && data !== null && <DividerLine />}
                     </div>
                 );
             })}

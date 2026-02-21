@@ -12,7 +12,6 @@ import { useEffect } from 'react';
 export function UserSection() {
     const router = useRouter();
     const isAuthenticated = useAuthStateStore((state) => state.isAuthenticated);
-    const login = useAuthStateStore((state) => state.login);
     const logout = useAuthStateStore((state) => state.logout);
 
     const { data, error, isLoading, fetchData } = useFetch();
@@ -26,6 +25,7 @@ export function UserSection() {
             console.log('ran 2');
             console.log('logout successful: ', data);
             logout();
+            window.location.reload();
         }
     }, [data, logout]);
 

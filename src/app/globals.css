@@ -16,9 +16,10 @@
 :root {
     --background: #ffffff;
     --foreground: #171717;
-    /* So layout calc(100dvh - var(--header-height)) works */
+    --primary: #adefd1;
     --header-height: var(--spacing-header-height);
     --left-sidebar-width: var(--spacing-left-sidebar-width);
+    --main-page-width: var(--spacing-main-page-width);
 }
 
 @theme {
@@ -45,6 +46,7 @@
 
     --spacing-header-height: 4rem;
     --spacing-left-sidebar-width: 16rem;
+    --spacing-main-page-width: 66.666667%;
 }
 
 @theme inline {

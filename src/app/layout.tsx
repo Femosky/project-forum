@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import LeftSidebar from '@/components/layout/LeftSidebar';
 import { cookies } from 'next/headers';
 import { AuthHydrator } from '@/lib/authHydrator';
+import TopLoader from '@/components/common/TopLoader';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -34,6 +35,7 @@ export default async function RootLayout({
     return (
         <html lang="en">
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}>
+                <TopLoader />
                 <AuthHydrator isAuthenticated={hasRefreshToken} />
 
                 <Header className="z-50 fixed h-(--header-height) bg-white" />

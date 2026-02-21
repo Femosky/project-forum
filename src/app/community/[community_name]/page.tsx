@@ -6,18 +6,36 @@ interface PageProps {
     params: Promise<{ community_name: string }>;
 }
 
+export async function generateMetadata({ params }: PageProps) {
+    const { community_name } = await params;
+    const response = await fetch(`${APIUtility.getApiUrl()}/community/${community_name}`, {
+        cache: 'no-store',
+    });
+    if (!response.ok) {
+        return {
+            title: 'Community not found',
+            description: 'Community not found',
+        };
+    }
+    const data = await response.json();
+
+    return {
+        title: `${data.community.name} community`,
+        description: data.community.description,
+    };
+}
+
 export default async function CommunityPage({ params }: PageProps) {
-    const communityName = (await params).community_name;
-    const res = await fetch(`${APIUtility.getApiUrl()}/community/${communityName}`, {
+    const { community_name } = await params;
+    const response = await fetch(`${APIUtility.getApiUrl()}/community/${community_name}`, {
         cache: 'no-store',
     });
 
-    console.log('community name: ', communityName);
-    if (!res.ok) {
+    if (!response.ok) {
         return <div>Community not found</div>;
     }
 
-    const data = await res.json();
+    const data = await response.json();
 
     return (
         <div>
