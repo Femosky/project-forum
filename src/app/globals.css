@@ -17,6 +17,8 @@
     --background: #ffffff;
     --foreground: #171717;
     --primary: #adefd1;
+    --secondary: #f4f4f4;
+    --secondary-hover: #dedcdc;
     --header-height: var(--spacing-header-height);
     --left-sidebar-width: var(--spacing-left-sidebar-width);
     --main-page-width: var(--spacing-main-page-width);
@@ -27,7 +29,9 @@
     --breakpoint-xs: 390px;
     --breakpoint-mdp: 885px;
 
-    --color-normal: #adefd1;
+    --color-primary: #adefd1;
+    --color-secondary: #f4f4f4;
+    --color-secondary-hover: #dedcdc;
     --color-disabled: #89909f;
     --color-hover: #b6f8da;
     --color-active: var(--color-gray-300);

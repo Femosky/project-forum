@@ -5,9 +5,18 @@ import { ComponentProps } from 'react';
 const buttonStyles = cva(['transition-colors', 'cursor-pointer', 'rounded-4xl', 'active:brightness-95'], {
     variants: {
         variant: {
-            default: ['bg-normal', 'hover:bg-hover', 'text-dark'],
+            default: ['bg-primary', 'hover:bg-hover', 'text-dark'],
+            neutral: ['bg-secondary', 'hover:bg-secondary-hover', 'text-dark'],
+            'add-reply': [
+                'cursor-text',
+                'active:brightness-100',
+                'border border-gray-200',
+                'hover:bg-secondary',
+                'hover:border-gray-300',
+                'text-dark',
+            ],
             disabled: ['bg-disabled', 'text-dark', 'cursor-not-allowed'],
-            dark: ['bg-dark', 'hover:bg-dark-hover', 'text-normal'],
+            dark: ['bg-dark', 'hover:bg-dark-hover', 'text-primary'],
             hot: ['bg-hot', 'text-white', 'hover:bg-hot-hover'],
             transparent: ['hover:bg-translucent'],
             clear: [],
@@ -15,6 +24,14 @@ const buttonStyles = cva(['transition-colors', 'cursor-pointer', 'rounded-4xl', 
         size: {
             default: ['px-5', 'py-2', 'font-medium', 'text-base'],
             round: ['rounded-full', 'items-center', 'justify-center', 'p-2'],
+            'add-reply-1': ['px-3', 'py-2', 'font-light', 'text-base'],
+            'add-reply-2': [
+                'px-3',
+                'py-1',
+                'font-medium',
+                'text-sm',
+                'border border-gray-200 outline-none focus:ring-0 focus:border-gray-400',
+            ],
             special: ['px-5', 'py-3', 'rounded-tl-4xl', 'rounded-bl-4xl', 'rounded-br-4xl'],
             google: ['px-3', 'py-2', 'bg-white', 'border border-black', 'rounded-4xl', 'w-fit', 'font-medium'],
         },

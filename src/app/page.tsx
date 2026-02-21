@@ -2,10 +2,6 @@ import { APIUtility } from '@/lib/utils/APIUtility';
 import { PostPreview } from './_components/PostPreview';
 import { APP_NAME } from '@/lib/constants';
 
-interface PageProps {
-    params: Promise<{ community_name: string }>;
-}
-
 export async function generateMetadata() {
     return {
         title: `Home | ${APP_NAME}`,
