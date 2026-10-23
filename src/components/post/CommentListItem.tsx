@@ -15,7 +15,7 @@ export function CommentListItem({ comment }: { comment: ListedComment }) {
                     c/{comment.post.community}
                 </Link>{' '}
                 • on{' '}
-                <Link href={postPath} className="font-semibold text-link hover:underline">
+                <Link href={`${postPath}?comment=${comment.short_id}`} className="font-semibold text-link hover:underline">
                     {comment.post.title}
                 </Link>{' '}
                 • <time dateTime={comment.created_at}>{TimeUtility.formatTimeAgo(comment.created_at)}</time>

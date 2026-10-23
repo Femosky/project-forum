@@ -118,7 +118,25 @@ export interface PrivateUser {
     role: string;
     karma: number;
     is_email_verified: boolean;
+    has_password: boolean;
+    has_google: boolean;
     created_at: string;
+}
+
+export interface Session {
+    id: string;
+    created_at: string;
+    last_used_at: string | null;
+    browser: string | null;
+    os: string | null;
+    device_type: string | null;
+    country: string | null;
+    city: string | null;
+    current: boolean;
+}
+
+export interface SessionsResponse {
+    sessions: Session[];
 }
 
 export interface PublicUser {
@@ -137,6 +155,11 @@ export interface PublicUserResponse {
 // A comment listed outside its thread (profiles), with enough of its post to link to it
 export interface ListedComment extends Comment {
     post: { short_id: string; slug: string; title: string; community: string };
+}
+
+export interface SavedCommentsResponse {
+    comments: ListedComment[];
+    next_cursor: string | null;
 }
 
 export interface UserCommentsResponse {
