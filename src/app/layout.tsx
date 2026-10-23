@@ -9,6 +9,7 @@ import { cookies } from 'next/headers';
 import { AuthHydrator } from '@/lib/authHydrator';
 import TopLoader from '@/components/common/TopLoader';
 import SignInPrompt from '@/components/common/SignInPrompt';
+import { NotificationPoller } from '@/components/notifications/NotificationBadge';
 import { getTheme } from '@/components/theme/getTheme';
 
 // Self-hosted at build time by next/font: no request to Google at runtime
@@ -60,6 +61,7 @@ export default async function RootLayout({
 
                 <BottomTabBar />
                 <SignInPrompt />
+                <NotificationPoller />
             </body>
         </html>
     );

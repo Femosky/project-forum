@@ -15,6 +15,10 @@ type UIStore = {
     editingPostId: string | null;
     setEditingPost: (postId: string | null) => void;
 
+    // Unread notifications for the signed-in viewer (null until first fetched)
+    unreadCount: number | null;
+    setUnreadCount: (count: number | null) => void;
+
     // Bumped on join/leave so the sidebar refetches the viewer's communities
     membershipVersion: number;
     membershipChanged: () => void;
@@ -30,6 +34,9 @@ export const useUIStore = create<UIStore>()((set) => ({
 
     editingPostId: null,
     setEditingPost: (postId) => set({ editingPostId: postId }),
+
+    unreadCount: null,
+    setUnreadCount: (count) => set({ unreadCount: count }),
 
     membershipVersion: 0,
     membershipChanged: () => set((state) => ({ membershipVersion: state.membershipVersion + 1 })),

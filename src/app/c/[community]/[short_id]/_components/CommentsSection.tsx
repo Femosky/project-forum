@@ -208,7 +208,8 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
     const nested = comment.depth < MAX_VISIBLE_DEPTH;
 
     return (
-        <div className="flex w-full gap-2.5">
+        // Notifications link here with #c-{shortId}
+        <div id={`c-${comment.short_id}`} className="flex w-full scroll-mt-header gap-2.5">
             <ShapeSection
                 username={getAuthorName(comment)}
                 hasChildren={hasChildren}

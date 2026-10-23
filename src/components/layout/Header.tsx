@@ -2,6 +2,7 @@ import { UserSection } from '@/app/_components/UserSection';
 import { SearchSection } from '@/app/_components/SearchSection';
 import LogoSection from '@/app/_components/LogoSection';
 import ThemeMenu from '@/components/theme/ThemeMenu';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import MobileNav from './MobileNav';
 import { Theme } from '@/lib/constants';
 import { ComponentProps } from 'react';
@@ -30,6 +31,7 @@ export default function Header({ className, theme, ...props }: HeaderProps) {
 
                 <div className="flex shrink-0 items-center gap-1">
                     <ThemeMenu initialTheme={theme} />
+                    <NotificationBell />
                     <UserSection />
                 </div>
             </div>

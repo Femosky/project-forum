@@ -154,6 +154,26 @@ export interface SearchCommunitiesResponse {
     next_page: number | null;
 }
 
+export interface AppNotification {
+    id: string;
+    type: 'post_reply' | 'comment_reply' | 'mention';
+    created_at: string;
+    read_at: string | null;
+    actor: AuthorRef | null;
+    post: { short_id: string; slug: string; title: string; community: string };
+    comment: { short_id: string; excerpt: string };
+}
+
+export interface NotificationsResponse {
+    notifications: AppNotification[];
+    next_cursor: string | null;
+    unread_count: number;
+}
+
+export interface UnreadCountResponse {
+    count: number;
+}
+
 export type PostSort = 'hot' | 'new' | 'top';
 export type CommentSort = 'best' | 'top' | 'new' | 'old';
 
