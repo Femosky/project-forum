@@ -2,53 +2,58 @@
 
 import Button from '@/components/ui/Button';
 import TextArea from '@/components/ui/TextArea';
-import { useEffect, useState } from 'react';
+import ErrorMessage from '@/components/ui/ErrorMessage';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { COMMENT_BODY_MAX } from '@/lib/constants';
+import { errorMessage } from '@/lib/api/errors';
+import { useState } from 'react';
 
+// Reply composer. handleReply resolves when the comment is saved; the text is kept if it fails.
 export default function ContentReplySection({
     fromReply,
     toggleReplyMode,
     handleReply,
-    resetReplyContent = false,
 }: {
     fromReply?: boolean;
     toggleReplyMode?: () => void;
-    handleReply?: (replyContent: string) => void;
-    resetReplyContent: boolean;
+    handleReply: (replyContent: string) => Promise<void>;
 }) {
     const [isOpen, setIsOpen] = useState(fromReply ?? false);
     const [replyContent, setReplyContent] = useState('');
+    const [isSending, setIsSending] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const requireAuth = useRequireAuth();
 
     function toggleOpen() {
+        if (!requireAuth('reply')) return;
         setIsOpen(true);
     }
 
     function toggleCancel() {
-        if (fromReply && fromReply === true) {
+        setError(null);
+        if (fromReply) {
             toggleReplyMode?.();
         } else {
             setIsOpen(false);
         }
     }
 
-    function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
+        if (replyContent.trim() === '' || isSending) return;
 
-        if (replyContent.trim() === '') {
-            return;
-        }
-
-        handleReply?.(replyContent);
-    }
-
-    useEffect(() => {
-        function reset() {
+        setIsSending(true);
+        setError(null);
+        try {
+            await handleReply(replyContent.trim());
             setReplyContent('');
+            if (!fromReply) setIsOpen(false);
+        } catch (error) {
+            setError(errorMessage(error));
+        } finally {
+            setIsSending(false);
         }
-
-        if (resetReplyContent) {
-            reset();
-        }
-    }, [resetReplyContent]);
+    }
 
     if (!isOpen) {
         return (
@@ -73,16 +78,19 @@ export default function ContentReplySection({
                 aria-label="Your reply"
                 placeholder="Add a reply"
                 autoFocus
+                maxLength={COMMENT_BODY_MAX}
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
             />
 
+            {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
+
             <div className="flex justify-end gap-2">
-                <Button size="sm" variant="ghost" onClick={toggleCancel}>
+                <Button size="sm" variant="ghost" onClick={toggleCancel} disabled={isSending}>
                     Cancel
                 </Button>
-                <Button type="submit" size="sm" disabled={replyContent.trim() === ''}>
-                    Reply
+                <Button type="submit" size="sm" disabled={replyContent.trim() === '' || isSending}>
+                    {isSending ? 'Replying...' : 'Reply'}
                 </Button>
             </div>
         </form>

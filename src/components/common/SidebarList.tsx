@@ -2,15 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { DividerLine } from '../ui/DividerLine';
 import { Avatar } from '../ui/Avatar';
 import { Skeleton } from '../ui/Skeleton';
-import { usePOST } from '@/hooks/usePOST';
-import { APIUtility } from '@/lib/utils/APIUtility';
-import { CommunitiesResponse } from '@/types/api';
+import { api } from '@/lib/api/client';
+import { MyCommunitiesResponse } from '@/types/api';
 import { useAuthStateStore } from '@/lib/stateStore';
+import { useUIStore } from '@/lib/uiStore';
 import { isActiveRoute, NavRoute, PRIMARY_NAV } from '@/data/ui/navigation';
 
 const itemClasses = 'flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors';
@@ -18,23 +18,25 @@ const itemClasses = 'flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-s
 // onNavigate lets the mobile menu close itself when a link is followed
 export default function SidebarList({ onNavigate }: { onNavigate?: () => void }) {
     const pathname = usePathname();
-    const { data, isLoading, sendData } = usePOST<CommunitiesResponse>();
     const isAuthenticated = useAuthStateStore((state) => state.isAuthenticated);
+    const membershipVersion = useUIStore((state) => state.membershipVersion);
+    const [communities, setCommunities] = useState<MyCommunitiesResponse['communities']>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
+    // Refetch on sign-in and whenever the viewer joins or leaves a community. Guests have none.
     useEffect(() => {
-        // Guests have no communities; fetching would 401 and bounce them to the login page
         if (!isAuthenticated) return;
-
-        async function fetchCommunities() {
-            await sendData(`${APIUtility.getApiUrl()}/community/get/communities`);
-        }
-
-        fetchCommunities();
-        // Fetch when the user logs in
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated]);
-
-    const communities = data?.communities ?? [];
+        let isCurrent = true;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsLoading(true);
+        api<MyCommunitiesResponse>('/users/me/communities')
+            .then((data) => isCurrent && setCommunities(data.communities))
+            .catch(() => isCurrent && setCommunities([]))
+            .finally(() => isCurrent && setIsLoading(false));
+        return () => {
+            isCurrent = false;
+        };
+    }, [isAuthenticated, membershipVersion]);
 
     return (
         <nav aria-label="Main" className="flex flex-col gap-4 p-3">
@@ -62,7 +64,7 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                         ) : (
                             <ul className="flex flex-col gap-0.5">
                                 {communities.map((community) => {
-                                    const href = `/community/${community.name}`;
+                                    const href = `/c/${community.name}`;
                                     return (
                                         <li key={community.id}>
                                             <Link
