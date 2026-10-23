@@ -1,10 +1,20 @@
+import Link from 'next/link';
+import { Compass } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
+import Button from '@/components/ui/Button';
+
 export default function NotFound() {
     return (
-        <div className="flex min-h-screen items-center justify-center">
-            <div className="text-center">
-                <h1 className="text-4xl font-bold mb-4">404</h1>
-                <p className="text-lg">Page not found</p>
-            </div>
-        </div>
+        <EmptyState
+            icon={<Compass />}
+            title="Page not found"
+            description="The link may be broken, or the page may have been removed."
+            action={
+                <Button asChild>
+                    <Link href="/">Go home</Link>
+                </Button>
+            }
+            className="py-24"
+        />
     );
 }

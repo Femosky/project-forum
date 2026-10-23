@@ -1,33 +1,37 @@
 import { UserSection } from '@/app/_components/UserSection';
 import { SearchSection } from '@/app/_components/SearchSection';
 import LogoSection from '@/app/_components/LogoSection';
+import ThemeMenu from '@/components/theme/ThemeMenu';
+import MobileNav from './MobileNav';
+import { Theme } from '@/lib/constants';
 import { ComponentProps } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-type HeaderProps = ComponentProps<'header'>;
+type HeaderProps = ComponentProps<'header'> & { theme: Theme | null };
 
-export default function Header({ className, ...props }: HeaderProps) {
+export default function Header({ className, theme, ...props }: HeaderProps) {
     return (
         <header
             className={twMerge(
-                'w-full h-header-height flex items-center justify-between p-4 border-b border-gray-200 gap-4',
+                'sticky top-0 z-40 h-header w-full border-b border-border bg-surface/95 backdrop-blur',
                 className
             )}
             {...props}
         >
-            {/* Logo Section */}
-            <div className="shrink-0">
-                <LogoSection />
-            </div>
+            <div className="flex h-full items-center gap-2 px-3 sm:gap-4 sm:px-4">
+                <div className="flex shrink-0 items-center gap-1">
+                    <MobileNav />
+                    <LogoSection />
+                </div>
 
-            {/* Search Section */}
-            <div className="flex-1 max-w-[45%]">
-                <SearchSection />
-            </div>
+                <div className="flex flex-1 justify-end md:justify-center">
+                    <SearchSection />
+                </div>
 
-            {/* User Section */}
-            <div className="shrink-0">
-                <UserSection />
+                <div className="flex shrink-0 items-center gap-1">
+                    <ThemeMenu initialTheme={theme} />
+                    <UserSection />
+                </div>
             </div>
         </header>
     );

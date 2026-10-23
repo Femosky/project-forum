@@ -5,7 +5,7 @@ import { ComponentProps } from 'react';
 const ErrorMessageStyles = cva(['transition-colors'], {
     variants: {
         variant: {
-            default: ['text-red-500'],
+            default: ['text-danger'],
         },
         size: {
             default: ['text-xs'],

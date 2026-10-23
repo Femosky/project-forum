@@ -1,74 +1,166 @@
 @import 'tailwindcss';
 
-/* Cap layout to viewport: no margin, fixed height so body doesn't grow */
-/* html {
-    height: 100%;
-    margin: 0;
-    overflow: hidden;
-} */
-/* body {
-    margin: 0;
-    height: 100vh;
-    max-height: 100vh;
-    overflow: hidden;
-} */
+/*
+ * Design tokens.
+ *
+ * Components use the semantic names below (bg-surface, text-muted, border-border...),
+ * never raw colours. The palette is a one-file swap: change the values in the light and
+ * dark blocks and the whole app follows.
+ *
+ * Theme selection: <html data-theme="light|dark"> when the user picked one (stored in a
+ * cookie and rendered by the server), otherwise the system preference decides.
+ *
+ * Brand seeds: navy #00203F and mint #ADEFD1. In light mode navy is the primary action
+ * colour and mint is a highlight surface only (mint text on white fails contrast). In dark
+ * mode they swap roles: mint becomes the action colour with navy text on it.
+ * Every text token passes WCAG AA (4.5:1) on bg, surface and surface-muted.
+ */
 
-:root {
-    --background: #ffffff;
-    --foreground: #171717;
-    --primary: #adefd1;
-    --secondary: #f4f4f4;
-    --secondary-hover: #dedcdc;
-    --header-height: var(--spacing-header-height);
-    --left-sidebar-width: var(--spacing-left-sidebar-width);
-    --main-page-width: var(--spacing-main-page-width);
+:root,
+:root[data-theme='light'] {
+    color-scheme: light;
+
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-muted: #edf1f5;
+    --text: #0e1a26;
+    --text-muted: #526172;
+    --border: #d9e0e7;
+    --border-strong: #7f90a2;
+    --accent: #00203f;
+    --accent-hover: #0a3460;
+    --accent-fg: #ffffff;
+    --highlight: #adefd1;
+    --highlight-fg: #00203f;
+    --link: #0a7350;
+    --upvote: #0a7350;
+    --downvote: #4b57c9;
+    --danger: #c02e24;
+    --success: #13773a;
+    --sponsored: #8a5a00;
+    --focus: #0a7350;
+    --overlay: rgb(14 26 38 / 0.45);
+    --shadow: 0 1px 2px rgb(14 26 38 / 0.06), 0 8px 24px rgb(14 26 38 / 0.1);
+}
+
+:root[data-theme='dark'] {
+    color-scheme: dark;
+
+    --bg: #06111d;
+    --surface: #0c1a2a;
+    --surface-raised: #122236;
+    --surface-muted: #16283c;
+    --text: #e4ecf3;
+    --text-muted: #97a8b9;
+    --border: #203448;
+    --border-strong: #56708a;
+    --accent: #adefd1;
+    --accent-hover: #c6f5df;
+    --accent-fg: #00203f;
+    --highlight: #173b36;
+    --highlight-fg: #adefd1;
+    --link: #7eddb4;
+    --upvote: #6fd8a8;
+    --downvote: #9ea8ff;
+    --danger: #ff8a80;
+    --success: #63d483;
+    --sponsored: #e8b54d;
+    --focus: #7eddb4;
+    --overlay: rgb(0 0 0 / 0.6);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.45);
+}
+
+/* System preference, when the user hasn't picked a theme. Keep in sync with the block above. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        color-scheme: dark;
+
+        --bg: #06111d;
+        --surface: #0c1a2a;
+        --surface-raised: #122236;
+        --surface-muted: #16283c;
+        --text: #e4ecf3;
+        --text-muted: #97a8b9;
+        --border: #203448;
+        --border-strong: #56708a;
+        --accent: #adefd1;
+        --accent-hover: #c6f5df;
+        --accent-fg: #00203f;
+        --highlight: #173b36;
+        --highlight-fg: #adefd1;
+        --link: #7eddb4;
+        --upvote: #6fd8a8;
+        --downvote: #9ea8ff;
+        --danger: #ff8a80;
+        --success: #63d483;
+        --sponsored: #e8b54d;
+        --focus: #7eddb4;
+        --overlay: rgb(0 0 0 / 0.6);
+        --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.45);
+    }
 }
 
 @theme {
     --breakpoint-xxs: 323px;
     --breakpoint-xs: 390px;
-    --breakpoint-mdp: 885px;
 
-    --color-primary: #adefd1;
-    --color-secondary: #f4f4f4;
-    --color-secondary-hover: #dedcdc;
-    --color-disabled: #89909f;
-    --color-hover: #b6f8da;
-    --color-active: var(--color-gray-300);
-    --color-hot: var(--color-red-700);
-    --color-hot-hover: var(--color-red-500);
-    --color-translucent: var(--color-neutral-100);
-    --color-hover-hover: var(--color-neutral-300);
-    --color-border: var(--color-neutral-400);
-    --color-text: var(--color-zinc-500);
-    /* --color-dark: var(--color-zinc-900); */
-    --color-dark: #00203f;
-    --color-dark-hover: #033457;
-
-    --font-plusJakarta: 'Plus Jakarta Sans', 'sans-serif';
-    --font-inter: 'Inter', 'sans-serif';
-
-    --spacing-header-height: 4rem;
-    --spacing-left-sidebar-width: 16rem;
-    --spacing-main-page-width: 66.666667%;
+    --spacing-header: 3.5rem;
+    --spacing-sidebar: 16rem;
+    --spacing-content: 46rem;
+    --spacing-tabbar: 3.5rem;
 }
 
 @theme inline {
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
+    --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+
+    --color-bg: var(--bg);
+    --color-surface: var(--surface);
+    --color-surface-raised: var(--surface-raised);
+    --color-surface-muted: var(--surface-muted);
+    --color-text: var(--text);
+    --color-muted: var(--text-muted);
+    --color-border: var(--border);
+    --color-border-strong: var(--border-strong);
+    --color-accent: var(--accent);
+    --color-accent-hover: var(--accent-hover);
+    --color-accent-fg: var(--accent-fg);
+    --color-highlight: var(--highlight);
+    --color-highlight-fg: var(--highlight-fg);
+    --color-link: var(--link);
+    --color-upvote: var(--upvote);
+    --color-downvote: var(--downvote);
+    --color-danger: var(--danger);
+    --color-success: var(--success);
+    --color-sponsored: var(--sponsored);
+    --color-focus: var(--focus);
+    --color-overlay: var(--overlay);
+
+    --shadow-raised: var(--shadow);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #0a0a0a;
-        --foreground: #ededed;
+@layer base {
+    html {
+        background-color: var(--bg);
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        min-height: 100dvh;
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+    }
+
+    ::selection {
+        background-color: var(--highlight);
+        color: var(--highlight-fg);
     }
 }
-
-/* body {
-    background: var(--background);
-    color: var(--foreground);
-    font-family: Arial, Helvetica, sans-serif;
-} */

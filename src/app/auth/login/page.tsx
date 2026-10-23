@@ -9,6 +9,7 @@ import z from 'zod';
 import { PASSWORD_SPECIAL_CHARACTERS, PASSWORD_SPECIAL_CHARACTERS_REGEX } from '@/lib/constants';
 import { useAuthStateStore } from '@/lib/stateStore';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import ErrorUtility from '@/lib/utils/ErrorUtility';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 
@@ -107,36 +108,57 @@ export default function LoginPage() {
     }, [data, login, router]);
 
     return (
-        <div className="place-self-center py-40">
-            <h1 className="text-2xl text-center">Login</h1>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-md">
-                <div className="flex flex-col gap-1">
-                    <InputField
-                        type="text"
-                        name="email"
-                        value={email}
-                        onChange={handleEmailTyping}
-                        outline={emailError ? 'error' : 'default'}
-                    />
-                    {emailError && <ErrorMessage errorMessage={emailError} />}
-                </div>
+        <div className="flex justify-center px-4 py-12 sm:py-20">
+            <div className="w-full max-w-sm rounded-2xl bg-surface p-6 sm:border sm:border-border sm:p-8">
+                <h1 className="text-2xl font-extrabold">Log in</h1>
+                <p className="mt-1 text-sm text-muted">Welcome back.</p>
 
-                <div className="flex flex-col gap-2">
-                    <InputField
-                        type="password"
-                        name="password"
-                        value={password}
-                        onChange={handlePasswordTyping}
-                        outline={passwordError ? 'error' : 'default'}
-                    />
-                    {passwordError && <ErrorMessage errorMessage={passwordError} />}
-                </div>
+                <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
+                    <div className="flex flex-col gap-1.5">
+                        <label htmlFor="email" className="text-sm font-semibold">
+                            Email
+                        </label>
+                        <InputField
+                            type="email"
+                            name="email"
+                            autoComplete="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={handleEmailTyping}
+                            outline={emailError ? 'error' : 'default'}
+                        />
+                        {emailError && <ErrorMessage errorMessage={emailError} />}
+                    </div>
 
-                <Button variant={isLoading ? 'disabled' : 'default'} type="submit" disabled={isLoading}>
-                    {isLoading ? 'Logging in...' : 'Login'}
-                </Button>
-                {error && <ErrorMessage errorMessage={error.message} />}
-            </form>
+                    <div className="flex flex-col gap-1.5">
+                        <label htmlFor="password" className="text-sm font-semibold">
+                            Password
+                        </label>
+                        <InputField
+                            type="password"
+                            name="password"
+                            autoComplete="current-password"
+                            placeholder=" "
+                            value={password}
+                            onChange={handlePasswordTyping}
+                            outline={passwordError ? 'error' : 'default'}
+                        />
+                        {passwordError && <ErrorMessage errorMessage={passwordError} />}
+                    </div>
+
+                    <Button type="submit" size="lg" disabled={isLoading} className="mt-2 w-full">
+                        {isLoading ? 'Logging in...' : 'Log in'}
+                    </Button>
+                    {error && <ErrorMessage size="small" errorMessage={error.message} role="alert" />}
+                </form>
+
+                <p className="mt-6 text-center text-sm text-muted">
+                    New here?{' '}
+                    <Link href="/auth/signup" className="font-semibold text-link hover:underline">
+                        Create an account
+                    </Link>
+                </p>
+            </div>
         </div>
     );
 }

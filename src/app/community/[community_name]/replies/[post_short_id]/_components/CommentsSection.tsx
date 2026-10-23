@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { SortByDropdown } from './SortByDropdown';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import Button from '@/components/ui/Button';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import Avatar from '@/components/ui/Avatar';
 import { ReplyActions } from './ReplyActions';
 import { usePOST } from '@/hooks/usePOST';
 import { useFetch } from '@/hooks/useFetch';
@@ -13,8 +13,6 @@ import { APIUtility } from '@/lib/utils/APIUtility';
 import ContentReplySection from './ContentReplySection';
 import { Comment, CommentsResponse, CreateCommentResponse } from '@/types/api';
 
-// Placeholder until avatars are wired to avatar_id
-const AVATAR_PLACEHOLDER = '/profile-pic-1.jpeg';
 const MORE_REPLIES_LIMIT = 50;
 
 interface ThreadContext {
@@ -51,15 +49,14 @@ export function CommentsSection({
     }
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
             <ContentReplySection handleReply={handleTopLevelReply} resetReplyContent={resetReplyContent} />
 
-            <div className="flex items-center gap-1 text-sm">
-                <p>Sort by:</p>
-                <SortByDropdown buttonZIndex="z-10" filter="top" />
+            <div className="-ml-3">
+                <SortByDropdown />
             </div>
 
-            <div className="flex flex-col w-full py-4 gap-2">
+            <div className="flex w-full flex-col gap-4 pb-6">
                 {comments.map((comment) => (
                     <CommentBlock key={comment.id} initialComment={comment} thread={thread} />
                 ))}
@@ -136,7 +133,7 @@ function CommentBlock({ initialComment, thread }: { initialComment: Comment; thr
     }
 
     return (
-        <div className="flex gap-4 w-full">
+        <div className="flex w-full gap-2.5">
             <ShapeSection
                 username={getAuthorName(comment)}
                 hasChildren={hasChildren}
@@ -144,14 +141,14 @@ function CommentBlock({ initialComment, thread }: { initialComment: Comment; thr
                 toggleHideAllReplies={hideReplies}
             />
 
-            <div className="flex flex-col gap-5 w-full">
-                <div className="flex flex-col gap-1.5 w-full">
+            <div className="flex min-w-0 w-full flex-col gap-3">
+                <div className="flex w-full flex-col gap-1">
                     <TextSection comment={comment} />
 
                     <ReplyActions
-                        buttonZIndex="z-10"
                         upvotes={comment._count?.upvoters ?? 0}
                         downvotes={comment._count?.downvoters ?? 0}
+                        isReplying={isReplying}
                         toggleReplyMode={toggleReplyMode}
                     />
 
@@ -172,24 +169,23 @@ function CommentBlock({ initialComment, thread }: { initialComment: Comment; thr
                     ))}
 
                 {hasChildren && (
-                    <div className="flex items-center gap-1">
+                    <div className="-ml-3 flex items-center gap-1">
                         {(!isExpanded || hiddenReplies > 0) && (
                             <Button
                                 onClick={showReplies}
-                                size="round"
-                                variant="transparent"
-                                className="w-fit px-3"
+                                variant="ghost"
+                                size="sm"
+                                className="text-link"
                                 disabled={isLoadingReplies}
                             >
-                                <span className="flex items-center gap-1">
-                                    {isExpanded ? `${hiddenReplies} more` : totalReplies}{' '}
-                                    {(isExpanded ? hiddenReplies : totalReplies) === 1 ? 'reply' : 'replies'}{' '}
-                                    <ChevronDown className="size-4" />
-                                </span>
+                                <ChevronDown className="size-4" />
+                                {isExpanded ? `${hiddenReplies} more` : totalReplies}{' '}
+                                {(isExpanded ? hiddenReplies : totalReplies) === 1 ? 'reply' : 'replies'}
                             </Button>
                         )}
                         {isExpanded && (
-                            <Button size="round" variant="transparent" className="w-fit px-3" onClick={hideReplies}>
+                            <Button variant="ghost" size="sm" className="text-muted" onClick={hideReplies}>
+                                <ChevronUp className="size-4" />
                                 Hide replies
                             </Button>
                         )}
@@ -211,20 +207,20 @@ function ShapeSection({
     isExpanded: boolean;
     toggleHideAllReplies: () => void;
 }) {
-    const alt = `${username}'s avatar`;
     return (
-        <div className="flex flex-col items-center gap-0">
-            <div className="relative size-10 shrink-0 rounded-full overflow-hidden aspect-square">
-                <Image src={AVATAR_PLACEHOLDER} className="object-cover" alt={alt} fill sizes="40px" />
-            </div>
+        <div className="flex flex-col items-center gap-1">
+            <Avatar name={username} size="md" />
 
+            {/* Thread line: click to collapse the replies */}
             {hasChildren && isExpanded && (
-                <div
+                <button
+                    type="button"
+                    aria-label={`Hide replies to ${username}`}
                     onClick={toggleHideAllReplies}
-                    className="w-full h-full flex flex-col group items-center justify-center"
+                    className="group flex w-full flex-1 cursor-pointer justify-center"
                 >
-                    <div className="w-px flex-1 bg-gray-300 group-hover:bg-gray-400 transition-colors duration-75 ease-in-out" />
-                </div>
+                    <span className="w-px flex-1 bg-border transition-colors group-hover:bg-border-strong" />
+                </button>
             )}
         </div>
     );
@@ -240,15 +236,14 @@ function TitleSection({
     editedAt: string | null;
 }) {
     return (
-        <div className="flex items-center gap-1 font-light text-sm">
-            <span className="font-medium">{username}</span>
-            <span>•</span>
-            <span>{TimeUtility.formatTimeAgo(createdAt)}</span>
+        <div className="flex min-h-8 flex-wrap items-center gap-x-1.5 text-xs text-muted">
+            <span className="font-bold text-text">{username}</span>
+            <span aria-hidden>•</span>
+            <time dateTime={createdAt}>{TimeUtility.formatTimeAgo(createdAt)}</time>
             {editedAt && (
                 <>
-                    <span>•</span>
-                    <span>Edited</span>
-                    <span>{TimeUtility.formatTimeAgo(editedAt)}</span>
+                    <span aria-hidden>•</span>
+                    <span>Edited {TimeUtility.formatTimeAgo(editedAt)}</span>
                 </>
             )}
         </div>
@@ -257,13 +252,13 @@ function TitleSection({
 
 function TextSection({ comment }: { comment: Comment }) {
     return (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-0.5">
             <TitleSection
                 username={getAuthorName(comment)}
                 createdAt={comment.created_at}
                 editedAt={comment.is_edited ? comment.edited_at : null}
             />
-            <p className="font-normal whitespace-pre-wrap break-words">{comment.content}</p>
+            <p className="whitespace-pre-wrap break-words">{comment.content}</p>
         </div>
     );
 }

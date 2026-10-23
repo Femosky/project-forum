@@ -1,15 +1,20 @@
 import SidebarList from '@/components/common/SidebarList';
-import { LEFT_SIDEBAR_LIST } from '@/data/ui/leftSidebarList';
 import { twMerge } from 'tailwind-merge';
 import { ComponentProps } from 'react';
 
 type LeftSidebarProps = ComponentProps<'aside'>;
 
+// Desktop only; on small screens the same list lives in the header's slide-out menu
 export default function LeftSidebar({ className, ...props }: LeftSidebarProps) {
     return (
-        <aside className={twMerge('0w-64 shrink-0 h-full px-2 border-r border-gray-200', className)} {...props}>
-            {/* Routes */}
-            <SidebarList list={LEFT_SIDEBAR_LIST} />
+        <aside
+            className={twMerge(
+                'hidden md:block w-sidebar shrink-0 sticky top-header h-[calc(100dvh-var(--spacing-header))] overflow-y-auto border-r border-border',
+                className
+            )}
+            {...props}
+        >
+            <SidebarList />
         </aside>
     );
 }

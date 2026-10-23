@@ -1,52 +1,54 @@
 'use client';
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { ChevronDown, Flag } from 'lucide-react';
+import {
+    Dropdown,
+    DropdownContent,
+    DropdownLabel,
+    DropdownRadioGroup,
+    DropdownRadioItem,
+    DropdownTrigger,
+} from '@/components/ui/Dropdown';
 import TextUtility from '@/lib/utils/TextUtility';
-import { twMerge } from 'tailwind-merge';
 
-export function SortByDropdown({ buttonZIndex, filter }: { buttonZIndex: string; filter: string }) {
-    const [isOpen, setIsOpen] = useState(false);
-    function handleClick() {
-        setIsOpen(!isOpen);
+const SORT_OPTIONS = ['top', 'new', 'old'] as const;
+export type CommentSort = (typeof SORT_OPTIONS)[number];
+
+// Comment sorting isn't applied by the API yet; this only tracks the choice
+export function SortByDropdown({
+    initialSort = 'top',
+    onChange,
+}: {
+    initialSort?: CommentSort;
+    onChange?: (sort: CommentSort) => void;
+}) {
+    const [sort, setSort] = useState<CommentSort>(initialSort);
+
+    function handleChange(value: string) {
+        const next = value as CommentSort;
+        setSort(next);
+        onChange?.(next);
     }
+
     return (
-        <div className="relative">
-            <Button
-                onClick={handleClick}
-                className={twMerge(
-                    buttonZIndex,
-                    'flex items-center gap-1 px-2 py-1 text-sm',
-                    isOpen && 'bg-secondary-hover'
-                )}
-                size="round"
-                variant="transparent"
-            >
-                {TextUtility.capitalize(filter)}{' '}
-                <span>
-                    <ChevronDown
-                        className={`transition-transform duration ease-in-out ${isOpen ? 'rotate-180' : ''}`}
-                    />
-                </span>
-            </Button>
-
-            {isOpen && (
-                <>
-                    <div onClick={handleClick} className="fixed inset-0 bg-transparent z-50" />
-                    <div className="absolute top-10 -right-5 w-32 bg-white z-60 rounded-sm transition-transform duration-1000 ease-in-out shadow-xl ring-1 ring-black/5">
-                        {/* Menu options */}
-                        <ul className="flex flex-col text-sm">
-                            <li className="flex items-center gap-1 px-2 hover:bg-translucent">
-                                <Button variant="clear" size="round" className={buttonZIndex}>
-                                    <Flag className="size-5" />
-                                </Button>
-
-                                <span>Report</span>
-                            </li>
-                        </ul>
-                    </div>
-                </>
-            )}
-        </div>
+        <Dropdown>
+            <DropdownTrigger asChild>
+                <Button variant="ghost" size="sm" className="group text-muted hover:text-text">
+                    Sort by: <span className="text-text">{TextUtility.capitalize(sort)}</span>
+                    <ChevronDown className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+                </Button>
+            </DropdownTrigger>
+            <DropdownContent align="start">
+                <DropdownLabel>Sort comments by</DropdownLabel>
+                <DropdownRadioGroup value={sort} onValueChange={handleChange}>
+                    {SORT_OPTIONS.map((option) => (
+                        <DropdownRadioItem key={option} value={option}>
+                            {TextUtility.capitalize(option)}
+                        </DropdownRadioItem>
+                    ))}
+                </DropdownRadioGroup>
+            </DropdownContent>
+        </Dropdown>
     );
 }

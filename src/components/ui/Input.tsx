@@ -3,49 +3,43 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { ComponentProps } from 'react';
 import TextUtility from '@/lib/utils/TextUtility';
 
-const InputStyles = cva(['transition-colors'], {
-    variants: {
-        variant: {
-            default: ['flex-1 px-4 py-2 rounded-sm'],
-            search: ['flex-1 px-4 py-2 rounded-4xl'],
+export const fieldStyles = cva(
+    [
+        'w-full bg-surface text-text placeholder:text-muted transition-colors',
+        'border outline-none focus-visible:outline-none focus:ring-2 focus:ring-focus/40',
+        'disabled:cursor-not-allowed disabled:opacity-50',
+    ],
+    {
+        variants: {
+            variant: {
+                default: 'h-11 px-4 rounded-lg text-base',
+                search: 'h-10 px-4 rounded-full text-sm bg-surface-muted border-transparent focus:bg-surface',
+            },
+            outline: {
+                default: 'border-border-strong focus:border-focus',
+                error: 'border-danger focus:border-danger focus:ring-danger/30',
+            },
         },
-        size: {
-            default: ['text-base'],
+        compoundVariants: [{ variant: 'search', outline: 'default', className: 'border-transparent' }],
+        defaultVariants: {
+            variant: 'default',
+            outline: 'default',
         },
-        outline: {
-            default: ['border border-gray-200 outline-none focus:ring-0 focus:border-gray-400'],
-            error: ['border border-red-500 outline-none'],
-        },
-    },
-    defaultVariants: {
-        variant: 'default',
-        size: 'default',
-        outline: 'default',
-    },
-});
+    }
+);
 
-type InputProps = VariantProps<typeof InputStyles> & ComponentProps<'input'>;
+type InputProps = VariantProps<typeof fieldStyles> & ComponentProps<'input'>;
 
-export function InputField({
-    variant,
-    size,
-    outline,
-    className,
-    type,
-    name,
-    placeholder,
-    defaultValue,
-    ...props
-}: InputProps) {
+export function InputField({ variant, outline, className, type, name, placeholder, ...props }: InputProps) {
     return (
         <input
             {...props}
-            type={type as string}
-            id={name as string}
-            placeholder={placeholder || TextUtility.capitalize(name as string)}
-            name={name as string}
-            defaultValue={defaultValue}
-            className={twMerge(InputStyles({ variant, size, outline }), className)}
+            type={type}
+            id={props.id ?? name}
+            placeholder={placeholder ?? (name ? TextUtility.capitalize(name) : undefined)}
+            name={name}
+            aria-invalid={outline === 'error' || undefined}
+            className={twMerge(fieldStyles({ variant, outline }), className)}
         />
     );
 }

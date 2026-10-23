@@ -1,51 +1,52 @@
 import { twMerge } from 'tailwind-merge';
 import { cva, VariantProps } from 'class-variance-authority';
 import { ComponentProps } from 'react';
+import { Slot } from 'radix-ui';
 
-const buttonStyles = cva(['transition-colors', 'cursor-pointer', 'rounded-4xl', 'active:brightness-95'], {
-    variants: {
-        variant: {
-            default: ['bg-primary', 'hover:bg-hover', 'text-dark'],
-            neutral: ['bg-secondary', 'hover:bg-secondary-hover', 'text-dark'],
-            'add-reply': [
-                'cursor-text',
-                'active:brightness-100',
-                'border border-gray-200',
-                'hover:bg-secondary',
-                'hover:border-gray-300',
-                'text-dark',
-            ],
-            disabled: ['bg-disabled', 'text-dark', 'cursor-not-allowed'],
-            dark: ['bg-dark', 'hover:bg-dark-hover', 'text-primary'],
-            hot: ['bg-hot', 'text-white', 'hover:bg-hot-hover'],
-            transparent: ['hover:bg-translucent'],
-            clear: [],
+export const buttonStyles = cva(
+    [
+        'inline-flex items-center justify-center gap-2 shrink-0 whitespace-nowrap',
+        'rounded-full font-semibold transition-colors cursor-pointer select-none',
+        'disabled:cursor-not-allowed disabled:opacity-50',
+    ],
+    {
+        variants: {
+            variant: {
+                primary: 'bg-accent text-accent-fg hover:bg-accent-hover',
+                secondary: 'bg-surface-muted text-text hover:bg-border',
+                highlight: 'bg-highlight text-highlight-fg hover:brightness-95',
+                outline: 'border border-border-strong text-text hover:bg-surface-muted',
+                ghost: 'text-text hover:bg-surface-muted',
+                danger: 'bg-danger text-surface hover:brightness-110',
+                link: 'h-auto px-0 text-link underline-offset-4 hover:underline',
+            },
+            size: {
+                sm: 'h-8 px-3 text-sm',
+                md: 'h-10 px-4 text-sm',
+                lg: 'h-12 px-6 text-base',
+            },
         },
-        size: {
-            default: ['px-5', 'py-2', 'font-medium', 'text-base'],
-            round: ['rounded-full', 'items-center', 'justify-center', 'p-2'],
-            'add-reply-1': ['px-3', 'py-2', 'font-light', 'text-base'],
-            'add-reply-2': [
-                'px-3',
-                'py-1',
-                'font-medium',
-                'text-sm',
-                'border border-gray-200 outline-none focus:ring-0 focus:border-gray-400',
-            ],
-            special: ['px-5', 'py-3', 'rounded-tl-4xl', 'rounded-bl-4xl', 'rounded-br-4xl'],
-            google: ['px-3', 'py-2', 'bg-white', 'border border-black', 'rounded-4xl', 'w-fit', 'font-medium'],
+        defaultVariants: {
+            variant: 'primary',
+            size: 'md',
         },
-    },
-    defaultVariants: {
-        variant: 'default',
-        size: 'default',
-    },
-});
+    }
+);
 
-type ButtonProps = VariantProps<typeof buttonStyles> & ComponentProps<'button'>;
+type ButtonProps = VariantProps<typeof buttonStyles> &
+    ComponentProps<'button'> & {
+        // Render the child (e.g. a Link) with button styles instead of a <button>
+        asChild?: boolean;
+    };
 
-export function Button({ variant, size, className, ...props }: ButtonProps) {
-    return <button {...props} className={twMerge(buttonStyles({ variant, size }), className)} />;
+export function Button({ variant, size, className, asChild = false, type = 'button', ...props }: ButtonProps) {
+    const classes = twMerge(buttonStyles({ variant, size }), className);
+
+    if (asChild) {
+        return <Slot.Root {...props} className={classes} />;
+    }
+
+    return <button type={type} {...props} className={classes} />;
 }
 
 export default Button;

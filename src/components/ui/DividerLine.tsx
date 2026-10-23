@@ -4,5 +4,5 @@ import { twMerge } from 'tailwind-merge';
 type DividerLineProps = ComponentProps<'div'>;
 
 export function DividerLine({ className, ...props }: DividerLineProps) {
-    return <div {...props} className={twMerge('border-t border-gray-200 w-full', className)} />;
+    return <div role="separator" {...props} className={twMerge('border-t border-border w-full', className)} />;
 }

@@ -50,35 +50,41 @@ export default function ContentReplySection({
         }
     }, [resetReplyContent]);
 
-    return (
-        <div>
-            {!isOpen ? (
-                <Button variant="add-reply" size="add-reply-1" className="w-full text-start" onClick={toggleOpen}>
-                    Add a reply
-                </Button>
-            ) : (
-                <form
-                    onSubmit={handleSubmit}
-                    className="flex flex-col border border-gray-200 rounded-3xl px-3 py-2 gap-2"
-                >
-                    <TextArea
-                        variant="add-reply"
-                        name="comment"
-                        placeholder="Add a reply"
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                    />
+    if (!isOpen) {
+        return (
+            <button
+                type="button"
+                onClick={toggleOpen}
+                className="flex h-11 w-full cursor-text items-center rounded-full border border-border-strong bg-surface px-4 text-left text-muted transition-colors hover:border-text"
+            >
+                Add a reply
+            </button>
+        );
+    }
 
-                    <div className="place-self-end flex gap-2">
-                        <Button size="add-reply-2" variant="neutral" className="text-start" onClick={toggleCancel}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" size="add-reply-2" className="text-start">
-                            Reply
-                        </Button>
-                    </div>
-                </form>
-            )}
-        </div>
+    return (
+        <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-2 rounded-2xl border border-border-strong bg-surface px-3 py-2 focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/40"
+        >
+            <TextArea
+                variant="bare"
+                name="comment"
+                aria-label="Your reply"
+                placeholder="Add a reply"
+                autoFocus
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+            />
+
+            <div className="flex justify-end gap-2">
+                <Button size="sm" variant="ghost" onClick={toggleCancel}>
+                    Cancel
+                </Button>
+                <Button type="submit" size="sm" disabled={replyContent.trim() === ''}>
+                    Reply
+                </Button>
+            </div>
+        </form>
     );
 }

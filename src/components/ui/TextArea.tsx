@@ -3,49 +3,41 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { ComponentProps } from 'react';
 import TextUtility from '@/lib/utils/TextUtility';
 
-const TextAreaStyles = cva(['transition-colors', 'resize-none', 'field-sizing-content'], {
-    variants: {
-        variant: {
-            default: ['flex-1 px-4 py-2 rounded-sm'],
-            search: ['flex-1 px-4 py-2 rounded-4xl'],
-            'add-reply': ['border-none'],
+const textAreaStyles = cva(
+    [
+        'w-full bg-surface text-text placeholder:text-muted resize-none field-sizing-content transition-colors',
+        'outline-none focus-visible:outline-none',
+    ],
+    {
+        variants: {
+            variant: {
+                default: 'min-h-24 px-4 py-3 rounded-lg text-base border focus:ring-2 focus:ring-focus/40',
+                // Borderless, for use inside a composer that draws its own frame
+                bare: 'min-h-16 px-1 py-1 text-base bg-transparent border-none',
+            },
+            outline: {
+                default: 'border-border-strong focus:border-focus',
+                error: 'border-danger focus:border-danger',
+            },
         },
-        size: {
-            default: ['text-base'],
-            'add-reply': ['text-xs min-h-10 px-3'],
+        defaultVariants: {
+            variant: 'default',
+            outline: 'default',
         },
-        outline: {
-            default: ['border border-gray-200 outline-none focus:ring-0 focus:border-gray-400'],
-            error: ['border border-red-500 outline-none'],
-        },
-    },
-    defaultVariants: {
-        variant: 'default',
-        size: 'default',
-        outline: 'default',
-    },
-});
+    }
+);
 
-type TextAreaProps = VariantProps<typeof TextAreaStyles> & ComponentProps<'textarea'>;
+type TextAreaProps = VariantProps<typeof textAreaStyles> & ComponentProps<'textarea'>;
 
-export function TextArea({
-    variant,
-    size,
-    outline,
-    className,
-    name,
-    placeholder,
-    defaultValue,
-    ...props
-}: TextAreaProps) {
+export function TextArea({ variant, outline, className, name, placeholder, ...props }: TextAreaProps) {
     return (
         <textarea
             {...props}
-            id={name as string}
-            placeholder={placeholder || TextUtility.capitalize(name as string)}
-            name={name as string}
-            defaultValue={defaultValue}
-            className={twMerge(TextAreaStyles({ variant, size, outline }), className)}
+            id={props.id ?? name}
+            placeholder={placeholder ?? (name ? TextUtility.capitalize(name) : undefined)}
+            name={name}
+            aria-invalid={outline === 'error' || undefined}
+            className={twMerge(textAreaStyles({ variant, outline }), className)}
         />
     );
 }
