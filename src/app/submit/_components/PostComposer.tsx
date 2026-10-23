@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Link2 } from 'lucide-react';
+import Link from 'next/link';
+import { ExternalLink, FileText, Link2, Repeat } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import InputField, { fieldStyles } from '@/components/ui/Input';
@@ -12,14 +13,34 @@ import { getPostPath } from '@/components/post/PostCard';
 import { api } from '@/lib/api/client';
 import { ApiError, errorMessage } from '@/lib/api/errors';
 import { POST_BODY_MAX, POST_TITLE_MAX, POST_TITLE_MIN } from '@/lib/constants';
-import { PostResponse } from '@/types/api';
+import { Flair, FlairsResponse, LinkPreview, LinkPreviewResponse, Post, PostResponse, PostsResponse } from '@/types/api';
 
 export type CommunityOption = { name: string; label: string | null; joined: boolean };
 
-type Draft = { community: string; type: 'text' | 'link'; title: string; body: string; url: string; isAnonymous: boolean };
+type Draft = {
+    community: string;
+    type: 'text' | 'link';
+    title: string;
+    body: string;
+    url: string;
+    flairId: string;
+    isAnonymous: boolean;
+};
 
 const DRAFT_KEY = 'post-draft';
-const EMPTY_DRAFT: Draft = { community: '', type: 'text', title: '', body: '', url: '', isAnonymous: false };
+const EMPTY_DRAFT: Draft = { community: '', type: 'text', title: '', body: '', url: '', flairId: '', isAnonymous: false };
+
+// Wait for typing to pause before looking a link up
+const LINK_CHECK_DELAY_MS = 600;
+
+function isWebUrl(value: string): boolean {
+    try {
+        const url = new URL(value.trim());
+        return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname.includes('.');
+    } catch {
+        return false;
+    }
+}
 
 function readDraft(): Partial<Draft> {
     try {
@@ -74,6 +95,48 @@ export function PostComposer({ communities, initialCommunity }: { communities: C
         if (hasLoadedDraft) writeDraft(draft);
     }, [draft, hasLoadedDraft]);
 
+    // The chosen community's flairs, if it has any
+    const [flairs, setFlairs] = useState<Flair[]>([]);
+    useEffect(() => {
+        if (!draft.community) return;
+        let isCurrent = true;
+        api<FlairsResponse>(`/communities/${draft.community}/flairs`)
+            .then((data) => isCurrent && setFlairs(data.flairs))
+            .catch(() => isCurrent && setFlairs([]));
+        return () => {
+            isCurrent = false;
+        };
+    }, [draft.community]);
+
+    // For link posts: a preview card and earlier posts of the same link, once typing pauses
+    const [preview, setPreview] = useState<LinkPreview | null>(null);
+    const [duplicates, setDuplicates] = useState<Post[]>([]);
+    const [isCheckingLink, setIsCheckingLink] = useState(false);
+    const linkToCheck = draft.type === 'link' && isWebUrl(draft.url) ? draft.url.trim() : null;
+    useEffect(() => {
+        if (!linkToCheck) return;
+        let isCurrent = true;
+        const timer = setTimeout(async () => {
+            setIsCheckingLink(true);
+            const query = `url=${encodeURIComponent(linkToCheck)}`;
+            const [previewResult, duplicateResult] = await Promise.all([
+                api<LinkPreviewResponse>(`/posts/link-preview?${query}`).catch(() => null),
+                api<PostsResponse>(`/posts/duplicates?${query}`).catch(() => null),
+            ]);
+            if (!isCurrent) return;
+            setPreview(previewResult?.preview ?? null);
+            setDuplicates(duplicateResult?.posts ?? []);
+            setIsCheckingLink(false);
+        }, LINK_CHECK_DELAY_MS);
+        return () => {
+            isCurrent = false;
+            clearTimeout(timer);
+        };
+    }, [linkToCheck]);
+    const shownPreview = linkToCheck ? preview : null;
+    const shownDuplicates = linkToCheck ? duplicates : [];
+    const availableFlairs = draft.community ? flairs : [];
+
     function update<K extends keyof Draft>(key: K, value: Draft[K]) {
         setDraft((current) => ({ ...current, [key]: value }));
         setFieldErrors((current) => ({ ...current, [key]: '' }));
@@ -96,6 +159,7 @@ export function PostComposer({ communities, initialCommunity }: { communities: C
                     title: draft.title.trim(),
                     body: draft.body.trim(),
                     ...(draft.type === 'link' ? { url: draft.url.trim() } : {}),
+                    ...(draft.flairId && availableFlairs.some((flair) => flair.id === draft.flairId) ? { flair_id: draft.flairId } : {}),
                     is_anonymous: draft.isAnonymous,
                 },
             });
@@ -210,7 +274,65 @@ export function PostComposer({ communities, initialCommunity }: { communities: C
                         outline={fieldErrors.url ? 'error' : 'default'}
                     />
                     {fieldErrors.url && <ErrorMessage errorMessage={fieldErrors.url} />}
+                    {isCheckingLink && <p className="text-xs text-muted">Checking the link...</p>}
+                    {shownPreview?.title && (
+                        <div className="flex items-stretch overflow-hidden rounded-xl border border-border">
+                            <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-3 py-2">
+                                <span className="line-clamp-2 text-sm font-bold">{shownPreview.title}</span>
+                                {shownPreview.description && <span className="line-clamp-2 text-xs text-muted">{shownPreview.description}</span>}
+                                <span className="flex items-center gap-1 text-xs text-link">
+                                    {shownPreview.site ?? new URL(linkToCheck!).hostname} <ExternalLink className="size-3" />
+                                </span>
+                            </div>
+                            {shownPreview.image && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={shownPreview.image} alt="" className="h-20 w-28 shrink-0 object-cover" />
+                            )}
+                        </div>
+                    )}
+                    {shownDuplicates.length > 0 && (
+                        <div className="flex flex-col gap-1 rounded-xl bg-surface-muted px-3 py-2 text-sm">
+                            <p className="flex items-center gap-1.5 font-semibold">
+                                <Repeat className="size-4" /> This link was already posted
+                            </p>
+                            <ul className="flex flex-col gap-0.5">
+                                {shownDuplicates.map((post) => (
+                                    <li key={post.id} className="truncate">
+                                        <Link href={getPostPath(post)} className="text-link hover:underline" target="_blank">
+                                            {post.title}
+                                        </Link>{' '}
+                                        <span className="text-muted">
+                                            in c/{post.community.name} · {post.comment_count} {post.comment_count === 1 ? 'comment' : 'comments'}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className="text-xs text-muted">You can still post it; joining that conversation might get you more answers.</p>
+                        </div>
+                    )}
                 </div>
+            )}
+
+            {availableFlairs.length > 0 && (
+                <fieldset className="flex flex-col gap-1.5">
+                    <legend className="text-sm font-semibold">Flair (optional)</legend>
+                    <div className="flex flex-wrap gap-2">
+                        {availableFlairs.map((flair) => (
+                            <button
+                                key={flair.id}
+                                type="button"
+                                aria-pressed={draft.flairId === flair.id}
+                                onClick={() => update('flairId', draft.flairId === flair.id ? '' : flair.id)}
+                                className={twMerge(
+                                    'h-8 cursor-pointer rounded-full border px-3 text-sm font-semibold transition-colors',
+                                    draft.flairId === flair.id ? 'border-accent bg-accent text-accent-fg' : 'border-border-strong hover:bg-surface-muted'
+                                )}
+                            >
+                                {flair.name}
+                            </button>
+                        ))}
+                    </div>
+                </fieldset>
             )}
 
             <div className="flex flex-col gap-1.5">
