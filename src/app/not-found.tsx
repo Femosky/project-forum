@@ -2,6 +2,10 @@ import Link from 'next/link';
 import { Compass } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
+import { APP_NAME } from '@/lib/constants';
+import { noindexMetadata } from '@/lib/seo';
+
+export const metadata = noindexMetadata(`Page not found | ${APP_NAME}`);
 
 export default function NotFound() {
     return (

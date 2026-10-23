@@ -1,12 +1,15 @@
 import Link from 'next/link';
-import { permanentRedirect } from 'next/navigation';
-import { ArrowLeft, FileQuestion } from 'lucide-react';
+import type { Metadata } from 'next';
+import { notFound, permanentRedirect } from 'next/navigation';
+import { ArrowLeft, CloudOff } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
-import { Comment, CommentsResponse, CommunityResponse, PostResponse } from '@/types/api';
+import { Comment, CommentsResponse, CommunityResponse, Post, PostResponse, RelatedPostsResponse } from '@/types/api';
 import PostCard, { getPostPath } from '@/components/post/PostCard';
 import EmptyState from '@/components/ui/EmptyState';
-import { stripMarkdown } from '@/components/common/Markdown';
+import JsonLd from '@/components/common/JsonLd';
+import RelatedThreads from '@/components/post/RelatedThreads';
+import { breadcrumbJsonLd, discussionJsonLd, noindexMetadata, pageMetadata, postTitle, summarize } from '@/lib/seo';
 import { CommentsSection } from '../_components/CommentsSection';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from '../_components/commentsApi';
 
@@ -18,17 +21,35 @@ type PageProps = {
 
 type SingleCommentResponse = { comment: Comment };
 
-export async function generateMetadata({ params }: PageProps) {
+// The canonical URL for this request, or null when it already is canonical
+function redirectTarget(post: Post, community: string, slug: string[] | undefined, focusId: string | undefined): string | null {
+    const canonical = getPostPath(post);
+    if (community === post.community.name && (slug?.[0] ?? '') === (post.slug ?? '') && (slug?.length ?? 0) <= 1) return null;
+    return focusId ? `${canonical}?comment=${encodeURIComponent(focusId)}` : canonical;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { short_id } = await params;
     const { data } = await serverApi<PostResponse>(`/posts/${encodeURIComponent(short_id)}`);
-    if (!data) return { title: `Post not found | ${APP_NAME}` };
+    if (!data) return noindexMetadata(`Post not found | ${APP_NAME}`);
 
     const { post } = data;
-    return {
-        title: `${post.title} | c/${post.community.name}`,
-        description: (post.ai_summary || stripMarkdown(post.body) || post.title).slice(0, 160),
-        alternates: { canonical: getPostPath(post) },
-    };
+    const fallback = `${post.comment_count} ${post.comment_count === 1 ? 'comment' : 'comments'} in c/${post.community.name}`;
+    return pageMetadata({
+        title: postTitle(post),
+        description: summarize(post.ai_summary || post.body || post.link_preview?.description || '') || fallback,
+        path: getPostPath(post),
+        image: `/og/post/${post.short_id}`,
+        // Removed posts (seen by moderators), posts by brand-new accounts and very short posts stay out of the index
+        noindex: !post.is_indexable,
+        openGraph: {
+            type: 'article',
+            publishedTime: post.created_at,
+            modifiedTime: post.edited_at ?? undefined,
+            section: `c/${post.community.name}`,
+            authors: post.author ? [`/u/${post.author.username}`] : undefined,
+        },
+    });
 }
 
 // One comment with its replies, loaded the same way the thread loads them
@@ -47,31 +68,27 @@ export default async function PostPage({ params, searchParams }: PageProps) {
     const { community, short_id, slug } = await params;
     const { comment: focusId } = await searchParams;
 
-    const [postResult, commentsResult, focused] = await Promise.all([
+    const [postResult, commentsResult, focused, related] = await Promise.all([
         serverApi<PostResponse>(`/posts/${encodeURIComponent(short_id)}`),
         focusId
             ? null
             : serverApi<CommentsResponse>(`/posts/${encodeURIComponent(short_id)}/comments?${commentsQuery(DEFAULT_COMMENT_SORT, COMMENT_PAGE_SIZE)}`),
         focusId ? loadFocusedThread(focusId) : null,
+        serverApi<RelatedPostsResponse>(`/posts/${encodeURIComponent(short_id)}/related`),
     ]);
 
+    // Missing, deleted, removed and private posts. Crawlers already got a 404 or 410 from the proxy.
+    if (postResult.status === 404 || postResult.status === 403) notFound();
     if (!postResult.data) {
-        return (
-            <EmptyState
-                icon={<FileQuestion />}
-                title="Post not found"
-                description="It may have been removed, or the link is wrong."
-            />
-        );
+        return <EmptyState icon={<CloudOff />} title="Couldn't load this post" description="Try again in a moment." />;
     }
 
     const { post } = postResult.data;
 
     // One URL per thread: fix a wrong community name or a missing/old slug
     const canonical = getPostPath(post);
-    if (community !== post.community.name || (slug?.[0] ?? '') !== (post.slug ?? '') || (slug?.length ?? 0) > 1) {
-        permanentRedirect(focusId ? `${canonical}?comment=${encodeURIComponent(focusId)}` : canonical);
-    }
+    const target = redirectTarget(post, community, slug, focusId);
+    if (target) permanentRedirect(target);
 
     // Moderators get remove/lock/pin on the post and its comments
     const membership = post.viewer ? await serverApi<CommunityResponse>(`/communities/${post.community.name}`) : null;
@@ -81,8 +98,20 @@ export default async function PostPage({ params, searchParams }: PageProps) {
     const showingOneThread = Boolean(focusId);
     const focusedInPost = focused && focused.post_id === post.id ? focused : null;
 
+    const comments = commentsResult?.data?.comments ?? [];
+
     return (
         <div className="mx-auto flex w-full max-w-content flex-col gap-2 sm:py-4">
+            <JsonLd
+                data={[
+                    discussionJsonLd(post, canonical, showingOneThread ? [] : comments),
+                    breadcrumbJsonLd([
+                        { name: APP_NAME, path: '/' },
+                        { name: `c/${post.community.name}`, path: `/c/${post.community.name}` },
+                        { name: post.title, path: canonical },
+                    ]),
+                ]}
+            />
             <PostCard post={post} variant="full" isModerator={isModerator} className="sm:px-4" />
 
             {/* Reply box and comments */}
@@ -108,12 +137,14 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                     isLocked={post.status === 'locked'}
                     isModerator={isModerator}
                     commentCount={post.comment_count}
-                    initialComments={showingOneThread ? (focusedInPost ? [focusedInPost] : []) : (commentsResult?.data?.comments ?? [])}
+                    initialComments={showingOneThread ? (focusedInPost ? [focusedInPost] : []) : comments}
                     initialCursor={showingOneThread ? null : (commentsResult?.data?.next_cursor ?? null)}
                     loadFailed={!showingOneThread && !commentsResult?.data}
                     isSingleThread={showingOneThread}
                 />
             </section>
+
+            {related.data && <RelatedThreads community={post.community.name} {...related.data} />}
         </div>
     );
 }

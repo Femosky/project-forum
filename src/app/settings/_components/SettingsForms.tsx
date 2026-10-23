@@ -11,7 +11,7 @@ import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { applyTheme, ThemeChoice } from '@/components/theme/ThemeMenu';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
-import { API_BASE, Theme } from '@/lib/constants';
+import { API_BASE, DATA_SAVER_COOKIE_NAME, Theme } from '@/lib/constants';
 import { useAuthStateStore } from '@/lib/stateStore';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import { PrivateUser, Session } from '@/types/api';
@@ -131,6 +131,27 @@ export function ThemePicker({ initialTheme }: { initialTheme: Theme | null }) {
                 </button>
             ))}
         </div>
+    );
+}
+
+const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
+
+// Saved as a cookie so the server marks <html data-save-data> from the next page on; applied right away here
+export function DataSaverToggle({ initialEnabled }: { initialEnabled: boolean }) {
+    const [enabled, setEnabled] = useState(initialEnabled);
+
+    function toggle() {
+        const next = !enabled;
+        setEnabled(next);
+        document.documentElement.toggleAttribute('data-save-data', next);
+        document.cookie = `${DATA_SAVER_COOKIE_NAME}=${next ? 'on' : 'off'}; path=/; max-age=${ONE_YEAR_SECONDS}; samesite=lax`;
+    }
+
+    return (
+        <label className="flex cursor-pointer items-center justify-between gap-4">
+            <span className="text-sm">Hide link preview images and profile pictures</span>
+            <input type="checkbox" role="switch" checked={enabled} onChange={toggle} className="size-5 shrink-0 accent-accent" />
+        </label>
     );
 }
 

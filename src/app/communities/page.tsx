@@ -1,13 +1,18 @@
 import Link from 'next/link';
 import { CloudOff, Users } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
+import { pageMetadata } from '@/lib/seo';
 import { serverApi } from '@/lib/api/server';
 import { CommunitiesResponse } from '@/types/api';
 import Avatar from '@/components/ui/Avatar';
 import EmptyState from '@/components/ui/EmptyState';
 import NumberUtility from '@/lib/utils/NumberUtility';
 
-export const metadata = { title: `Communities | ${APP_NAME}` };
+export const metadata = pageMetadata({
+    title: `Communities | ${APP_NAME}`,
+    description: `Browse every community on ${APP_NAME}, from the biggest to the newest.`,
+    path: '/communities',
+});
 
 // Simple directory until categories and search arrive
 export default async function CommunitiesPage() {

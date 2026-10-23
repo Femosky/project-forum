@@ -20,3 +20,21 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm run lint
       - run: npm run build
+
+      # Performance budget on the production build, against a mock API with one busy thread
+      - name: Start mock API and app
+        run: |
+          node scripts/mock-api.mjs 3001 &
+          npm start &
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/robots.txt > /dev/null && break; sleep 1; done
+      - name: Page weight and no-JS reading
+        run: npm run budget -- http://localhost:3000
+      - name: Lighthouse (Slow 4G, mid-range phone)
+        run: npx --yes @lhci/cli@0.15.1 autorun
+      - name: Keep Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci
+          if-no-files-found: ignore
