@@ -2,9 +2,9 @@ import { APIUtility } from '@/lib/utils/APIUtility';
 import Link from 'next/link';
 import { PostOptions } from './_components/PostOptions';
 import { PostActions } from '@/app/_components/PostActions';
-import InputField from '@/components/ui/Input';
-import ReplySection from './_components/ReplySection';
-import { SortByDropdown } from './_components/SortByDropdown';
+import PostReplySection from './_components/ContentReplySection';
+import { CommentsSection } from './_components/CommentsSection';
+import ContentReplySection from './_components/ContentReplySection';
 
 interface PageProps {
     params: Promise<{ community_name: string; post_short_id: string }>;
@@ -40,10 +40,10 @@ export default async function PostPage({ params }: PageProps) {
     console.log('data: ', data);
 
     return (
-        <div className="borderborder-blue-500">
-            <div className="flex-1 flex flex-col gap-6 w-(--main-page-width) place-self-center borderborder-green-500">
+        <div className="border border-blue-500 md:py-4">
+            <div className="flex flex-col gap-6 w-[var(--main-page-width)] max-w-full mx-auto border border-green-500">
                 {/* Post section */}
-                <div className="w-full flex flex-col gap-4 items-center borderborder-red-500">
+                <div className="w-full flex flex-col gap-4 items-center border border-red-500">
                     <TopSection buttonZIndex="z-10" communityName={data.post.community_ref.name} />
 
                     <ContentSection title={data.post.title} content={data.post.content} />
@@ -58,29 +58,10 @@ export default async function PostPage({ params }: PageProps) {
                     />
                 </div>
 
-                <ReplySection />
+                <ContentReplySection />
 
                 {/* Comments section */}
-                <div>
-                    <div className="flex items-center gap-1 text-sm">
-                        <p>Sort by:</p>
-                        <SortByDropdown buttonZIndex="z-10" filter="top" />
-                    </div>
-
-                    <div className="flex flex-col py-4 gap-2">
-                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                        {data.comments.map((comment: any) => {
-                            return (
-                                <div key={comment.id}>
-                                    <p>{comment.content}</p>
-                                    <p>upvoters: {comment._count.upvotes}</p>
-                                    <p>downvoters: {comment._count.downvotes}</p>
-                                    <div>child comments: {comment._count.child_comments}</div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+                <CommentsSection initialComments={data.comments} />
             </div>
         </div>
     );
