@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { twMerge } from 'tailwind-merge';
 import { isActiveRoute, TAB_BAR_NAV } from '@/data/ui/navigation';
+import { UnreadBadge } from '@/components/notifications/NotificationBadge';
 
 // Mobile only. The page reserves space for it with pb-tabbar on <main>.
 export default function BottomTabBar() {
@@ -28,7 +29,10 @@ export default function BottomTabBar() {
                                     isActive ? 'text-text' : 'text-muted hover:text-text'
                                 )}
                             >
-                                <Icon className="size-5" strokeWidth={isActive ? 2.5 : 2} />
+                                <span className="relative">
+                                    <Icon className="size-5" strokeWidth={isActive ? 2.5 : 2} />
+                                    {route.href === '/notifications' && <UnreadBadge className="-right-2" />}
+                                </span>
                                 <span>{route.label}</span>
                             </Link>
                         </li>
