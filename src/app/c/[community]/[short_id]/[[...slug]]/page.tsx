@@ -5,6 +5,7 @@ import { serverApi } from '@/lib/api/server';
 import { CommentsResponse, PostResponse } from '@/types/api';
 import PostCard, { getPostPath } from '@/components/post/PostCard';
 import EmptyState from '@/components/ui/EmptyState';
+import { stripMarkdown } from '@/components/common/Markdown';
 import { CommentsSection } from '../_components/CommentsSection';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from '../_components/commentsApi';
 
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: PageProps) {
     const { post } = data;
     return {
         title: `${post.title} | c/${post.community.name}`,
-        description: (post.ai_summary || post.body || post.title).slice(0, 160),
+        description: (post.ai_summary || stripMarkdown(post.body) || post.title).slice(0, 160),
     };
 }
 

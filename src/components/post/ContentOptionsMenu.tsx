@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Bookmark, BookmarkCheck, Ellipsis, Flag, Trash2 } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Ellipsis, Flag, Pencil, Trash2 } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import Button from '@/components/ui/Button';
 import ErrorMessage from '@/components/ui/ErrorMessage';
@@ -19,11 +19,13 @@ type ContentOptionsMenuProps = {
     isAuthor?: boolean;
     // Called after the viewer deletes their own post or comment
     onDeleted?: () => void;
+    // Offered to the author when the content can be edited where it's shown
+    onEdit?: () => void;
     label?: string;
 };
 
 // "..." menu on posts and comments: save, report, and delete for the author
-export function ContentOptionsMenu({ targetType, id, saved = false, isAuthor = false, onDeleted, label }: ContentOptionsMenuProps) {
+export function ContentOptionsMenu({ targetType, id, saved = false, isAuthor = false, onDeleted, onEdit, label }: ContentOptionsMenuProps) {
     const [isSaved, setIsSaved] = useState(saved);
     const [isReporting, setIsReporting] = useState(false);
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -81,6 +83,11 @@ export function ContentOptionsMenu({ targetType, id, saved = false, isAuthor = f
                     )}
                     {isAuthor && (
                         <>
+                            {onEdit && (
+                                <DropdownItem onSelect={onEdit}>
+                                    <Pencil /> Edit
+                                </DropdownItem>
+                            )}
                             <DropdownSeparator />
                             <DropdownItem destructive onSelect={() => setIsConfirmingDelete(true)}>
                                 <Trash2 /> Delete
