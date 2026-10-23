@@ -37,8 +37,31 @@ export function usePOST<T = unknown>() {
         }
     }
 
-    async function sendData(url: string, payload?: unknown) {
-        if (isLoading) return;
+    async function request(url: string, payload?: unknown): Promise<Response> {
+        // No payload means a GET request
+        if (ErrorUtility.isNullOrUndefined(payload)) {
+            return fetch(url, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+        }
+
+        return fetch(url, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    // Returns the response data on success, or null on failure (the error is kept in state)
+    async function sendData(url: string, payload?: unknown): Promise<T | null> {
+        if (isLoading) return null;
 
         try {
             setIsLoading(true);
@@ -48,60 +71,33 @@ export function usePOST<T = unknown>() {
                 throw new Error('URL is required');
             }
 
-            let response;
+            let response = await request(url, payload);
 
-            if (ErrorUtility.isNullOrUndefined(payload)) {
-                // GET Request
-                response = await fetch(url, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-            } else {
-                // POST Request
-                response = await fetch(url, {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                });
+            // If the status is 401 (Unauthorized), refresh the access token and retry once.
+            // Auth endpoints (e.g. a wrong password on login) return 401 for their own reasons.
+            if (response.status === 401 && !url.includes('/auth/')) {
+                const refreshedData = await APIService.refreshAccessToken();
+
+                if (refreshedData instanceof Error) {
+                    // If the refresh token fails, logout the user TODO: Get error types from backend
+                    triggerLogout();
+                    throw refreshedData;
+                }
+
+                response = await request(url, payload);
             }
 
             const data = await response.json();
 
-            if (!response.ok) {
-                // If the status is 401 (Unauthorized), refresh the access token
-                if (response.status === 401) {
-                    const refreshedData = await APIService.refreshAccessToken();
-
-                    if (refreshedData instanceof Error) {
-                        // If the refresh token fails, logout the user TODO: Get error types from backend
-                        triggerLogout();
-                        throw refreshedData;
-                    }
-
-                    await sendData(url, payload);
-                }
-
-                console.log('error response from usePOST: ', data);
-                throw new Error(data?.error?.message || 'Failed to post data');
+            if (!response.ok || data.error) {
+                throw new Error(data?.error?.message || data?.error || 'Failed to post data');
             }
-
-            if (data.error) {
-                console.log('data from error: ', data.error);
-                throw new Error(data.error || data.error.message);
-            }
-
-            console.log('data from usePOST: ', data);
 
             setData(data);
+            return data as T;
         } catch (error) {
-            console.log('error from usePOST: ', error);
             setError(error as Error);
+            return null;
         } finally {
             setIsLoading(false);
         }

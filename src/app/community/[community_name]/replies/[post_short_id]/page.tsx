@@ -2,9 +2,8 @@ import { APIUtility } from '@/lib/utils/APIUtility';
 import Link from 'next/link';
 import { PostOptions } from './_components/PostOptions';
 import { PostActions } from '@/app/_components/PostActions';
-import PostReplySection from './_components/ContentReplySection';
 import { CommentsSection } from './_components/CommentsSection';
-import ContentReplySection from './_components/ContentReplySection';
+import { PostDetailResponse } from '@/types/api';
 
 interface PageProps {
     params: Promise<{ community_name: string; post_short_id: string }>;
@@ -19,11 +18,11 @@ export async function generateMetadata({ params }: PageProps) {
             description: 'Post not found',
         };
     }
-    const data = await response.json();
+    const data: PostDetailResponse = await response.json();
 
     return {
         title: `${data.post.title} | ${data.post.community_ref.name} community`,
-        description: data.post.summary || data.post.content,
+        description: data.post.ai_summary || data.post.content.slice(0, 160),
     };
 }
 
@@ -36,14 +35,13 @@ export default async function PostPage({ params }: PageProps) {
         return <div>Failed to fetch replies</div>;
     }
 
-    const data = await response.json();
-    console.log('data: ', data);
+    const data: PostDetailResponse = await response.json();
 
     return (
-        <div className="border border-blue-500 md:py-4">
-            <div className="flex flex-col gap-6 w-[var(--main-page-width)] max-w-full mx-auto border border-green-500">
+        <div className="md:py-4">
+            <div className="flex flex-col gap-6 w-[var(--main-page-width)] max-w-full mx-auto">
                 {/* Post section */}
-                <div className="w-full flex flex-col gap-4 items-center border border-red-500">
+                <div className="w-full flex flex-col gap-4 items-center">
                     <TopSection buttonZIndex="z-10" communityName={data.post.community_ref.name} />
 
                     <ContentSection title={data.post.title} content={data.post.content} />
@@ -58,10 +56,13 @@ export default async function PostPage({ params }: PageProps) {
                     />
                 </div>
 
-                <ContentReplySection />
-
-                {/* Comments section */}
-                <CommentsSection initialComments={data.comments} />
+                {/* Reply box and comments */}
+                <CommentsSection
+                    initialComments={data.comments}
+                    postId={data.post.id}
+                    postShortId={data.post.short_id}
+                    communityName={data.post.community_ref.name}
+                />
             </div>
         </div>
     );

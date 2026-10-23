@@ -1,6 +1,7 @@
 import { APIUtility } from '@/lib/utils/APIUtility';
 import { PostPreview } from './_components/PostPreview';
 import { APP_NAME } from '@/lib/constants';
+import { PostsResponse } from '@/types/api';
 
 export async function generateMetadata() {
     return {
@@ -27,13 +28,12 @@ export default async function Home() {
     if (!response.ok) {
         return <div>Failed to fetch posts</div>;
     }
-    const data = await response.json();
+    const data: PostsResponse = await response.json();
     const posts = data.posts;
-    console.log('data: ', data);
 
     return (
-        <div className="borderborder-green-500 flex flex-col gap-2 items-center justify-center ">
-            {posts.map((post: unknown) => {
+        <div className="flex flex-col gap-2 items-center justify-center ">
+            {posts.map((post) => {
                 return <PostPreview key={post.id} post={post} />;
             })}
         </div>

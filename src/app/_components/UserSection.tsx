@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/Button';
 import { useFetch } from '@/hooks/useFetch';
-import { usePOST } from '@/hooks/usePOST';
 import { useAuthStateStore } from '@/lib/stateStore';
 import { APIUtility } from '@/lib/utils/APIUtility';
 import ErrorUtility from '@/lib/utils/ErrorUtility';

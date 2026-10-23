@@ -1,6 +1,7 @@
 // app/community/[community_name]/page.tsx
 
 import { APIUtility } from '@/lib/utils/APIUtility';
+import { CommunityResponse } from '@/types/api';
 
 interface PageProps {
     params: Promise<{ community_name: string }>;
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: PageProps) {
             description: 'Community not found',
         };
     }
-    const data = await response.json();
+    const data: CommunityResponse = await response.json();
 
     return {
         title: `${data.community.name} community`,
@@ -35,13 +36,13 @@ export default async function CommunityPage({ params }: PageProps) {
         return <div>Community not found</div>;
     }
 
-    const data = await response.json();
+    const data: CommunityResponse = await response.json();
 
     return (
         <div>
             <h1>{data.community.name}</h1>
-            <p>{data.community._count.members} members</p>
-            <p>{data.community._count.posts} posts</p>
+            <p>{data.community._count?.members ?? 0} members</p>
+            <p>{data.community._count?.posts ?? 0} posts</p>
         </div>
     );
 }

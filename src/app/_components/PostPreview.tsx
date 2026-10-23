@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { PostPreviewOptions } from './PostPreviewOptions';
 import { PostActions } from './PostActions';
+import { Post } from '@/types/api';
 
-export function PostPreview({ post }: { post: unknown }) {
+export function PostPreview({ post }: { post: Post }) {
     const buttonZIndex = 'z-10';
     return (
-        <div className="borderborder-blue-500 w-(--main-page-width) block relative">
+        <div className="w-(--main-page-width) block relative">
             <Link
                 href={`/community/${post.community_ref.name}/replies/${post.short_id}`}
                 className="absolute inset-0 border-b border-gray-200 hover:border-green-400 transition-transform duration-300 ease-in-out"
@@ -20,6 +21,7 @@ export function PostPreview({ post }: { post: unknown }) {
 
                 {/* Quick actions */}
                 <PostActions
+                    removeInvisibleButton={false}
                     buttonZIndex={buttonZIndex}
                     upvotes={post._count.upvoters}
                     downvotes={post._count.downvoters}

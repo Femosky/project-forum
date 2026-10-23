@@ -1,138 +1,111 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { SortByDropdown } from './SortByDropdown';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import Button from '@/components/ui/Button';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { ReplyActions } from './ReplyActions';
 import { usePOST } from '@/hooks/usePOST';
+import { useFetch } from '@/hooks/useFetch';
 import { APIUtility } from '@/lib/utils/APIUtility';
-import { TextArea } from '@/components/ui/TextArea';
 import ContentReplySection from './ContentReplySection';
+import { Comment, CommentsResponse, CreateCommentResponse } from '@/types/api';
 
-export function CommentsSection({ initialComments }: { initialComments: unknown[] }) {
-    const [comments, setComments] = useState(initialComments);
+// Placeholder until avatars are wired to avatar_id
+const AVATAR_PLACEHOLDER = '/profile-pic-1.jpeg';
+const MORE_REPLIES_LIMIT = 50;
 
-    // function handleSort(sort: string) {
-    //     setComments(comments.sort((a, b) => {
-    //         return a.created_at - b.created_at;
-    //     }))
-    // }
+interface ThreadContext {
+    postId: string;
+    postShortId: string;
+    communityName: string;
+}
+
+export function CommentsSection({
+    initialComments,
+    postId,
+    postShortId,
+    communityName,
+}: {
+    initialComments: Comment[];
+} & ThreadContext) {
+    const [comments, setComments] = useState<Comment[]>(initialComments);
+    const [resetReplyContent, setResetReplyContent] = useState(false);
+    const { sendData } = usePOST<CreateCommentResponse>();
+    const thread: ThreadContext = { postId, postShortId, communityName };
+
+    async function handleTopLevelReply(replyContent: string) {
+        setResetReplyContent(false);
+        const result = await sendData(`${APIUtility.getApiUrl()}/comment/create`, {
+            post_id: postId,
+            content: replyContent,
+            is_anonymous: false,
+        });
+
+        if (result?.comment) {
+            setComments((current) => [result.comment, ...current]);
+            setResetReplyContent(true);
+        }
+    }
 
     return (
-        <div>
+        <div className="flex flex-col gap-6">
+            <ContentReplySection handleReply={handleTopLevelReply} resetReplyContent={resetReplyContent} />
+
             <div className="flex items-center gap-1 text-sm">
                 <p>Sort by:</p>
                 <SortByDropdown buttonZIndex="z-10" filter="top" />
             </div>
 
-            <div className="flex flex-col w-full py-4 gap-2 border border-gray-200">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <CommentsBlock initialComments={comments} />
+            <div className="flex flex-col w-full py-4 gap-2">
+                {comments.map((comment) => (
+                    <CommentBlock key={comment.id} initialComment={comment} thread={thread} />
+                ))}
             </div>
         </div>
     );
 }
 
 // The API drops author_ref for anonymous, deleted and removed comments
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getAuthorName(comment: any): string {
+function getAuthorName(comment: Comment): string {
     if (comment.author_ref?.username) return comment.author_ref.username;
     return comment.status === 'deleted' || comment.status === 'removed' ? '[deleted]' : 'Anonymous';
 }
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-function CommentsBlock({ initialComments }: { initialComments: any[] }) {
-    const [comments, setComments] = useState(initialComments);
-
-    function handleReplyUpdate(parentCommentId: string, updatedComment: any) {
-        const newComments = [...comments];
-
-        for (let i = 0; i < newComments.length; i++) {
-            const comment = newComments[i];
-
-            if (comment.id === parentCommentId) {
-                newComments[i] = { ...comment, ...updatedComment };
-                break;
-            }
-        }
-
-        setComments(newComments);
-    }
-
-    function getDefaultChildrenOpenCount(comment: any): number {
-        return (comment?.child_comments?.length ?? 0) > 0 ? 1 : 0;
-    }
-
-    return (
-        <>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {comments.filter(Boolean).map((comment: any) => {
-                return (
-                    <CommentBlock
-                        key={comment.id}
-                        initialComment={comment}
-                        defaultChildrenOpenCount={getDefaultChildrenOpenCount(comment)}
-                        handleReplyUpdate={handleReplyUpdate}
-                    />
-                );
-            })}
-        </>
-    );
-}
-
-function CommentBlock({
-    initialComment,
-    defaultChildrenOpenCount,
-    handleReplyUpdate,
-}: {
-    initialComment: any;
-    defaultChildrenOpenCount: number;
-    handleReplyUpdate: (parentCommentId: string, updatedComment: any) => void;
-}) {
-    const [comment, setComment] = useState(initialComment);
+function CommentBlock({ initialComment, thread }: { initialComment: Comment; thread: ThreadContext }) {
+    const [comment, setComment] = useState<Comment>(initialComment);
     const [isReplying, setIsReplying] = useState(false);
-    const hasChildren = (comment?._count?.child_comments ?? 0) > 0;
-    const [isExpanded, setIsExpanded] = useState(hasChildren);
+    const [isExpanded, setIsExpanded] = useState((initialComment.child_comments?.length ?? 0) > 0);
     const [resetReplyContent, setResetReplyContent] = useState(false);
 
-    const { data: replyData, sendData: sendReplyData, reset: resetReplyData } = usePOST();
-    const { data: moreRepliesData, sendData: sendMoreRepliesData, reset: resetMoreRepliesData } = usePOST();
+    const { sendData: sendReply } = usePOST<CreateCommentResponse>();
+    const { fetchData: fetchReplies, isLoading: isLoadingReplies } = useFetch<CommentsResponse>();
 
-    const [childrenOpenCount, setChildrenOpenCount] = useState<number>(defaultChildrenOpenCount);
+    const childComments = comment.child_comments ?? [];
+    const totalReplies = comment._count?.child_comments ?? 0;
+    const hasChildren = totalReplies > 0;
+    const hiddenReplies = Math.max(totalReplies - childComments.length, 0);
 
-    function handleChildRepliesUpdate(newChildComments: any[]) {
-        const newComment = { ...comment };
-        newComment.child_comments = [...comment.child_comments, ...newChildComments];
-        setComment(newComment);
-    }
+    async function loadMoreReplies() {
+        const params = new URLSearchParams({ parent_limit: String(MORE_REPLIES_LIMIT) });
+        const url = `${APIUtility.getApiUrl()}/community/${thread.communityName}/replies/${thread.postShortId}/reply/${comment.short_id}?${params}`;
+        const result = await fetchReplies(url);
 
-    async function fetchMoreReplies() {
-        // /:community_name/replies/:post_short_id/reply/:comment_short_id
-        // const params = new URLSearchParams({
-        //     sort_by = CommentService.DEFAULT_SORT_BY,
-        //     parent_page_number = CommentService.DEFAULT_PAGE_NUMBER,
-        //     parent_limit = CommentService.DEFAULT_LIMIT,
-        // });
-
-        const payload = {};
-        const url = `${APIUtility.getApiUrl()}/community/${comment.community_name}/replies/${comment.short_id}/reply/${comment.short_id}`;
-        await sendMoreRepliesData(url, payload);
-    }
-
-    async function toggleExpand() {
-        if (comment.child_comments.length < (parseInt(comment?._count?.child_comments) ?? 0)) {
-            // Fetch more replies
-            await fetchMoreReplies();
-            setIsExpanded(true);
+        if (result?.comments) {
+            setComment((current) => ({ ...current, child_comments: result.comments }));
         }
-        // setChildrenOpenCount(Math.max((parseInt(comment?._count?.child_comments) ?? 0) - childrenOpenCount, 0));
     }
 
-    function toggleHideAllReplies() {
-        setChildrenOpenCount(comment._count.child_comments);
+    async function showReplies() {
+        setIsExpanded(true);
+        if (hiddenReplies > 0) {
+            await loadMoreReplies();
+        }
+    }
+
+    function hideReplies() {
         setIsExpanded(false);
     }
 
@@ -141,48 +114,34 @@ function CommentBlock({
     }
 
     async function handleReply(replyContent: string) {
-        // { community_id, post_id, content, is_anonymous, is_sponsored, parent_comment_id }
-
-        const payload = {
-            post_id: comment.post_id,
+        setResetReplyContent(false);
+        const result = await sendReply(`${APIUtility.getApiUrl()}/comment/create`, {
+            post_id: thread.postId,
             content: replyContent,
             is_anonymous: false,
-            parent_comment_id: comment.parent_comment_id,
-        };
+            parent_comment_id: comment.id,
+        });
 
-        await sendReplyData(`${APIUtility.getApiUrl()}/comment/create`, payload);
-
-        setIsReplying(false);
-        setResetReplyContent(true);
+        if (result?.comment) {
+            const newReply = result.comment;
+            setComment((current) => ({
+                ...current,
+                child_comments: [newReply, ...(current.child_comments ?? [])],
+                _count: { ...current._count, child_comments: (current._count?.child_comments ?? 0) + 1 },
+            }));
+            setIsExpanded(true);
+            setIsReplying(false);
+            setResetReplyContent(true);
+        }
     }
-
-    useEffect(() => {
-        if (moreRepliesData) {
-            console.log('more replies data: ', moreRepliesData);
-
-            // Update the comments with the new replies
-            handleChildRepliesUpdate(comment.id, moreRepliesData.comments);
-            resetMoreRepliesData();
-        }
-    }, [moreRepliesData]);
-
-    useEffect(() => {
-        if (replyData) {
-            console.log('reply data: ', replyData);
-            handleReplyUpdate(comment.id, replyData);
-            resetReplyData();
-        }
-    }, [replyData]);
 
     return (
         <div className="flex gap-4 w-full">
             <ShapeSection
                 username={getAuthorName(comment)}
-                avatarId={comment.author_ref?.avatar_id ?? 'default_1'}
                 hasChildren={hasChildren}
-                parentCommentId={comment.parent_comment_id}
                 isExpanded={isExpanded}
-                toggleHideAllReplies={toggleHideAllReplies}
+                toggleHideAllReplies={hideReplies}
             />
 
             <div className="flex flex-col gap-5 w-full">
@@ -191,8 +150,8 @@ function CommentBlock({
 
                     <ReplyActions
                         buttonZIndex="z-10"
-                        upvotes={comment._count.upvoters}
-                        downvotes={comment._count.downvoters}
+                        upvotes={comment._count?.upvoters ?? 0}
+                        downvotes={comment._count?.downvoters ?? 0}
                         toggleReplyMode={toggleReplyMode}
                     />
 
@@ -200,45 +159,37 @@ function CommentBlock({
                         <ContentReplySection
                             fromReply={true}
                             toggleReplyMode={toggleReplyMode}
-                            handleReply={(replyContent) => handleReply(replyContent)}
+                            handleReply={handleReply}
                             resetReplyContent={resetReplyContent}
                         />
                     )}
                 </div>
 
                 {/* Child replies */}
-                {defaultChildrenOpenCount > 0 &&
-                    isExpanded &&
-                    comment?.child_comments &&
-                    comment.child_comments.length > 0 &&
-                    comment.child_comments.map((childComment: any) => {
-                        return (
-                            <CommentBlock
-                                key={childComment.id}
-                                initialComment={childComment}
-                                defaultChildrenOpenCount={childrenOpenCount}
-                                handleCommentUpdate={handleCommentUpdate}
-                            />
-                        );
-                    })}
+                {isExpanded &&
+                    childComments.map((childComment) => (
+                        <CommentBlock key={childComment.id} initialComment={childComment} thread={thread} />
+                    ))}
 
-                {/* TODO: add expand/hide all replies button */}
                 {hasChildren && (
                     <div className="flex items-center gap-1">
-                        {!isExpanded && childrenOpenCount > 0 && (
-                            <Button onClick={toggleExpand} size="round" variant="transparent" className="w-fit px-3">
+                        {(!isExpanded || hiddenReplies > 0) && (
+                            <Button
+                                onClick={showReplies}
+                                size="round"
+                                variant="transparent"
+                                className="w-fit px-3"
+                                disabled={isLoadingReplies}
+                            >
                                 <span className="flex items-center gap-1">
-                                    {childrenOpenCount} replies <ChevronDown className="size-4" />
+                                    {isExpanded ? `${hiddenReplies} more` : totalReplies}{' '}
+                                    {(isExpanded ? hiddenReplies : totalReplies) === 1 ? 'reply' : 'replies'}{' '}
+                                    <ChevronDown className="size-4" />
                                 </span>
                             </Button>
                         )}
                         {isExpanded && (
-                            <Button
-                                size="round"
-                                variant="transparent"
-                                className="w-fit px-3"
-                                onClick={toggleHideAllReplies}
-                            >
+                            <Button size="round" variant="transparent" className="w-fit px-3" onClick={hideReplies}>
                                 Hide replies
                             </Button>
                         )}
@@ -251,41 +202,20 @@ function CommentBlock({
 
 function ShapeSection({
     username,
-    avatarId,
     hasChildren,
-    parentCommentId,
     isExpanded,
     toggleHideAllReplies,
 }: {
     username: string;
-    avatarId: string;
     hasChildren: boolean;
-    parentCommentId: string | null;
     isExpanded: boolean;
     toggleHideAllReplies: () => void;
 }) {
-    const imgTestUrl =
-        'https://firebasestorage.googleapis.com:443/v0/b/roki-e02bf.appspot.com/o/profilesMedia%2F06RrzyKlNEQl192x861CKZslf223%2FD56331C9-BFF0-40B6-BD69-480F206F5017.jpg?alt=media&token=7b1d07df-8f8d-4dc9-99ee-a4942a8d7e5d';
-
     const alt = `${username}'s avatar`;
     return (
-        <div className="flex flex-col items-center gap-0 xbg-amber-100">
-            <div className="relative size-10 shrink-0 rounded-full overflow-visible aspect-square">
-                {/* {parentCommentId !== null && (
-                    <div className="absolute flex items-center right-full size-9 apointer-events-none">
-                        <div className="w-full h-px bg-gray-300" />
-                    </div>
-                )} */}
-                <div className="relative size-10 shrink-0 rounded-full overflow-hidden aspect-square">
-                    <Image
-                        src={imgTestUrl}
-                        className="object-cover"
-                        placeholder="blur"
-                        blurDataURL={imgTestUrl}
-                        alt={alt}
-                        fill
-                    />
-                </div>
+        <div className="flex flex-col items-center gap-0">
+            <div className="relative size-10 shrink-0 rounded-full overflow-hidden aspect-square">
+                <Image src={AVATAR_PLACEHOLDER} className="object-cover" alt={alt} fill sizes="40px" />
             </div>
 
             {hasChildren && isExpanded && (
@@ -293,7 +223,7 @@ function ShapeSection({
                     onClick={toggleHideAllReplies}
                     className="w-full h-full flex flex-col group items-center justify-center"
                 >
-                    <div className="w-px flex-1 bg-gray-300 group-hover:bg-gray-400 transition-colors duration-75 ease-in-ou" />
+                    <div className="w-px flex-1 bg-gray-300 group-hover:bg-gray-400 transition-colors duration-75 ease-in-out" />
                 </div>
             )}
         </div>
@@ -303,20 +233,18 @@ function ShapeSection({
 function TitleSection({
     username,
     createdAt,
-    isEdited,
     editedAt,
 }: {
     username: string;
     createdAt: string;
-    isEdited: boolean;
-    editedAt: string;
+    editedAt: string | null;
 }) {
     return (
         <div className="flex items-center gap-1 font-light text-sm">
             <span className="font-medium">{username}</span>
             <span>•</span>
             <span>{TimeUtility.formatTimeAgo(createdAt)}</span>
-            {isEdited && editedAt && (
+            {editedAt && (
                 <>
                     <span>•</span>
                     <span>Edited</span>
@@ -327,21 +255,15 @@ function TitleSection({
     );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function TextSection({ comment }: { comment: any }) {
-    const username = getAuthorName(comment);
-    const createdAt = comment.created_at;
-    const isEdited = comment.edited_at;
-    const editedAt = comment.edited_at;
-
+function TextSection({ comment }: { comment: Comment }) {
     return (
         <div className="flex flex-col gap-1.5">
-            <TitleSection username={username} createdAt={createdAt} isEdited={isEdited} editedAt={editedAt} />
-            <p className="font-normal">
-                {comment.content !== 'Me too!'
-                    ? comment.content
-                    : 'jnjsnjs jfnjsnfjs f sjnfjs fjs jfsjf sj fsjfjs fjs fsj fjsnfs fjs fjsfnisnfjs fjsn fjsn fjsnfisjfjnjsnjs jfnjsnfjs f sjnfjs fjs jfsjf sj fsjfjs fjs fsj fjsnfs fjs fjsfnisnfjs fjsn fjsn fjsnfisjfjnjsnjs jfnjsnfjs f sjnfjs fjs jfsjf sj fsjfjs fjs fsj fjsnfs fjs fjsfnisnfjs fjsn fjsn fjsnfisjfjnjsnjs jfnjsnfjs f sjnfjs fjs jfsjf sj fsjfjs fjs fsj fjsnfs fjs fjsfnisnfjs fjsn fjsn fjsnfisjfjnjsnjs jfnjsnfjs f sjnfjs fjs jfsjf sj fsjfjs fjs fsj fjsnfs fjs fjsfnisnfjs fjsn fjsn fjsnfisjfjnjsnjs jfnjsnfjs f sjnfjs fjs jfsjf sj fsjfjs fjs fsj fjsnfs fjs fjsfnisnfjs fjsn fjsn fjsnfisjfjnjsnjs jfnjsnfjs f sjnfjs fjs jfsjf sj fsjfjs fjs fsj fjsnfs fjs fjsfnisnfjs fjsn fjsn fjsnfisjfjnjsnjs jfnjsnfjs f sjnfjs fjs jfsjf sj fsjfjs fjs fsj fjsnfs fjs fjsfnisnfjs fjsn fjsn fjsnfisjfjnjsnjs jfnjsnfjs f sjnfjs fjs jfsjf sj fsjfjs fjs fsj fjsnfs fjs fjsfnisnfjs fjsn fjsn fjsnfisjf'}
-            </p>
+            <TitleSection
+                username={getAuthorName(comment)}
+                createdAt={comment.created_at}
+                editedAt={comment.is_edited ? comment.edited_at : null}
+            />
+            <p className="font-normal whitespace-pre-wrap break-words">{comment.content}</p>
         </div>
     );
 }

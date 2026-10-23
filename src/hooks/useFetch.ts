@@ -6,8 +6,9 @@ export function useFetch<T = unknown>() {
     const [error, setError] = useState<Error | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    async function fetchData(url: string) {
-        if (isLoading) return;
+    // Returns the response data on success, or null on failure (the error is kept in state)
+    async function fetchData(url: string): Promise<T | null> {
+        if (isLoading) return null;
 
         try {
             setIsLoading(true);
@@ -36,9 +37,10 @@ export function useFetch<T = unknown>() {
             }
 
             setData(data);
+            return data as T;
         } catch (error) {
-            console.log('error from useFetch: ', error);
             setError(error as Error);
+            return null;
         } finally {
             setIsLoading(false);
         }
