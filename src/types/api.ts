@@ -121,6 +121,39 @@ export interface PrivateUser {
     created_at: string;
 }
 
+export interface PublicUser {
+    username: string;
+    display_name: string | null;
+    avatar_id: string;
+    karma: number;
+    is_suspended: boolean;
+    created_at: string;
+}
+
+export interface PublicUserResponse {
+    user: PublicUser;
+}
+
+// A comment listed outside its thread (profiles), with enough of its post to link to it
+export interface ListedComment extends Comment {
+    post: { short_id: string; slug: string; title: string; community: string };
+}
+
+export interface UserCommentsResponse {
+    comments: ListedComment[];
+    next_cursor: string | null;
+}
+
+export interface SearchPostsResponse {
+    posts: Post[];
+    next_page: number | null;
+}
+
+export interface SearchCommunitiesResponse {
+    communities: Community[];
+    next_page: number | null;
+}
+
 export type PostSort = 'hot' | 'new' | 'top';
 export type CommentSort = 'best' | 'top' | 'new' | 'old';
 
