@@ -1,27 +1,26 @@
-import { APIUtility } from '@/lib/utils/APIUtility';
-import { APP_NAME } from '@/lib/constants';
-import { PostsResponse } from '@/types/api';
-import PostCard from '@/components/post/PostCard';
+import Link from 'next/link';
+import { CloudOff } from 'lucide-react';
+import { APP_NAME, APP_DESCRIPTION } from '@/lib/constants';
+import { serverApi } from '@/lib/api/server';
+import { FeedResponse } from '@/types/api';
 import EmptyState from '@/components/ui/EmptyState';
-import { CloudOff, MessagesSquare } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import { PostList, SortTabs, parsePostSort } from '@/components/post/PostList';
 
-export async function generateMetadata() {
-    return {
-        title: `Home | ${APP_NAME}`,
-        description: 'Home',
-    };
-}
+export const metadata = {
+    title: `Home | ${APP_NAME}`,
+    description: APP_DESCRIPTION,
+};
 
-export default async function Home() {
-    // TODO(Phase 3): replace the hard-coded community with the global feed endpoint
-    const response = await fetch(`${APIUtility.getApiUrl()}/community/hi/posts`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    }).catch(() => null);
+type PageProps = { searchParams: Promise<{ sort?: string; cursor?: string }> };
 
-    if (!response?.ok) {
+export default async function Home({ searchParams }: PageProps) {
+    const { sort: sortParam, cursor } = await searchParams;
+    const sort = parsePostSort(sortParam);
+    const query = new URLSearchParams({ sort, ...(sort === 'top' ? { t: 'week' } : {}), ...(cursor ? { cursor } : {}) });
+    const { data } = await serverApi<FeedResponse>(`/feed?${query}`);
+
+    if (!data) {
         return (
             <EmptyState
                 icon={<CloudOff />}
@@ -30,20 +29,25 @@ export default async function Home() {
             />
         );
     }
-    const data: PostsResponse = await response.json();
-    const posts = data.posts;
 
     return (
-        <div className="mx-auto w-full max-w-content sm:px-4 sm:py-4">
-            {posts.length === 0 ? (
-                <EmptyState icon={<MessagesSquare />} title="No posts yet" description="Be the first to start a conversation." />
-            ) : (
-                <div className="flex flex-col divide-y divide-border sm:gap-3 sm:divide-y-0">
-                    {posts.map((post) => (
-                        <PostCard key={post.id} post={post} />
-                    ))}
-                </div>
-            )}
+        <div className="mx-auto flex w-full max-w-content flex-col gap-3 py-3 sm:px-4 sm:py-4">
+            <SortTabs basePath="/" current={sort} />
+            <PostList
+                posts={data.posts}
+                basePath="/"
+                sort={sort}
+                nextCursor={data.next_cursor}
+                empty={{
+                    title: cursor ? "That's everything" : 'No posts yet',
+                    description: cursor ? "You've reached the end of the feed." : 'Be the first to start a conversation.',
+                    action: (
+                        <Button asChild>
+                            <Link href={cursor ? '/' : '/submit'}>{cursor ? 'Back to the top' : 'Create a post'}</Link>
+                        </Button>
+                    ),
+                }}
+            />
         </div>
     );
 }

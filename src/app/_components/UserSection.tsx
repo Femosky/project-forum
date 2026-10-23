@@ -3,30 +3,24 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from '@/components/ui/Dropdown';
-import { useFetch } from '@/hooks/useFetch';
+import { api } from '@/lib/api/client';
 import { useAuthStateStore } from '@/lib/stateStore';
-import { APIUtility } from '@/lib/utils/APIUtility';
-import ErrorUtility from '@/lib/utils/ErrorUtility';
-import { LogOut, Plus, User } from 'lucide-react';
-import { useEffect } from 'react';
+import { Bookmark, LogOut, Plus, User } from 'lucide-react';
+import { useState } from 'react';
 
 export function UserSection() {
     const isAuthenticated = useAuthStateStore((state) => state.isAuthenticated);
     const logout = useAuthStateStore((state) => state.logout);
 
-    const { data, error, isLoading, fetchData } = useFetch();
+    const [isLoading, setIsLoading] = useState(false);
 
     async function handleLogout() {
-        await fetchData(`${APIUtility.getApiUrl()}/auth/logout`);
+        setIsLoading(true);
+        // Even if this fails the session is over on this device, so reset and reload
+        await api('/auth/logout', { method: 'POST' }).catch(() => null);
+        logout();
+        window.location.reload();
     }
-
-    // Either way the session is over on this device, so reset and reload
-    useEffect(() => {
-        if (!ErrorUtility.isNullOrUndefined(data) || !ErrorUtility.isNullOrUndefined(error)) {
-            logout();
-            window.location.reload();
-        }
-    }, [data, error, logout]);
 
     if (!isAuthenticated) {
         return (
@@ -64,6 +58,11 @@ export function UserSection() {
                     <DropdownItem asChild>
                         <Link href="/profile">
                             <User /> Profile
+                        </Link>
+                    </DropdownItem>
+                    <DropdownItem asChild>
+                        <Link href="/saved">
+                            <Bookmark /> Saved
                         </Link>
                     </DropdownItem>
                     <DropdownItem onSelect={handleLogout} disabled={isLoading}>

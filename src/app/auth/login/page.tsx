@@ -1,111 +1,54 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import Button from '@/components/ui/Button';
 import InputField from '@/components/ui/Input';
-import { APIUtility } from '@/lib/utils/APIUtility';
-import { usePOST } from '@/hooks/usePOST';
-import { useEffect, useState } from 'react';
-import z from 'zod';
-import { PASSWORD_SPECIAL_CHARACTERS, PASSWORD_SPECIAL_CHARACTERS_REGEX } from '@/lib/constants';
-import { useAuthStateStore } from '@/lib/stateStore';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import ErrorUtility from '@/lib/utils/ErrorUtility';
 import ErrorMessage from '@/components/ui/ErrorMessage';
-
-const formSchema = z.object({
-    email: z.email(),
-    password: z
-        .string()
-        .min(8, { message: 'Password must be at least 8 characters long' })
-        .max(20, { message: 'Password must be less than 20 characters' })
-        .refine((val) => /[A-Z]/.test(val), {
-            message: 'Password must contain at least one uppercase letter',
-        })
-        .refine((val) => /[a-z]/.test(val), {
-            message: 'Password must contain at least one lowercase letter',
-        })
-        .refine((val) => /[0-9]/.test(val), {
-            message: 'Password must contain at least one number',
-        })
-        .refine((val) => PASSWORD_SPECIAL_CHARACTERS_REGEX.test(val), {
-            message: `Password must contain at least one special character (e.g. ${PASSWORD_SPECIAL_CHARACTERS})`,
-        }),
-});
+import { api } from '@/lib/api/client';
+import { errorMessage } from '@/lib/api/errors';
+import { useAuthStateStore } from '@/lib/stateStore';
+import { safeNextPath } from '@/lib/utils/NavigationUtility';
+import { UserResponse } from '@/types/api';
 
 export default function LoginPage() {
+    return (
+        <Suspense>
+            <LoginForm />
+        </Suspense>
+    );
+}
+
+function LoginForm() {
     const router = useRouter();
-    const { data, error, isLoading, sendData } = usePOST();
+    const next = safeNextPath(useSearchParams().get('next'));
     const login = useAuthStateStore((state) => state.login);
-    const isAuthenticated = useAuthStateStore((state) => state.isAuthenticated);
 
-    const [email, setEmail] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
-
-    const [emailError, setEmailError] = useState<string | null>(null);
-    const [passwordError, setPasswordError] = useState<string | null>(null);
-
-    function handleEmailTyping(e: React.ChangeEvent<HTMLInputElement>) {
-        const newEmail = e.target.value;
-        setEmail(newEmail);
-
-        const validatedResults = formSchema.safeParse({
-            email: newEmail,
-            password,
-        });
-
-        if (!validatedResults.success) {
-            const errors = validatedResults.error.format();
-            setEmailError(errors.email?._errors[0] || null);
-        } else {
-            setEmailError(null);
-        }
-    }
-
-    function handlePasswordTyping(e: React.ChangeEvent<HTMLInputElement>) {
-        const newPassword = e.target.value;
-        setPassword(newPassword);
-
-        const validatedResults = formSchema.safeParse({
-            email,
-            password: newPassword,
-        });
-
-        if (!validatedResults.success) {
-            const errors = validatedResults.error.format();
-            setPasswordError(errors.password?._errors[0] || null);
-        } else {
-            setPasswordError(null);
-        }
-    }
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-
-        // Validate the form
-        // const validatedResults = formSchema.safeParse({ email, password });
-
-        // if (validatedResults.error) {
-        //     console.log('error: ', validatedResults.error);
-        //     return;
-        // }
-
-        await sendData(`${APIUtility.getApiUrl()}/auth/login`, { email, password });
-    }
-
-    useEffect(() => {
-        // redirect to home if user is already logged in
-        if (isAuthenticated) {
-            router.push('/');
+        if (!identifier.trim() || !password) {
+            setError('Enter your email or username and your password.');
+            return;
         }
-    }, [isAuthenticated, router]);
 
-    useEffect(() => {
-        if (!ErrorUtility.isNullOrUndefined(data)) {
+        setIsLoading(true);
+        setError(null);
+        try {
+            await api<UserResponse>('/auth/login', { method: 'POST', body: { identifier: identifier.trim(), password } });
             login();
-            router.push('/');
+            router.replace(next);
+            router.refresh();
+        } catch (error) {
+            setError(errorMessage(error));
+            setIsLoading(false);
         }
-    }, [data, login, router]);
+    }
 
     return (
         <div className="flex justify-center px-4 py-12 sm:py-20">
@@ -115,19 +58,17 @@ export default function LoginPage() {
 
                 <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
                     <div className="flex flex-col gap-1.5">
-                        <label htmlFor="email" className="text-sm font-semibold">
-                            Email
+                        <label htmlFor="identifier" className="text-sm font-semibold">
+                            Email or username
                         </label>
                         <InputField
-                            type="email"
-                            name="email"
-                            autoComplete="email"
+                            name="identifier"
+                            autoComplete="username"
+                            autoCapitalize="none"
                             placeholder="you@example.com"
-                            value={email}
-                            onChange={handleEmailTyping}
-                            outline={emailError ? 'error' : 'default'}
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
                         />
-                        {emailError && <ErrorMessage errorMessage={emailError} />}
                     </div>
 
                     <div className="flex flex-col gap-1.5">
@@ -140,21 +81,22 @@ export default function LoginPage() {
                             autoComplete="current-password"
                             placeholder=" "
                             value={password}
-                            onChange={handlePasswordTyping}
-                            outline={passwordError ? 'error' : 'default'}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
-                        {passwordError && <ErrorMessage errorMessage={passwordError} />}
                     </div>
 
                     <Button type="submit" size="lg" disabled={isLoading} className="mt-2 w-full">
                         {isLoading ? 'Logging in...' : 'Log in'}
                     </Button>
-                    {error && <ErrorMessage size="small" errorMessage={error.message} role="alert" />}
+                    {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
                 </form>
 
                 <p className="mt-6 text-center text-sm text-muted">
                     New here?{' '}
-                    <Link href="/auth/signup" className="font-semibold text-link hover:underline">
+                    <Link
+                        href={`/auth/signup${next === '/' ? '' : `?next=${encodeURIComponent(next)}`}`}
+                        className="font-semibold text-link hover:underline"
+                    >
                         Create an account
                     </Link>
                 </p>

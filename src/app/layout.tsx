@@ -8,6 +8,7 @@ import BottomTabBar from '@/components/layout/BottomTabBar';
 import { cookies } from 'next/headers';
 import { AuthHydrator } from '@/lib/authHydrator';
 import TopLoader from '@/components/common/TopLoader';
+import SignInPrompt from '@/components/common/SignInPrompt';
 import { getTheme } from '@/components/theme/getTheme';
 
 // Self-hosted at build time by next/font: no request to Google at runtime
@@ -58,6 +59,7 @@ export default async function RootLayout({
                 </div>
 
                 <BottomTabBar />
+                <SignInPrompt />
             </body>
         </html>
     );
