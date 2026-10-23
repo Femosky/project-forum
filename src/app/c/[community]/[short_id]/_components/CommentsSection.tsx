@@ -17,6 +17,7 @@ import { Comment, CommentResponse, CommentSort, CommentsResponse } from '@/types
 import Markdown from '@/components/common/Markdown';
 import TextArea from '@/components/ui/TextArea';
 import { COMMENT_BODY_MAX } from '@/lib/constants';
+import { CommentSkeleton } from '@/components/post/PostSkeletons';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from './commentsApi';
 
 // Replies nest this deep before the thread stops indenting further
@@ -121,6 +122,13 @@ export function CommentsSection({ postId, isLocked, commentCount, initialComment
                     {comments.map((comment) => (
                         <CommentBlock key={comment.id} initialComment={comment} />
                     ))}
+
+                    {isLoading && (
+                        <>
+                            <CommentSkeleton />
+                            <CommentSkeleton />
+                        </>
+                    )}
 
                     {cursor && (
                         <Button variant="secondary" onClick={() => load(sort, cursor)} disabled={isLoading} className="self-center">

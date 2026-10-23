@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { ChevronRight, MessagesSquare } from 'lucide-react';
+import { MessagesSquare } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
-import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import { Post, PostSort } from '@/types/api';
 import PostCard from './PostCard';
+import InfinitePosts from './InfinitePosts';
 
 export const POST_SORTS: { value: PostSort; label: string }[] = [
     { value: 'hot', label: 'Hot' },
@@ -42,11 +42,13 @@ type PostListProps = {
     basePath: string;
     sort: PostSort;
     nextCursor: string | null;
+    // The same list on the API, without a cursor, for loading further pages in the browser
+    apiPath: string;
     showCommunity?: boolean;
     empty?: { title: string; description: string; action?: React.ReactNode };
 };
 
-export function PostList({ posts, basePath, sort, nextCursor, showCommunity = true, empty }: PostListProps) {
+export function PostList({ posts, basePath, sort, nextCursor, apiPath, showCommunity = true, empty }: PostListProps) {
     if (posts.length === 0) {
         return (
             <EmptyState
@@ -68,13 +70,13 @@ export function PostList({ posts, basePath, sort, nextCursor, showCommunity = tr
                 ))}
             </div>
             {nextCursor && (
-                <div className="flex justify-center pb-6">
-                    <Button asChild variant="secondary">
-                        <Link href={`${basePath}?${nextParams}`} rel="next">
-                            Next page <ChevronRight className="size-4" />
-                        </Link>
-                    </Button>
-                </div>
+                <InfinitePosts
+                    apiPath={apiPath}
+                    initialCursor={nextCursor}
+                    nextHref={`${basePath}?${nextParams}`}
+                    seenIds={posts.map((post) => post.id)}
+                    showCommunity={showCommunity}
+                />
             )}
         </div>
     );

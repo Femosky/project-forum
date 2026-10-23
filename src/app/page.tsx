@@ -17,8 +17,8 @@ type PageProps = { searchParams: Promise<{ sort?: string; cursor?: string }> };
 export default async function Home({ searchParams }: PageProps) {
     const { sort: sortParam, cursor } = await searchParams;
     const sort = parsePostSort(sortParam);
-    const query = new URLSearchParams({ sort, ...(sort === 'top' ? { t: 'week' } : {}), ...(cursor ? { cursor } : {}) });
-    const { data } = await serverApi<FeedResponse>(`/feed?${query}`);
+    const listQuery = new URLSearchParams({ sort, ...(sort === 'top' ? { t: 'week' } : {}) });
+    const { data } = await serverApi<FeedResponse>(`/feed?${listQuery}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`);
 
     if (!data) {
         return (
@@ -38,6 +38,7 @@ export default async function Home({ searchParams }: PageProps) {
                 basePath="/"
                 sort={sort}
                 nextCursor={data.next_cursor}
+                apiPath={`/feed?${listQuery}`}
                 empty={{
                     title: cursor ? "That's everything" : 'No posts yet',
                     description: cursor ? "You've reached the end of the feed." : 'Be the first to start a conversation.',

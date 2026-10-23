@@ -30,10 +30,11 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
     const sort = parsePostSort(sortParam);
     const basePath = `/c/${name}`;
 
-    const query = new URLSearchParams({ sort, ...(sort === 'top' ? { t: 'all' } : {}), ...(cursor ? { cursor } : {}) });
+    const listQuery = new URLSearchParams({ sort, ...(sort === 'top' ? { t: 'all' } : {}) });
+    const postsPath = `/communities/${encodeURIComponent(name)}/posts?${listQuery}`;
     const [community, posts] = await Promise.all([
         serverApi<CommunityResponse>(`/communities/${encodeURIComponent(name)}`),
-        serverApi<PostsResponse>(`/communities/${encodeURIComponent(name)}/posts?${query}`),
+        serverApi<PostsResponse>(`${postsPath}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`),
     ]);
 
     if (!community.data) {
@@ -78,6 +79,7 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
                         basePath={basePath}
                         sort={sort}
                         nextCursor={posts.data?.next_cursor ?? null}
+                        apiPath={postsPath}
                         showCommunity={false}
                         empty={{
                             title: posts.data ? 'No posts here yet' : "Couldn't load posts",
