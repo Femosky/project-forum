@@ -36,6 +36,13 @@ export function CommentsSection({ initialComments }: { initialComments: unknown[
     );
 }
 
+// The API drops author_ref for anonymous, deleted and removed comments
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getAuthorName(comment: any): string {
+    if (comment.author_ref?.username) return comment.author_ref.username;
+    return comment.status === 'deleted' || comment.status === 'removed' ? '[deleted]' : 'Anonymous';
+}
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 function CommentsBlock({ initialComments }: { initialComments: any[] }) {
     const [comments, setComments] = useState(initialComments);
@@ -140,7 +147,6 @@ function CommentBlock({
             post_id: comment.post_id,
             content: replyContent,
             is_anonymous: false,
-            is_sponsored: false,
             parent_comment_id: comment.parent_comment_id,
         };
 
@@ -171,8 +177,8 @@ function CommentBlock({
     return (
         <div className="flex gap-4 w-full">
             <ShapeSection
-                username={comment.author_ref.username}
-                avatarId={comment.author_ref.avatar_id}
+                username={getAuthorName(comment)}
+                avatarId={comment.author_ref?.avatar_id ?? 'default_1'}
                 hasChildren={hasChildren}
                 parentCommentId={comment.parent_comment_id}
                 isExpanded={isExpanded}
@@ -323,7 +329,7 @@ function TitleSection({
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function TextSection({ comment }: { comment: any }) {
-    const username = comment.author_ref.username;
+    const username = getAuthorName(comment);
     const createdAt = comment.created_at;
     const isEdited = comment.edited_at;
     const editedAt = comment.edited_at;
