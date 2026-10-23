@@ -2,10 +2,19 @@
  * Application-wide constants and configuration
  */
 
+// Branding lives here: renaming the site means changing this block (and /public/logo.jpg). Page titles, share
+// previews, generated images, structured data, robots.txt and llms.txt all read from it.
 export const APP_NAME = 'Project Forum';
 export const APP_DESCRIPTION =
     'Ask questions, share what you know and get real answers from people who have been there.';
-export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+export const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+// <html lang> and og:locale. English as written and searched in Nigeria; the copy itself stays neutral.
+export const SITE_LANG = 'en-NG';
+export const SITE_OG_LOCALE = 'en_NG';
+// The site's X/Twitter account for twitter:site, e.g. '@projectforum'; left out until there is one
+export const TWITTER_HANDLE = process.env.NEXT_PUBLIC_TWITTER_HANDLE || undefined;
+// Colours for generated share images (match --accent and friends in globals.css)
+export const BRAND_COLORS = { background: '#00203f', text: '#ffffff', accent: '#adefd1', muted: '#9fb6cc' } as const;
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:3001';
 export const API_BASE = `${BACKEND_URL}/v1`;
 
@@ -20,6 +29,9 @@ export const REFRESH_TOKEN_COOKIE_NAME = 'refresh_token';
 export const THEME_COOKIE_NAME = 'theme';
 export const THEMES = ['light', 'dark'] as const;
 export type Theme = (typeof THEMES)[number];
+
+// "on" or "off" from the data saver switch in settings; absent means follow the browser's Save-Data setting
+export const DATA_SAVER_COOKIE_NAME = 'data_saver';
 
 // Limits the API enforces; the forms check them first
 export const POST_TITLE_MIN = 3;

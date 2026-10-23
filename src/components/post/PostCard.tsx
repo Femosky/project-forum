@@ -144,7 +144,7 @@ function LinkPreviewCard({ post, compact }: { post: Post; compact: boolean }) {
             {preview?.image && (
                 // Remote preview images come from any site, so next/image's allow-list doesn't apply
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview.image} alt="" loading="lazy" className="h-16 w-24 shrink-0 object-cover sm:h-20 sm:w-32" />
+                <img src={preview.image} alt="" loading="lazy" className="data-saver-hide h-16 w-24 shrink-0 object-cover sm:h-20 sm:w-32" />
             )}
         </a>
     );

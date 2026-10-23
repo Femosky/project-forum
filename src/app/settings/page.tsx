@@ -3,10 +3,12 @@ import { Settings } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
 import { getTheme } from '@/components/theme/getTheme';
+import { getDataSaver } from '@/lib/dataSaver';
 import { SessionsResponse, UserResponse } from '@/types/api';
 import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
 import {
+    DataSaverToggle,
     DeleteAccount,
     EmailForm,
     ExportData,
@@ -20,10 +22,11 @@ import {
 export const metadata = { title: `Settings | ${APP_NAME}`, robots: { index: false } };
 
 export default async function SettingsPage() {
-    const [me, sessions, theme] = await Promise.all([
+    const [me, sessions, theme, dataSaver] = await Promise.all([
         serverApi<UserResponse>('/auth/me'),
         serverApi<SessionsResponse>('/auth/sessions'),
         getTheme(),
+        getDataSaver(),
     ]);
 
     if (!me.data) {
@@ -52,6 +55,10 @@ export default async function SettingsPage() {
 
             <Section title="Appearance" description="Follow your device, or pick one.">
                 <ThemePicker initialTheme={theme} />
+            </Section>
+
+            <Section title="Data saver" description="Uses less data on slow or metered connections. Turns on by itself when your browser asks to save data.">
+                <DataSaverToggle initialEnabled={dataSaver.enabled} />
             </Section>
 
             <Section title="Email">

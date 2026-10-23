@@ -58,6 +58,8 @@ export interface Post {
     downvote_count: number;
     score: number;
     comment_count: number;
+    // Whether search engines should index this post's page (brand-new accounts and very short posts wait)
+    is_indexable: boolean;
     community: CommunityRef;
     author: AuthorRef | null;
     viewer: ContentViewer | null;
@@ -225,6 +227,26 @@ export interface FeedResponse extends PostsResponse {
 
 export interface PostResponse {
     post: Post;
+}
+
+export interface RelatedPost {
+    short_id: string;
+    slug: string;
+    title: string;
+    community: string;
+    score: number;
+    comment_count: number;
+}
+
+export interface RelatedPostsResponse {
+    related: RelatedPost[];
+    more_from_community: RelatedPost[];
+}
+
+export interface SitemapIndexResponse {
+    posts: { page: number; lastmod: string | null }[];
+    communities: { page: number; lastmod: string | null }[];
+    users: { page: number; lastmod: string | null }[];
 }
 
 export interface CommentsResponse {
