@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { APIUtility } from './utils/APIUtility';
 
 type AuthStateStore = {
     isAuthenticated: boolean;

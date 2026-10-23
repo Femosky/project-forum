@@ -7,19 +7,25 @@ import { DividerLine } from '../ui/DividerLine';
 import { usePOST } from '@/hooks/usePOST';
 import { useEffect } from 'react';
 import { APIUtility } from '@/lib/utils/APIUtility';
+import { CommunitiesResponse } from '@/types/api';
+import { useAuthStateStore } from '@/lib/stateStore';
 
 export default function SidebarList({ list }: { list: SidebarListProps[] }) {
-    const { data, isLoading, sendData } = usePOST();
+    const { data, isLoading, sendData } = usePOST<CommunitiesResponse>();
+    const isAuthenticated = useAuthStateStore((state) => state.isAuthenticated);
 
     useEffect(() => {
+        // Guests have no communities; fetching would 401 and bounce them to the login page
+        if (!isAuthenticated) return;
+
         async function fetchCommunities() {
             await sendData(`${APIUtility.getApiUrl()}/community/get/communities`);
         }
 
-        console.log('data: ', data);
-
         fetchCommunities();
-    }, []);
+        // Fetch when the user logs in
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated]);
 
     return (
         <>
@@ -44,9 +50,7 @@ export default function SidebarList({ list }: { list: SidebarListProps[] }) {
                             ) : isLoading ? (
                                 <div>Loading...</div>
                             ) : (
-                                data &&
-                                'communities' in data &&
-                                data.communities?.map((community) => {
+                                data?.communities?.map((community) => {
                                     return (
                                         <SidebarItem
                                             key={community.id}

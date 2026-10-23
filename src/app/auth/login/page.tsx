@@ -34,7 +34,7 @@ const formSchema = z.object({
 
 export default function LoginPage() {
     const router = useRouter();
-    const { data, error, reset, isLoading, sendData } = usePOST();
+    const { data, isLoading, sendData } = usePOST();
     const login = useAuthStateStore((state) => state.login);
     const isAuthenticated = useAuthStateStore((state) => state.isAuthenticated);
 
