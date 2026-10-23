@@ -2,6 +2,9 @@
 
 import { APIUtility } from '@/lib/utils/APIUtility';
 import { CommunityResponse } from '@/types/api';
+import CommunityHeader from '@/components/community/CommunityHeader';
+import EmptyState from '@/components/ui/EmptyState';
+import { MessagesSquare, Users } from 'lucide-react';
 
 interface PageProps {
     params: Promise<{ community_name: string }>;
@@ -33,16 +36,22 @@ export default async function CommunityPage({ params }: PageProps) {
     });
 
     if (!response.ok) {
-        return <div>Community not found</div>;
+        return (
+            <EmptyState
+                icon={<Users />}
+                title="Community not found"
+                description="Check the name, or browse other communities."
+            />
+        );
     }
 
     const data: CommunityResponse = await response.json();
 
+    // TODO(Phase 3): community post list with sort
     return (
-        <div>
-            <h1>{data.community.name}</h1>
-            <p>{data.community._count?.members ?? 0} members</p>
-            <p>{data.community._count?.posts ?? 0} posts</p>
+        <div className="mx-auto flex w-full max-w-content flex-col gap-3 sm:px-4 sm:py-4">
+            <CommunityHeader community={data.community} />
+            <EmptyState icon={<MessagesSquare />} title="Posts are coming" description="This community's posts will show here." />
         </div>
     );
 }

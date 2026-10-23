@@ -1,7 +1,8 @@
-import { Button } from '@/components/ui/Button';
+import IconButton from '@/components/ui/IconButton';
 import InputField from '@/components/ui/Input';
 import { APP_NAME } from '@/lib/constants';
 import { SearchIcon } from 'lucide-react';
+import Link from 'next/link';
 import { redirect, RedirectType } from 'next/navigation';
 
 const handleSearch = async (formData: FormData) => {
@@ -13,15 +14,24 @@ const handleSearch = async (formData: FormData) => {
 
 export function SearchSection() {
     return (
-        <section className="w-full flex items-center gap-4">
-            <form action={handleSearch} className="hidden md:flex w-full items-center gap-2">
-                <InputField variant="search" type="text" name="search" placeholder={`Search ${APP_NAME}`} />
-                <Button type="submit">Search</Button>
+        <>
+            <form action={handleSearch} role="search" className="relative hidden w-full max-w-xl md:block">
+                <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
+                <InputField
+                    variant="search"
+                    type="search"
+                    name="search"
+                    aria-label={`Search ${APP_NAME}`}
+                    placeholder={`Search ${APP_NAME}`}
+                    className="pl-10"
+                />
             </form>
 
-            <Button size="round" variant="transparent" className="block md:hidden">
-                <SearchIcon />
-            </Button>
-        </section>
+            <IconButton asChild aria-label="Search" className="md:hidden">
+                <Link href="/search">
+                    <SearchIcon />
+                </Link>
+            </IconButton>
+        </>
     );
 }

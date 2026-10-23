@@ -5,7 +5,7 @@ import NextTopLoader from 'nextjs-toploader';
 export default function TopLoader() {
     return (
         <NextTopLoader
-            color="green"
+            color="var(--link)"
             height={2}
             showSpinner={false}
             crawl={true}
