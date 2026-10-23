@@ -15,8 +15,14 @@ export function getPostPath(post: Pick<Post, 'community' | 'short_id' | 'slug'>)
     return `/c/${post.community.name}/${post.short_id}${post.slug ? `/${post.slug}` : ''}`;
 }
 
-export function authorName(author: Post['author']): string {
-    return author?.username ?? 'Anonymous';
+// The author's name, linking to their profile unless the post is anonymous
+function AuthorLink({ author, className }: { author: Post['author']; className?: string }) {
+    if (!author) return <span className={className}>Anonymous</span>;
+    return (
+        <Link href={`/u/${author.username}`} className={twMerge('relative z-10 hover:underline', className)}>
+            {author.username}
+        </Link>
+    );
 }
 
 function linkHost(url: string): string {
@@ -65,7 +71,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, clas
                             <span className="truncate">c/{communityName}</span>
                         </Link>
                     ) : (
-                        <span className="truncate font-bold text-text">{authorName(post.author)}</span>
+                        <AuthorLink author={post.author} className="truncate font-bold text-text" />
                     )}
                     <span aria-hidden>•</span>
                     <time dateTime={post.created_at} className="shrink-0">
@@ -74,7 +80,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, clas
                     {showCommunity && !isCompact && (
                         <>
                             <span aria-hidden>•</span>
-                            <span className="truncate">{authorName(post.author)}</span>
+                            <AuthorLink author={post.author} className="truncate" />
                         </>
                     )}
                     {post.pinned_at && <Pin className="size-3.5 shrink-0 text-success" aria-label="Pinned" />}

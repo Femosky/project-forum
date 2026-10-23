@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState } from 'react';
+import Link from 'next/link';
 import { ChevronDown, ChevronUp, Lock, MessagesSquare } from 'lucide-react';
 import { SortByDropdown } from './SortByDropdown';
 import TimeUtility from '@/lib/utils/TimeUtility';
@@ -316,10 +317,26 @@ function ShapeSection({
     );
 }
 
-function TitleSection({ username, createdAt, editedAt }: { username: string; createdAt: string; editedAt: string | null }) {
+function TitleSection({
+    username,
+    profile,
+    createdAt,
+    editedAt,
+}: {
+    username: string;
+    profile?: string;
+    createdAt: string;
+    editedAt: string | null;
+}) {
     return (
         <div className="flex min-h-8 flex-wrap items-center gap-x-1.5 text-xs text-muted">
-            <span className="font-bold text-text">{username}</span>
+            {profile ? (
+                <Link href={`/u/${profile}`} className="font-bold text-text hover:underline">
+                    {username}
+                </Link>
+            ) : (
+                <span className="font-bold text-text">{username}</span>
+            )}
             <span aria-hidden>•</span>
             {/* Rendered on the server and again in the browser a moment later, so the text may differ slightly */}
             <time dateTime={createdAt} suppressHydrationWarning>
@@ -339,7 +356,12 @@ function TextSection({ comment }: { comment: Comment }) {
     const isGone = comment.status === 'deleted' || comment.status === 'removed';
     return (
         <div className="flex flex-col gap-0.5">
-            <TitleSection username={getAuthorName(comment)} createdAt={comment.created_at} editedAt={comment.edited_at} />
+            <TitleSection
+                username={getAuthorName(comment)}
+                profile={comment.author?.username}
+                createdAt={comment.created_at}
+                editedAt={comment.edited_at}
+            />
             {isGone ? <p className="italic text-muted">{comment.body}</p> : <Markdown text={comment.body} />}
         </div>
     );
