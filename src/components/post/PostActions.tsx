@@ -27,6 +27,7 @@ export function CommentCountButton({ post, href }: { post: Post; href: string })
 // The post's "..." menu. Deleting from the post page goes back to the community; from a list it drops out.
 export function PostOptions({ post, leaveOnDelete }: { post: Post; leaveOnDelete: boolean }) {
     const router = useRouter();
+    const setEditingPost = useUIStore((state) => state.setEditingPost);
 
     function handleDeleted() {
         if (leaveOnDelete) router.push(`/c/${post.community.name}`);
@@ -40,6 +41,8 @@ export function PostOptions({ post, leaveOnDelete }: { post: Post; leaveOnDelete
             saved={post.viewer?.saved}
             isAuthor={post.viewer?.is_author}
             onDeleted={handleDeleted}
+            // Editing happens in place on the post's own page
+            onEdit={leaveOnDelete && post.viewer?.is_author ? () => setEditingPost(post.id) : undefined}
         />
     );
 }

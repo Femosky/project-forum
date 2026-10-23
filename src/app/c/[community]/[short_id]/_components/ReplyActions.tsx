@@ -15,9 +15,10 @@ type ReplyActionsProps = ComponentProps<'div'> & {
     isReplying: boolean;
     toggleReplyMode: () => void;
     onDeleted: () => void;
+    onEdit: () => void;
 };
 
-export function ReplyActions({ className, comment, canReply, isReplying, toggleReplyMode, onDeleted, ...props }: ReplyActionsProps) {
+export function ReplyActions({ className, comment, canReply, isReplying, toggleReplyMode, onDeleted, onEdit, ...props }: ReplyActionsProps) {
     const requireAuth = useRequireAuth();
     const isGone = comment.status === 'deleted' || comment.status === 'removed';
 
@@ -58,6 +59,7 @@ export function ReplyActions({ className, comment, canReply, isReplying, toggleR
                     saved={comment.viewer?.saved}
                     isAuthor={comment.viewer?.is_author}
                     onDeleted={onDeleted}
+                    onEdit={onEdit}
                 />
             )}
         </div>

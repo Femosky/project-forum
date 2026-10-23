@@ -8,6 +8,8 @@ import TimeUtility from '@/lib/utils/TimeUtility';
 import VoteControl from './VoteControl';
 import ShareButton from './ShareButton';
 import { CommentCountButton, PostOptions } from './PostActions';
+import PostBody from './PostBody';
+import { stripMarkdown } from '@/components/common/Markdown';
 
 export function getPostPath(post: Pick<Post, 'community' | 'short_id' | 'slug'>): string {
     return `/c/${post.community.name}/${post.short_id}${post.slug ? `/${post.slug}` : ''}`;
@@ -94,11 +96,9 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, clas
 
             {post.type === 'link' && post.url && <LinkPreviewCard post={post} compact={isCompact} />}
 
-            {post.body && (
-                <p className={twMerge('whitespace-pre-wrap break-words', isCompact ? 'line-clamp-3 text-sm text-muted' : 'text-base')}>
-                    {post.body}
-                </p>
-            )}
+            {isCompact
+                ? post.body && <p className="line-clamp-3 break-words text-sm text-muted">{stripMarkdown(post.body)}</p>
+                : <PostBody post={post} />}
 
             <footer className="mt-1 flex flex-wrap items-center gap-2">
                 <VoteControl

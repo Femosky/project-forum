@@ -13,6 +13,9 @@ import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { useUIStore } from '@/lib/uiStore';
 import { Comment, CommentResponse, CommentSort, CommentsResponse } from '@/types/api';
+import Markdown from '@/components/common/Markdown';
+import TextArea from '@/components/ui/TextArea';
+import { COMMENT_BODY_MAX } from '@/lib/constants';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from './commentsApi';
 
 // Replies nest this deep before the thread stops indenting further
@@ -139,6 +142,7 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
     const thread = useThread();
     const [comment, setComment] = useState<Comment>(initialComment);
     const [isReplying, setIsReplying] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [isExpanded, setIsExpanded] = useState(true);
     const [isLoadingReplies, setIsLoadingReplies] = useState(false);
     const [repliesError, setRepliesError] = useState<string | null>(null);
@@ -184,6 +188,12 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
         setIsReplying(false);
     }
 
+    async function handleEdit(body: string) {
+        const { comment: updated } = await api<CommentResponse>(`/comments/${comment.id}`, { method: 'PATCH', body: { body } });
+        setComment((current) => ({ ...current, body: updated.body, edited_at: updated.edited_at }));
+        setIsEditing(false);
+    }
+
     function handleDeleted() {
         setComment((current) => ({
             ...current,
@@ -207,15 +217,28 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
 
             <div className="flex min-w-0 w-full flex-col gap-3">
                 <div className="flex w-full flex-col gap-1">
-                    <TextSection comment={comment} />
+                    {isEditing ? (
+                        <>
+                            <TitleSection username={getAuthorName(comment)} createdAt={comment.created_at} editedAt={comment.edited_at} />
+                            <EditBox initialBody={comment.body} onSave={handleEdit} onCancel={() => setIsEditing(false)} />
+                        </>
+                    ) : (
+                        <TextSection comment={comment} />
+                    )}
 
-                    <ReplyActions
-                        comment={comment}
-                        canReply={canReply}
-                        isReplying={isReplying}
-                        toggleReplyMode={() => setIsReplying(!isReplying)}
-                        onDeleted={handleDeleted}
-                    />
+                    {!isEditing && (
+                        <ReplyActions
+                            comment={comment}
+                            canReply={canReply}
+                            isReplying={isReplying}
+                            toggleReplyMode={() => setIsReplying(!isReplying)}
+                            onDeleted={handleDeleted}
+                            onEdit={() => {
+                                setIsReplying(false);
+                                setIsEditing(true);
+                            }}
+                        />
+                    )}
 
                     {isReplying && (
                         <ContentReplySection fromReply toggleReplyMode={() => setIsReplying(false)} handleReply={handleReply} />
@@ -317,7 +340,54 @@ function TextSection({ comment }: { comment: Comment }) {
     return (
         <div className="flex flex-col gap-0.5">
             <TitleSection username={getAuthorName(comment)} createdAt={comment.created_at} editedAt={comment.edited_at} />
-            <p className={isGone ? 'italic text-muted' : 'whitespace-pre-wrap break-words'}>{comment.body}</p>
+            {isGone ? <p className="italic text-muted">{comment.body}</p> : <Markdown text={comment.body} />}
         </div>
+    );
+}
+
+// In-place editor for the viewer's own comment
+function EditBox({ initialBody, onSave, onCancel }: { initialBody: string; onSave: (body: string) => Promise<void>; onCancel: () => void }) {
+    const [body, setBody] = useState(initialBody);
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        if (!body.trim() || isSaving) return;
+        setIsSaving(true);
+        setError(null);
+        try {
+            await onSave(body.trim());
+        } catch (error) {
+            setError(errorMessage(error));
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-2 rounded-2xl border border-border-strong bg-surface px-3 py-2 focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/40"
+        >
+            <TextArea
+                variant="bare"
+                name="edit-comment"
+                aria-label="Edit your comment"
+                placeholder="Edit your comment"
+                autoFocus
+                maxLength={COMMENT_BODY_MAX}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+            />
+            {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
+            <div className="flex justify-end gap-2">
+                <Button size="sm" variant="ghost" onClick={onCancel} disabled={isSaving}>
+                    Cancel
+                </Button>
+                <Button type="submit" size="sm" disabled={!body.trim() || body.trim() === initialBody || isSaving}>
+                    {isSaving ? 'Saving...' : 'Save'}
+                </Button>
+            </div>
+        </form>
     );
 }

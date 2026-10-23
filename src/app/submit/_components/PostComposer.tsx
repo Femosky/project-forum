@@ -6,7 +6,7 @@ import { FileText, Link2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import InputField, { fieldStyles } from '@/components/ui/Input';
-import TextArea from '@/components/ui/TextArea';
+import MarkdownEditor from '@/components/common/MarkdownEditor';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { getPostPath } from '@/components/post/PostCard';
 import { api } from '@/lib/api/client';
@@ -217,14 +217,13 @@ export function PostComposer({ communities, initialCommunity }: { communities: C
                 <label htmlFor="body" className="text-sm font-semibold">
                     {draft.type === 'link' ? 'Add some context (optional)' : 'Details (optional)'}
                 </label>
-                <TextArea
+                <MarkdownEditor
                     name="body"
                     placeholder="Add details, background or what you've already tried"
-                    className="min-h-40"
                     maxLength={POST_BODY_MAX}
                     value={draft.body}
-                    onChange={(e) => update('body', e.target.value)}
-                    outline={fieldErrors.body ? 'error' : 'default'}
+                    onChange={(value) => update('body', value)}
+                    invalid={Boolean(fieldErrors.body)}
                 />
                 {fieldErrors.body && <ErrorMessage errorMessage={fieldErrors.body} />}
             </div>
