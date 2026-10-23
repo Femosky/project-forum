@@ -197,6 +197,20 @@ export interface UnreadCountResponse {
     count: number;
 }
 
+export interface Flair {
+    id: string;
+    name: string;
+    color: string | null;
+}
+
+export interface FlairsResponse {
+    flairs: Flair[];
+}
+
+export interface LinkPreviewResponse {
+    preview: LinkPreview | null;
+}
+
 export type PostSort = 'hot' | 'new' | 'top';
 export type CommentSort = 'best' | 'top' | 'new' | 'old';
 

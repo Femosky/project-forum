@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { Lock, Plus, Users } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
-import { CommunityResponse, PostsResponse } from '@/types/api';
+import { CommunityResponse, FlairsResponse, PostsResponse } from '@/types/api';
 import CommunityHeader from '@/components/community/CommunityHeader';
+import ManageFlairs from '@/components/community/ManageFlairs';
 import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
 import { PostList, SortTabs, parsePostSort } from '@/components/post/PostList';
@@ -52,11 +53,16 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
         );
     }
 
+    const role = community.data.viewer?.role;
+    const isModerator = role === 'owner' || role === 'moderator';
+    const flairs = isModerator ? await serverApi<FlairsResponse>(`/communities/${encodeURIComponent(name)}/flairs`) : null;
+
     const isPrivateAndClosed = !posts.data && (posts.status === 403 || posts.status === 404);
 
     return (
         <div className="mx-auto flex w-full max-w-content flex-col gap-3 sm:px-4 sm:py-4">
             <CommunityHeader community={community.data.community} viewer={community.data.viewer} />
+            {isModerator && <ManageFlairs community={community.data.community.name} initialFlairs={flairs?.data?.flairs ?? []} />}
 
             {isPrivateAndClosed ? (
                 <EmptyState
