@@ -16,9 +16,21 @@ type ReplyActionsProps = ComponentProps<'div'> & {
     toggleReplyMode: () => void;
     onDeleted: () => void;
     onEdit: () => void;
+    // Present when the viewer moderates this community
+    onModerated?: (comment: Comment) => void;
 };
 
-export function ReplyActions({ className, comment, canReply, isReplying, toggleReplyMode, onDeleted, onEdit, ...props }: ReplyActionsProps) {
+export function ReplyActions({
+    className,
+    comment,
+    canReply,
+    isReplying,
+    toggleReplyMode,
+    onDeleted,
+    onEdit,
+    onModerated,
+    ...props
+}: ReplyActionsProps) {
     const requireAuth = useRequireAuth();
     const isGone = comment.status === 'deleted' || comment.status === 'removed';
 
@@ -52,7 +64,7 @@ export function ReplyActions({ className, comment, canReply, isReplying, toggleR
                 </Button>
             )}
 
-            {!isGone && (
+            {(!isGone || (onModerated && comment.status === 'removed')) && (
                 <ContentOptionsMenu
                     targetType="comment"
                     id={comment.id}
@@ -60,6 +72,14 @@ export function ReplyActions({ className, comment, canReply, isReplying, toggleR
                     isAuthor={comment.viewer?.is_author}
                     onDeleted={onDeleted}
                     onEdit={onEdit}
+                    moderation={
+                        onModerated && {
+                            status: comment.status,
+                            pinned: Boolean(comment.pinned_at),
+                            canPin: comment.depth === 0,
+                            onModerated: (body) => onModerated((body as { comment: Comment }).comment),
+                        }
+                    }
                 />
             )}
         </div>

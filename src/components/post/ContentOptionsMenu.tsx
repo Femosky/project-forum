@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Bookmark, BookmarkCheck, Ellipsis, Flag, Pencil, Trash2 } from 'lucide-react';
+import { Bookmark, BookmarkCheck, CircleCheck, Ellipsis, Flag, Lock, LockOpen, Pencil, Pin, PinOff, ShieldX, Trash2 } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import Button from '@/components/ui/Button';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
-import { Dropdown, DropdownContent, DropdownItem, DropdownSeparator, DropdownTrigger } from '@/components/ui/Dropdown';
+import { Dropdown, DropdownContent, DropdownItem, DropdownLabel, DropdownSeparator, DropdownTrigger } from '@/components/ui/Dropdown';
+import { ContentStatus } from '@/types/api';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -21,11 +22,43 @@ type ContentOptionsMenuProps = {
     onDeleted?: () => void;
     // Offered to the author when the content can be edited where it's shown
     onEdit?: () => void;
+    // Moderator tools, shown only to moderators of the community
+    moderation?: Moderation;
     label?: string;
 };
 
+type Moderation = {
+    status: ContentStatus;
+    pinned: boolean;
+    canPin: boolean;
+    // Gets the API's response body after an action succeeds
+    onModerated: (body: unknown) => void;
+};
+
+type ModAction = 'remove' | 'approve' | 'lock' | 'unlock' | 'pin' | 'unpin';
+
+function moderationItems({ status, pinned, canPin }: Moderation): { action: ModAction; label: string; icon: typeof Pin; destructive?: boolean }[] {
+    const isVisible = status === 'active' || status === 'locked';
+    return [
+        ...(canPin && isVisible ? [pinned ? { action: 'unpin' as const, label: 'Unpin', icon: PinOff } : { action: 'pin' as const, label: 'Pin', icon: Pin }] : []),
+        ...(status === 'active' ? [{ action: 'lock' as const, label: 'Lock replies', icon: Lock }] : []),
+        ...(status === 'locked' ? [{ action: 'unlock' as const, label: 'Unlock replies', icon: LockOpen }] : []),
+        ...(isVisible ? [{ action: 'remove' as const, label: 'Remove', icon: ShieldX, destructive: true }] : []),
+        ...(status === 'removed' || status === 'pending' ? [{ action: 'approve' as const, label: 'Approve', icon: CircleCheck }] : []),
+    ];
+}
+
 // "..." menu on posts and comments: save, report, and delete for the author
-export function ContentOptionsMenu({ targetType, id, saved = false, isAuthor = false, onDeleted, onEdit, label }: ContentOptionsMenuProps) {
+export function ContentOptionsMenu({
+    targetType,
+    id,
+    saved = false,
+    isAuthor = false,
+    onDeleted,
+    onEdit,
+    moderation,
+    label,
+}: ContentOptionsMenuProps) {
     const [isSaved, setIsSaved] = useState(saved);
     const [isReporting, setIsReporting] = useState(false);
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -48,6 +81,18 @@ export function ContentOptionsMenu({ targetType, id, saved = false, isAuthor = f
     function openReport() {
         if (!requireAuth('report')) return;
         setIsReporting(true);
+    }
+
+    const [modError, setModError] = useState<string | null>(null);
+
+    async function moderate(action: ModAction) {
+        setModError(null);
+        try {
+            const body = await api(`${path}/moderation`, { method: 'POST', body: { action } });
+            moderation?.onModerated(body);
+        } catch (error) {
+            setModError(errorMessage(error));
+        }
     }
 
     async function handleDelete() {
@@ -94,8 +139,29 @@ export function ContentOptionsMenu({ targetType, id, saved = false, isAuthor = f
                             </DropdownItem>
                         </>
                     )}
+                    {moderation && moderationItems(moderation).length > 0 && (
+                        <>
+                            <DropdownSeparator />
+                            <DropdownLabel>Moderation</DropdownLabel>
+                            {moderationItems(moderation).map((item) => (
+                                <DropdownItem key={item.action} destructive={item.destructive} onSelect={() => moderate(item.action)}>
+                                    <item.icon /> {item.label}
+                                </DropdownItem>
+                            ))}
+                        </>
+                    )}
                 </DropdownContent>
             </Dropdown>
+
+            {modError && (
+                <Dialog open onOpenChange={() => setModError(null)}>
+                    <DialogContent title="That didn't work" description={modError}>
+                        <Button className="w-full" onClick={() => setModError(null)}>
+                            OK
+                        </Button>
+                    </DialogContent>
+                </Dialog>
+            )}
 
             <ReportDialog targetType={targetType} targetId={id} open={isReporting} onOpenChange={setIsReporting} />
 

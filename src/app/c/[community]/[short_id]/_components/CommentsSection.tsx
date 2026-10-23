@@ -20,13 +20,17 @@ import { COMMENT_BODY_MAX } from '@/lib/constants';
 import { CommentSkeleton } from '@/components/post/PostSkeletons';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from './commentsApi';
 
-// Replies nest this deep before the thread stops indenting further
+// Replies nest this deep; below that, "Continue this thread" opens the rest on its own
 const MAX_VISIBLE_DEPTH = 8;
 const MAX_PAGE = 100;
 
 interface ThreadContextValue {
     postId: string;
+    postPath: string;
     isLocked: boolean;
+    isModerator: boolean;
+    // Depth of the comments at the top of this view (not 0 when showing one comment's thread)
+    baseDepth: number;
     sort: CommentSort;
     createComment: (body: string, parentId?: string) => Promise<Comment>;
 }
@@ -41,14 +45,28 @@ function useThread(): ThreadContextValue {
 
 type CommentsSectionProps = {
     postId: string;
+    postPath: string;
     isLocked: boolean;
+    isModerator: boolean;
+    // Showing one comment and its replies (?comment=) rather than the whole thread
+    isSingleThread: boolean;
     commentCount: number;
     initialComments: Comment[];
     initialCursor: string | null;
     loadFailed: boolean;
 };
 
-export function CommentsSection({ postId, isLocked, commentCount, initialComments, initialCursor, loadFailed }: CommentsSectionProps) {
+export function CommentsSection({
+    postId,
+    postPath,
+    isLocked,
+    isModerator,
+    isSingleThread,
+    commentCount,
+    initialComments,
+    initialCursor,
+    loadFailed,
+}: CommentsSectionProps) {
     const [comments, setComments] = useState<Comment[]>(initialComments);
     const [cursor, setCursor] = useState<string | null>(initialCursor);
     const [sort, setSort] = useState<CommentSort>(DEFAULT_COMMENT_SORT);
@@ -93,9 +111,11 @@ export function CommentsSection({ postId, isLocked, commentCount, initialComment
     }
 
     return (
-        <ThreadContext.Provider value={{ postId, isLocked, sort, createComment }}>
+        <ThreadContext.Provider
+            value={{ postId, postPath, isLocked, isModerator, baseDepth: initialComments[0]?.depth ?? 0, sort, createComment }}
+        >
             <div className="flex flex-col gap-4">
-                {isLocked ? (
+                {isSingleThread ? null : isLocked ? (
                     <p className="flex items-center gap-2 rounded-xl bg-surface-muted px-4 py-3 text-sm text-muted">
                         <Lock className="size-4" /> Comments are locked. You can still read and vote.
                     </p>
@@ -103,7 +123,7 @@ export function CommentsSection({ postId, isLocked, commentCount, initialComment
                     <ContentReplySection handleReply={handleTopLevelReply} />
                 )}
 
-                {comments.length > 0 && (
+                {comments.length > 0 && !isSingleThread && (
                     <div className="-ml-3">
                         <SortByDropdown sort={sort} onChange={changeSort} disabled={isLoading} />
                     </div>
@@ -213,14 +233,19 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
         }));
     }
 
-    const nested = comment.depth < MAX_VISIBLE_DEPTH;
+    // Deep threads continue in their own view instead of squeezing further right
+    const continuesElsewhere = hasChildren && comment.depth - thread.baseDepth >= MAX_VISIBLE_DEPTH - 1;
+
+    function handleModerated(updated: Comment) {
+        setComment((current) => ({ ...current, status: updated.status, body: updated.body, pinned_at: updated.pinned_at }));
+    }
 
     return (
         // Notifications link here with #c-{shortId}
         <div id={`c-${comment.short_id}`} className="flex w-full scroll-mt-header gap-2.5">
             <ShapeSection
                 username={getAuthorName(comment)}
-                hasChildren={hasChildren}
+                hasChildren={hasChildren && !continuesElsewhere}
                 isExpanded={isExpanded}
                 toggleHideAllReplies={() => setIsExpanded(false)}
             />
@@ -243,6 +268,7 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
                             isReplying={isReplying}
                             toggleReplyMode={() => setIsReplying(!isReplying)}
                             onDeleted={handleDeleted}
+                            onModerated={thread.isModerator ? handleModerated : undefined}
                             onEdit={() => {
                                 setIsReplying(false);
                                 setIsEditing(true);
@@ -255,16 +281,21 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
                     )}
                 </div>
 
-                {/* Child replies. Past the visible depth they stop indenting so threads stay readable on phones. */}
-                {isExpanded && replies.length > 0 && (
-                    <div className={nested ? 'flex flex-col gap-3' : '-ml-10 flex flex-col gap-3 border-l-2 border-border pl-2'}>
+                {continuesElsewhere && (
+                    <Link href={`${thread.postPath}?comment=${comment.short_id}`} className="-mt-1 text-sm font-semibold text-link hover:underline">
+                        Continue this thread ({totalReplies} {totalReplies === 1 ? 'reply' : 'replies'}) →
+                    </Link>
+                )}
+
+                {!continuesElsewhere && isExpanded && replies.length > 0 && (
+                    <div className="flex flex-col gap-3">
                         {replies.map((reply) => (
                             <CommentBlock key={reply.id} initialComment={reply} />
                         ))}
                     </div>
                 )}
 
-                {hasChildren && (
+                {hasChildren && !continuesElsewhere && (
                     <div className="-ml-3 flex flex-wrap items-center gap-1">
                         {(!isExpanded || hiddenReplies > 0) && (
                             <Button
@@ -371,6 +402,10 @@ function TextSection({ comment }: { comment: Comment }) {
                 createdAt={comment.created_at}
                 editedAt={comment.edited_at}
             />
+            {comment.status === 'removed' && comment.body !== '[removed]' && (
+                // Only moderators get the text of a removed comment back
+                <p className="text-xs font-semibold text-danger">Removed by moderators</p>
+            )}
             {isGone ? <p className="italic text-muted">{comment.body}</p> : <Markdown text={comment.body} />}
         </div>
     );

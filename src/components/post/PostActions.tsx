@@ -25,7 +25,7 @@ export function CommentCountButton({ post, href }: { post: Post; href: string })
 }
 
 // The post's "..." menu. Deleting from the post page goes back to the community; from a list it drops out.
-export function PostOptions({ post, leaveOnDelete }: { post: Post; leaveOnDelete: boolean }) {
+export function PostOptions({ post, leaveOnDelete, isModerator }: { post: Post; leaveOnDelete: boolean; isModerator: boolean }) {
     const router = useRouter();
     const setEditingPost = useUIStore((state) => state.setEditingPost);
 
@@ -43,6 +43,12 @@ export function PostOptions({ post, leaveOnDelete }: { post: Post; leaveOnDelete
             onDeleted={handleDeleted}
             // Editing happens in place on the post's own page
             onEdit={leaveOnDelete && post.viewer?.is_author ? () => setEditingPost(post.id) : undefined}
+            // The page re-renders from the server to show the new status, pin or lock
+            moderation={
+                isModerator
+                    ? { status: post.status, pinned: Boolean(post.pinned_at), canPin: true, onModerated: () => router.refresh() }
+                    : undefined
+            }
         />
     );
 }

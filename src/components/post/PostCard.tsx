@@ -39,10 +39,12 @@ type PostCardProps = {
     variant?: 'compact' | 'full';
     // Hide the community name when the list is already inside that community
     showCommunity?: boolean;
+    // Shows moderator tools in the post's menu
+    isModerator?: boolean;
     className?: string;
 };
 
-export function PostCard({ post, variant = 'compact', showCommunity = true, className }: PostCardProps) {
+export function PostCard({ post, variant = 'compact', showCommunity = true, isModerator = false, className }: PostCardProps) {
     const isCompact = variant === 'compact';
     const postPath = getPostPath(post);
     const communityName = post.community.name;
@@ -85,18 +87,19 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, clas
                     )}
                     {post.pinned_at && <Pin className="size-3.5 shrink-0 text-success" aria-label="Pinned" />}
                 </div>
-                <PostOptions post={post} leaveOnDelete={!isCompact} />
+                <PostOptions post={post} leaveOnDelete={!isCompact} isModerator={isModerator} />
             </header>
 
             <TitleTag className={twMerge('font-bold leading-snug break-words', isCompact ? 'text-lg' : 'text-2xl')}>
                 {post.title}
             </TitleTag>
 
-            {(post.flair || post.is_nsfw || isLocked) && (
+            {(post.flair || post.is_nsfw || isLocked || post.status === 'removed') && (
                 <div className="flex flex-wrap gap-1.5">
                     {post.flair && <Badge>{post.flair.name}</Badge>}
                     {post.is_nsfw && <Badge variant="danger">NSFW</Badge>}
                     {isLocked && <Badge>Locked</Badge>}
+                    {post.status === 'removed' && <Badge variant="danger">Removed by moderators</Badge>}
                 </div>
             )}
 
