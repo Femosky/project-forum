@@ -63,7 +63,8 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
                     {data.notifications.map((notification) => {
                         const Icon = ICONS[notification.type];
                         const { post } = notification;
-                        const href = `/c/${post.community}/${post.short_id}${post.slug ? `/${post.slug}` : ''}#c-${notification.comment.short_id}`;
+                        const short = notification.comment.short_id;
+                        const href = `/c/${post.community}/${post.short_id}${post.slug ? `/${post.slug}` : ''}?comment=${short}#c-${short}`;
                         const isUnread = notification.read_at === null;
                         return (
                             <li key={notification.id}>
