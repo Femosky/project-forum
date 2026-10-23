@@ -73,8 +73,9 @@ export function usePOST<T = unknown>() {
 
             let response = await request(url, payload);
 
-            // If the status is 401 (Unauthorized), refresh the access token and retry once
-            if (response.status === 401) {
+            // If the status is 401 (Unauthorized), refresh the access token and retry once.
+            // Auth endpoints (e.g. a wrong password on login) return 401 for their own reasons.
+            if (response.status === 401 && !url.includes('/auth/')) {
                 const refreshedData = await APIService.refreshAccessToken();
 
                 if (refreshedData instanceof Error) {

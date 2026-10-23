@@ -34,7 +34,7 @@ const formSchema = z.object({
 
 export default function LoginPage() {
     const router = useRouter();
-    const { data, isLoading, sendData } = usePOST();
+    const { data, error, isLoading, sendData } = usePOST();
     const login = useAuthStateStore((state) => state.login);
     const isAuthenticated = useAuthStateStore((state) => state.isAuthenticated);
 
@@ -100,7 +100,6 @@ export default function LoginPage() {
     }, [isAuthenticated, router]);
 
     useEffect(() => {
-        console.log('datdjmkw');
         if (!ErrorUtility.isNullOrUndefined(data)) {
             login();
             router.push('/');
@@ -136,7 +135,7 @@ export default function LoginPage() {
                 <Button variant={isLoading ? 'disabled' : 'default'} type="submit" disabled={isLoading}>
                     {isLoading ? 'Logging in...' : 'Login'}
                 </Button>
-                {/* {isLoading && <p>Loading..;</p>} */}
+                {error && <ErrorMessage errorMessage={error.message} />}
             </form>
         </div>
     );
