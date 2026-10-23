@@ -13,12 +13,12 @@ import {
 } from '@/components/ui/Dropdown';
 import { Theme, THEME_COOKIE_NAME, THEMES } from '@/lib/constants';
 
-type ThemeChoice = Theme | 'system';
+export type ThemeChoice = Theme | 'system';
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
 // The cookie lets the server render <html data-theme> on the next request, so there is no flash
-function applyTheme(choice: ThemeChoice) {
+export function applyTheme(choice: ThemeChoice) {
     const root = document.documentElement;
 
     if (choice === 'system') {

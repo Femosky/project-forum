@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from '@/components/ui/Dropdown';
 import { api } from '@/lib/api/client';
 import { useAuthStateStore } from '@/lib/stateStore';
-import { Bookmark, LogOut, Plus, User } from 'lucide-react';
+import { Bookmark, LogOut, Plus, Settings, User } from 'lucide-react';
 import { useState } from 'react';
 
 export function UserSection() {
@@ -63,6 +63,11 @@ export function UserSection() {
                     <DropdownItem asChild>
                         <Link href="/saved">
                             <Bookmark /> Saved
+                        </Link>
+                    </DropdownItem>
+                    <DropdownItem asChild>
+                        <Link href="/settings">
+                            <Settings /> Settings
                         </Link>
                     </DropdownItem>
                     <DropdownItem onSelect={handleLogout} disabled={isLoading}>
