@@ -4,6 +4,16 @@ import { CRAWLER_UA } from './src/lib/bots';
 const nextConfig: NextConfig = {
     // Crawlers get metadata in <head> rather than streamed after it
     htmlLimitedBots: CRAWLER_UA,
+    // Analytics events reach PostHog through the site's own origin (src/lib/analytics.ts)
+    async rewrites() {
+        const host = (process.env.POSTHOG_HOST || 'https://eu.i.posthog.com').replace(/\/$/, '');
+        return [{ source: '/_a/:path*', destination: `${host}/:path*` }];
+    },
+    // Private testing (PRIVATE_SITE=true): every response asks search engines not to index it
+    async headers() {
+        if (process.env.PRIVATE_SITE !== 'true') return [];
+        return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }];
+    },
     // Links shared before communities moved to /c/{name}
     async redirects() {
         return [

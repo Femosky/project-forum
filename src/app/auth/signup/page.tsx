@@ -133,6 +133,17 @@ function SignupForm() {
                         {isLoading ? 'Creating your account...' : 'Sign up'}
                     </Button>
                     {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
+                    <p className="text-center text-xs text-muted">
+                        By signing up you agree to the{' '}
+                        <Link href="/policies/terms" className="text-link hover:underline">
+                            terms
+                        </Link>{' '}
+                        and{' '}
+                        <Link href="/policies/privacy" className="text-link hover:underline">
+                            privacy policy
+                        </Link>
+                        .
+                    </p>
                 </form>
 
                 <p className="mt-6 text-center text-sm text-muted">

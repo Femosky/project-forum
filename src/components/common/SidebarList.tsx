@@ -109,6 +109,9 @@ const FOOTER_LINKS = [
     { href: '/policies/community-guidelines', label: 'Guidelines' },
     { href: '/policies/moderators', label: 'For moderators' },
     { href: '/policies/legal', label: 'Legal and takedowns' },
+    { href: '/policies/terms', label: 'Terms' },
+    { href: '/policies/privacy', label: 'Privacy' },
+    { href: '/policies/cookies', label: 'Cookies' },
 ];
 
 function SidebarItem({

@@ -101,5 +101,5 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
     // Pages only: skip Next's own assets and files with an extension
-    matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.[a-z0-9]+$).*)'],
+    matcher: ['/((?!_next/static|_next/image|_a/|favicon.ico|.*\\.[a-z0-9]+$).*)'],
 };
