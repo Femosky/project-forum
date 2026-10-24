@@ -219,7 +219,7 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
 
     async function handleEdit(body: string) {
         const { comment: updated } = await api<CommentResponse>(`/comments/${comment.id}`, { method: 'PATCH', body: { body } });
-        setComment((current) => ({ ...current, body: updated.body, edited_at: updated.edited_at }));
+        setComment((current) => ({ ...current, body: updated.body, edited_at: updated.edited_at, status: updated.status }));
         setIsEditing(false);
     }
 
@@ -405,6 +405,11 @@ function TextSection({ comment }: { comment: Comment }) {
             {comment.status === 'removed' && comment.body !== '[removed]' && (
                 // Only moderators get the text of a removed comment back
                 <p className="text-xs font-semibold text-danger">Removed by moderators</p>
+            )}
+            {comment.status === 'pending' && (
+                <p className="text-xs font-semibold text-muted">
+                    {comment.held_reason ? `Held for review: ${comment.held_reason}` : 'Waiting for a moderator to review it. Only you can see it for now.'}
+                </p>
             )}
             {isGone ? <p className="italic text-muted">{comment.body}</p> : <Markdown text={comment.body} />}
         </div>

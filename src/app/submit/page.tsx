@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { PenLine } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
-import { CommunitiesResponse, MyCommunitiesResponse } from '@/types/api';
+import { CommunitiesResponse, MyCommunitiesResponse, UserResponse } from '@/types/api';
 import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
 import PostComposer, { CommunityOption } from './_components/PostComposer';
@@ -13,9 +13,10 @@ type PageProps = { searchParams: Promise<{ community?: string }> };
 
 export default async function SubmitPage({ searchParams }: PageProps) {
     const { community } = await searchParams;
-    const [mine, popular] = await Promise.all([
+    const [mine, popular, me] = await Promise.all([
         serverApi<MyCommunitiesResponse>('/users/me/communities'),
         serverApi<CommunitiesResponse>('/communities?sort=popular&limit=100'),
+        serverApi<UserResponse>('/auth/me'),
     ]);
 
     if (mine.status === 401 || mine.status === 403) {
@@ -44,7 +45,12 @@ export default async function SubmitPage({ searchParams }: PageProps) {
     return (
         <div className="mx-auto w-full max-w-content px-4 py-4">
             <h1 className="mb-4 text-2xl font-extrabold">Create a post</h1>
-            <PostComposer communities={[...joined, ...others]} initialCommunity={community} />
+            <PostComposer
+                communities={[...joined, ...others]}
+                initialCommunity={community}
+                canPostLinks={me.data?.user.can_post_links ?? true}
+                canPostAnonymously={me.data?.user.can_post_anonymously ?? true}
+            />
         </div>
     );
 }

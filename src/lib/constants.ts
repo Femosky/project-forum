@@ -15,6 +15,8 @@ export const SITE_OG_LOCALE = 'en_NG';
 export const TWITTER_HANDLE = process.env.NEXT_PUBLIC_TWITTER_HANDLE || undefined;
 // Colours for generated share images (match --accent and friends in globals.css)
 export const BRAND_COLORS = { background: '#00203f', text: '#ffffff', accent: '#adefd1', muted: '#9fb6cc' } as const;
+// Where legal requests, takedown notices and appeals go (shown on the policy pages)
+export const LEGAL_EMAIL = process.env.NEXT_PUBLIC_LEGAL_EMAIL || 'legal@forum.oskeylabs.com';
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:3001';
 export const API_BASE = `${BACKEND_URL}/v1`;
 

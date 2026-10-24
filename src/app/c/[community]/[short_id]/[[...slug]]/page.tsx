@@ -112,6 +112,13 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                     ]),
                 ]}
             />
+            {post.status === 'pending' && (
+                <p role="status" className="mx-4 rounded-xl bg-highlight px-4 py-3 text-sm text-highlight-fg">
+                    {isModerator
+                        ? 'This post is waiting in the mod queue. Approve or remove it from the options menu.'
+                        : "Your post is waiting for a moderator to review it. Only you can see it until it's approved."}
+                </p>
+            )}
             <PostCard post={post} variant="full" isModerator={isModerator} className="sm:px-4" />
 
             {/* Reply box and comments */}

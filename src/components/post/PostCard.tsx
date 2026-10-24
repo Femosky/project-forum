@@ -94,12 +94,13 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 {post.title}
             </TitleTag>
 
-            {(post.flair || post.is_nsfw || isLocked || post.status === 'removed') && (
+            {(post.flair || post.is_nsfw || isLocked || post.status === 'removed' || post.status === 'pending') && (
                 <div className="flex flex-wrap gap-1.5">
                     {post.flair && <Badge>{post.flair.name}</Badge>}
                     {post.is_nsfw && <Badge variant="danger">NSFW</Badge>}
                     {isLocked && <Badge>Locked</Badge>}
                     {post.status === 'removed' && <Badge variant="danger">Removed by moderators</Badge>}
+                    {post.status === 'pending' && <Badge variant="highlight">{post.held_reason ? `Held: ${post.held_reason}` : 'Waiting for review'}</Badge>}
                 </div>
             )}
 
