@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import Button from '@/components/ui/Button';
+import { useChallenge } from '@/components/common/Turnstile';
 import InputField from '@/components/ui/Input';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
@@ -28,6 +29,7 @@ function LoginForm() {
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const challenge = useChallenge(false);
     const [error, setError] = useState<string | null>(null);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -36,15 +38,20 @@ function LoginForm() {
             setError('Enter your email or username and your password.');
             return;
         }
+        if (challenge.isPending) {
+            setError('Complete the check below first.');
+            return;
+        }
 
         setIsLoading(true);
         setError(null);
         try {
-            await api<UserResponse>('/auth/login', { method: 'POST', body: { identifier: identifier.trim(), password } });
+            await api<UserResponse>('/auth/login', { method: 'POST', body: { identifier: identifier.trim(), password, turnstile_token: challenge.token } });
             login();
             router.replace(next);
             router.refresh();
         } catch (error) {
+            challenge.afterError(error);
             setError(errorMessage(error));
             setIsLoading(false);
         }
@@ -90,6 +97,7 @@ function LoginForm() {
                         />
                     </div>
 
+                    {challenge.widget}
                     <Button type="submit" size="lg" disabled={isLoading} className="mt-2 w-full">
                         {isLoading ? 'Logging in...' : 'Log in'}
                     </Button>
