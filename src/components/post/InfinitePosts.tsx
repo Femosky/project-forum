@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -10,6 +10,29 @@ import { errorMessage } from '@/lib/api/errors';
 import { Post, PostsResponse } from '@/types/api';
 import PostCard from './PostCard';
 import { PostCardSkeleton } from './PostSkeletons';
+import FeedAdSlot from '@/ads/FeedAdSlot';
+import { AD_SEEN_COOKIE, slotAfter, slotsBetween } from '@/ads/config';
+import { readSeen } from '@/ads/frequency';
+import type { AdUnit, AdsResponse } from '@/ads/types';
+import { useDataSaver } from '@/lib/useDataSaver';
+
+// The API's default page size; later pages ask for ads to cover a full page
+const PAGE_SIZE = 25;
+
+// Ads for the slots in the next page; a failed ad request just means no ads there
+async function fetchAds(community: string | undefined, count: number): Promise<AdUnit[]> {
+    if (count <= 0) return [];
+    const cookie = document.cookie.split('; ').find((row) => row.startsWith(`${AD_SEEN_COOKIE}=`));
+    const seen = readSeen(cookie ? decodeURIComponent(cookie.slice(AD_SEEN_COOKIE.length + 1)) : undefined);
+    const query = new URLSearchParams({ placement: 'feed', count: String(count), ...(community ? { community } : {}), ...(seen ? { seen } : {}) });
+    try {
+        return (await api<AdsResponse>(`/ads?${query}`)).ads;
+    } catch {
+        return [];
+    }
+}
+
+type Item = { post: Post; ad?: AdUnit };
 
 type InfinitePostsProps = {
     // API path for this list without a cursor, e.g. "/feed?sort=hot"
@@ -19,12 +42,15 @@ type InfinitePostsProps = {
     nextHref: string;
     seenIds: string[];
     showCommunity: boolean;
+    // Set when this list carries ads
+    ads?: { community?: string };
 };
 
 // Loads the next page as the reader nears the end of the list. Until it hydrates, it's a plain "Next page" link.
-export function InfinitePosts({ apiPath, initialCursor, nextHref, seenIds, showCommunity }: InfinitePostsProps) {
+export function InfinitePosts({ apiPath, initialCursor, nextHref, seenIds, showCommunity, ads }: InfinitePostsProps) {
     const [isHydrated, setIsHydrated] = useState(false);
-    const [posts, setPosts] = useState<Post[]>([]);
+    const [items, setItems] = useState<Item[]>([]);
+    const dataSaver = useDataSaver();
     const [cursor, setCursor] = useState<string | null>(initialCursor);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -39,11 +65,22 @@ export function InfinitePosts({ apiPath, initialCursor, nextHref, seenIds, showC
         setError(null);
         try {
             const separator = apiPath.includes('?') ? '&' : '?';
-            const data = await api<PostsResponse>(`${apiPath}${separator}cursor=${encodeURIComponent(cursor)}`);
+            // Slots continue the server-rendered page's pattern, so count from the posts already shown
+            const offset = seen.current.size;
+            const [data, units] = await Promise.all([
+                api<PostsResponse>(`${apiPath}${separator}cursor=${encodeURIComponent(cursor)}`),
+                ads ? fetchAds(ads.community, slotsBetween(offset, PAGE_SIZE, 'feed')) : [],
+            ]);
             // Hot rankings shift while you read, so a post can turn up twice
             const fresh = data.posts.filter((post) => !seen.current.has(post.id));
             fresh.forEach((post) => seen.current.add(post.id));
-            setPosts((current) => [...current, ...fresh]);
+            const usable = dataSaver ? units.filter((unit) => unit.kind !== 'adsense') : units;
+            let slots = 0;
+            const batch = fresh.map((post, index): Item => {
+                const slot = slotAfter(offset + index, 'feed');
+                return { post, ad: slot === null ? undefined : usable[slots++] };
+            });
+            setItems((current) => [...current, ...batch]);
             setCursor(data.next_cursor);
         } catch (error) {
             setError(errorMessage(error));
@@ -76,10 +113,13 @@ export function InfinitePosts({ apiPath, initialCursor, nextHref, seenIds, showC
 
     return (
         <>
-            {posts.length > 0 && (
+            {items.length > 0 && (
                 <div className="flex flex-col divide-y divide-border border-t border-border sm:gap-3 sm:divide-y-0 sm:border-t-0">
-                    {posts.map((post) => (
-                        <PostCard key={post.id} post={post} showCommunity={showCommunity} />
+                    {items.map(({ post, ad }) => (
+                        <Fragment key={post.id}>
+                            <PostCard post={post} showCommunity={showCommunity} />
+                            <FeedAdSlot unit={ad} />
+                        </Fragment>
                     ))}
                 </div>
             )}

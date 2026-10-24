@@ -162,6 +162,41 @@ export const POLICIES: Policy[] = [
             },
         ],
     },
+    {
+        slug: 'ads',
+        title: 'Ads and sponsored posts',
+        summary: `How ads appear on ${APP_NAME}, how they are chosen, and the rules advertisers follow.`,
+        updated: UPDATED,
+        sections: [
+            {
+                heading: 'How ads look',
+                paragraphs: [
+                    'Ads appear in the feed and between comments. Every one is labelled "Sponsored" (or "From us" for our own announcements) and names the advertiser. Ads cannot be voted on or replied to, and their links are marked as sponsored.',
+                ],
+            },
+            {
+                heading: 'How ads are chosen',
+                items: [
+                    "Sponsored posts from advertisers we work with directly are chosen by the community or topic you're reading, not by your personal details or what you've done elsewhere.",
+                    'When no sponsored post fills a space, we may show an ad from Google AdSense. Google uses cookies for this. We ask before Google ads load: allow personalised ads, or choose general ads only. You can change your answer by clearing this site\'s cookies.',
+                    'With data saver on, Google ads and ad images are not loaded.',
+                    'There are no ads in NSFW communities, in sensitive communities such as health and support spaces, or on locked or removed threads.',
+                ],
+            },
+            {
+                heading: 'Rules for advertisers',
+                items: [
+                    'Ads must follow the content policy. No scams, misleading claims, or adult, gambling or get-rich-quick offers.',
+                    'Advertisers are responsible for any regulatory approval their ad needs, such as vetting by the Advertising Regulatory Council of Nigeria (ARCON).',
+                    'We may refuse or remove any ad.',
+                ],
+            },
+            {
+                heading: 'Reporting an ad',
+                paragraphs: ['Use the menu on any ad and choose Report ad. Reports go to the site team.'],
+            },
+        ],
+    },
 ];
 
 export const findPolicy = (slug: string) => POLICIES.find((policy) => policy.slug === slug);

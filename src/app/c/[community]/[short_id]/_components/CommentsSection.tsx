@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState } from 'react';
+import { Fragment, createContext, useContext, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronUp, Lock, MessagesSquare } from 'lucide-react';
 import { SortByDropdown } from './SortByDropdown';
@@ -19,6 +19,9 @@ import TextArea from '@/components/ui/TextArea';
 import { COMMENT_BODY_MAX } from '@/lib/constants';
 import { CommentSkeleton } from '@/components/post/PostSkeletons';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from './commentsApi';
+import ThreadAdSlot from '@/ads/ThreadAdSlot';
+import { slotAfter } from '@/ads/config';
+import type { AdUnit } from '@/ads/types';
 
 // Replies nest this deep; below that, "Continue this thread" opens the rest on its own
 const MAX_VISIBLE_DEPTH = 8;
@@ -54,6 +57,8 @@ type CommentsSectionProps = {
     initialComments: Comment[];
     initialCursor: string | null;
     loadFailed: boolean;
+    // Ads for the slots between top-level comments (see ads/config.ts)
+    ads?: AdUnit[];
 };
 
 export function CommentsSection({
@@ -66,6 +71,7 @@ export function CommentsSection({
     initialComments,
     initialCursor,
     loadFailed,
+    ads = [],
 }: CommentsSectionProps) {
     const [comments, setComments] = useState<Comment[]>(initialComments);
     const [cursor, setCursor] = useState<string | null>(initialCursor);
@@ -139,9 +145,15 @@ export function CommentsSection({
                 )}
 
                 <div className="flex w-full flex-col gap-4 pb-6" aria-busy={isLoading}>
-                    {comments.map((comment) => (
-                        <CommentBlock key={comment.id} initialComment={comment} />
-                    ))}
+                    {comments.map((comment, index) => {
+                        const slot = slotAfter(index, 'thread');
+                        return (
+                            <Fragment key={comment.id}>
+                                <CommentBlock initialComment={comment} />
+                                {slot !== null && <ThreadAdSlot unit={ads[slot]} />}
+                            </Fragment>
+                        );
+                    })}
 
                     {isLoading && (
                         <>

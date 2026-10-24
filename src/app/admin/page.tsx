@@ -8,12 +8,14 @@ import QueueList from '@/components/moderation/QueueList';
 import ModLog from '@/components/moderation/ModLog';
 import ToolTabs from '@/components/moderation/ToolTabs';
 import { AdminCommunities, AdminUsers, Blocklist } from './_components/AdminPanels';
+import { AdminAds, AdminCampaign } from './_components/AdminAds';
+import type { AdsOverview, CampaignDetail } from '@/ads/types';
 
 export const metadata = { title: `Admin | ${APP_NAME}`, robots: { index: false } };
 
-type PageProps = { searchParams: Promise<{ tab?: string }> };
+type PageProps = { searchParams: Promise<{ tab?: string; campaign?: string }> };
 
-const TABS = ['queue', 'users', 'communities', 'blocklist', 'log'] as const;
+const TABS = ['queue', 'users', 'communities', 'ads', 'blocklist', 'log'] as const;
 type Tab = (typeof TABS)[number];
 
 // Site admins only. Everyone else gets a plain 404, so the page doesn't advertise itself.
@@ -21,7 +23,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
     const me = await serverApi<UserResponse>('/auth/me');
     if (me.data?.user.role !== 'admin') notFound();
 
-    const { tab: tabParam } = await searchParams;
+    const { tab: tabParam, campaign } = await searchParams;
     const tab: Tab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'queue';
 
     const [overview, section] = await Promise.all([
@@ -31,6 +33,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 queue: '/admin/queue',
                 users: '/admin/users',
                 communities: '/admin/communities',
+                ads: campaign ? `/admin/ads/campaigns/${encodeURIComponent(campaign)}` : '/admin/ads',
                 blocklist: '/admin/blocklist',
                 log: '/admin/mod-log',
             }[tab]
@@ -66,6 +69,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     { id: 'queue', label: 'Queue', count: stats?.queue },
                     { id: 'users', label: 'Users' },
                     { id: 'communities', label: 'Communities' },
+                    { id: 'ads', label: 'Ads' },
                     { id: 'blocklist', label: 'Blocklist' },
                     { id: 'log', label: 'Log' },
                 ]}
@@ -79,6 +83,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     <AdminUsers initialUsers={(section.data as { users: AdminUser[] }).users} />
                 ) : tab === 'communities' ? (
                     <AdminCommunities initialCommunities={(section.data as { communities: AdminCommunity[] }).communities} />
+                ) : tab === 'ads' ? (
+                    campaign ? (
+                        <AdminCampaign key={campaign} initial={section.data as CampaignDetail} />
+                    ) : (
+                        <AdminAds initial={section.data as AdsOverview} />
+                    )
                 ) : tab === 'blocklist' ? (
                     <Blocklist initialTerms={(section.data as { terms: BlockedTerm[] }).terms} />
                 ) : (

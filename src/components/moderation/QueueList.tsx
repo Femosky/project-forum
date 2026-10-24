@@ -169,7 +169,23 @@ export function QueueList({ initialItems, site = false }: { initialItems: QueueI
                                         <ShieldX className="size-4" /> Take down
                                     </Button>
                                 )}
-                                {(item.user || item.community) && (
+                                {site && item.ad && (
+                                    <>
+                                        {item.ad.is_active && (
+                                            <Button
+                                                size="sm"
+                                                variant="danger"
+                                                onClick={() => run(item, () => api(`/admin/ads/creatives/${item.target_id}`, { method: 'PATCH', body: { is_active: false } }))}
+                                            >
+                                                <ShieldX className="size-4" /> Pause ad
+                                            </Button>
+                                        )}
+                                        <Button size="sm" variant="outline" asChild>
+                                            <Link href={`/admin?tab=ads&campaign=${item.ad.campaign_id}`}>Open campaign</Link>
+                                        </Button>
+                                    </>
+                                )}
+                                {(item.user || item.community || item.ad) && (
                                     <Button size="sm" variant="secondary" onClick={() => dismiss(item)}>
                                         <CircleCheck className="size-4" /> Dismiss reports
                                     </Button>
@@ -276,6 +292,17 @@ function QueueTarget({ item }: { item: QueueItem }) {
                 </Link>{' '}
                 <span className="text-muted">
                     · {item.user.karma} karma · joined <span suppressHydrationWarning>{TimeUtility.formatTimeAgo(item.user.created_at)}</span> · {item.user.status}
+                </span>
+            </p>
+        );
+    }
+    if (item.ad) {
+        return (
+            <p className="text-sm">
+                Ad <span className="font-bold">{item.ad.headline}</span>{' '}
+                <span className="text-muted">
+                    · {item.ad.advertiser} · {item.ad.campaign}
+                    {!item.ad.is_active && ' · paused'}
                 </span>
             </p>
         );

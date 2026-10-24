@@ -120,7 +120,31 @@ const light = (post) => ({ short_id: post.short_id, slug: post.slug, title: post
 
 const user = { username: 'budget_user', display_name: null, avatar_id: 'default_1', karma: 5120, is_suspended: false, created_at: iso(400_000) };
 
+// Ads (Phase 6): a sponsored card first, then AdSense boxes, so the budget runs measure pages with ads in them
+function ads(query) {
+    const placement = query.get('placement');
+    const count = Number(query.get('count') ?? 1);
+    const native = {
+        kind: 'direct',
+        id: '01900000-0000-7000-8000-00000000ad01',
+        campaign_id: '01900000-0000-7000-8000-00000000ca01',
+        frequency_cap: null,
+        creative: {
+            advertiser_name: 'Budget Bank',
+            advertiser_logo: null,
+            title: placement === 'feed' ? 'Track every naira you spend this month' : 'Set a monthly budget in two minutes',
+            body: 'Free budgeting tools with your current account.',
+            image_url: null,
+            cta_label: 'Learn more',
+            display_url: 'budget.example',
+        },
+    };
+    const adsense = (index) => ({ kind: 'adsense', id: `adsense-${placement}-${index}`, client: 'ca-pub-0000000000000000', slot_id: '1', format: placement === 'feed' ? 'in-feed' : 'in-article', layout_key: null });
+    return { ads: [native, ...Array.from({ length: Math.max(count - 1, 0) }, (_, index) => adsense(index))] };
+}
+
 const routes = [
+    [/^\/v1\/ads$/, (_, query) => ads(query)],
     [/^\/v1\/feed$/, () => ({ posts, next_cursor: 'next', scope: 'all' })],
     [/^\/v1\/posts\/([^/]+)$/, ([id]) => findPost(id) && { post: findPost(id) }],
     [/^\/v1\/posts\/([^/]+)\/comments$/, ([id]) => findPost(id) && { comments: id === thread.short_id || id === thread.id ? comments : [], next_cursor: 'next' }],

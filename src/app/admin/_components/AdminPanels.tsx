@@ -182,7 +182,25 @@ function PendingDialog({ pending, onClose }: { pending: Pending; onClose: () => 
     );
 }
 
-// --- Communities: take down or restore ---
+// --- Communities: take down or restore, ads on or off ---
+
+const SENSITIVE_CATEGORIES = ['health'];
+
+function AdsSwitch({ community, onChange }: { community: AdminCommunity; onChange: (value: boolean | null) => Promise<void> }) {
+    const fallback = community.is_nsfw || SENSITIVE_CATEGORIES.includes(community.category ?? '') ? 'off' : 'on';
+    return (
+        <select
+            aria-label={`Ads in c/${community.name}`}
+            value={community.ads_enabled === null ? 'default' : community.ads_enabled ? 'on' : 'off'}
+            onChange={(e) => onChange(e.target.value === 'default' ? null : e.target.value === 'on')}
+            className={twMerge(fieldStyles(), 'h-8 w-auto cursor-pointer appearance-auto px-2 text-sm')}
+        >
+            <option value="default">Ads: default ({fallback})</option>
+            <option value="on">Ads: on</option>
+            <option value="off">Ads: off</option>
+        </select>
+    );
+}
 
 export function AdminCommunities({ initialCommunities }: { initialCommunities: AdminCommunity[] }) {
     const [communities, setCommunities] = useState(initialCommunities);
@@ -200,6 +218,16 @@ export function AdminCommunities({ initialCommunities }: { initialCommunities: A
 
     const setStatus = (name: string, status: string) =>
         setCommunities((current) => current.map((community) => (community.name === name ? { ...community, status } : community)));
+
+    async function setAds(name: string, value: boolean | null) {
+        setError(null);
+        try {
+            await api(`/admin/communities/${name}/ads`, { method: 'PATCH', body: { ads_enabled: value } });
+            setCommunities((current) => current.map((community) => (community.name === name ? { ...community, ads_enabled: value } : community)));
+        } catch (error) {
+            setError(errorMessage(error));
+        }
+    }
 
     async function restore(name: string) {
         setError(null);
@@ -231,6 +259,7 @@ export function AdminCommunities({ initialCommunities }: { initialCommunities: A
                                 <span suppressHydrationWarning>{TimeUtility.formatTimeAgo(community.created_at)}</span>
                             </p>
                         </div>
+                        {community.status !== 'deleted' && <AdsSwitch community={community} onChange={(value) => setAds(community.name, value)} />}
                         {community.status === 'deleted' ? (
                             <Button size="sm" variant="secondary" onClick={() => restore(community.name)}>
                                 <RotateCcw className="size-4" /> Restore
