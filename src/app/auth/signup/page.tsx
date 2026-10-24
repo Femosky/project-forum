@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import Button from '@/components/ui/Button';
+import { useChallenge } from '@/components/common/Turnstile';
 import InputField from '@/components/ui/Input';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
@@ -45,6 +46,7 @@ function SignupForm() {
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const challenge = useChallenge(true);
 
     function update(name: keyof Fields) {
         return (e: React.ChangeEvent<HTMLInputElement>) => setFields((current) => ({ ...current, [name]: e.target.value }));
@@ -55,19 +57,24 @@ function SignupForm() {
         const errors = validate(fields, isAdult);
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) return;
+        if (challenge.isPending) {
+            setError('Complete the check below first.');
+            return;
+        }
 
         setIsLoading(true);
         setError(null);
         try {
             await api<UserResponse>('/auth/signup', {
                 method: 'POST',
-                body: { email: fields.email.trim(), username: fields.username.trim(), password: fields.password, is_adult: true },
+                body: { email: fields.email.trim(), username: fields.username.trim(), password: fields.password, is_adult: true, turnstile_token: challenge.token },
             });
             login();
             router.replace(next);
             router.refresh();
         } catch (error) {
             if (error instanceof ApiError && error.fields) setFieldErrors(error.fields);
+            challenge.afterError(error);
             setError(errorMessage(error));
             setIsLoading(false);
         }
@@ -129,6 +136,7 @@ function SignupForm() {
                         {fieldErrors.is_adult && <ErrorMessage errorMessage={fieldErrors.is_adult} />}
                     </div>
 
+                    {challenge.widget}
                     <Button type="submit" size="lg" disabled={isLoading} className="mt-2 w-full">
                         {isLoading ? 'Creating your account...' : 'Sign up'}
                     </Button>

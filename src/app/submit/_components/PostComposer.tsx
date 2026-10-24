@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ExternalLink, FileText, Link2, Repeat } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
+import { useChallenge } from '@/components/common/Turnstile';
 import InputField, { fieldStyles } from '@/components/ui/Input';
 import MarkdownEditor from '@/components/common/MarkdownEditor';
 import ErrorMessage from '@/components/ui/ErrorMessage';
@@ -90,6 +91,8 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // New accounts are checked for bots on their first day; the API says when
+    const challenge = useChallenge(false);
 
     // Restore an unsent draft once on load (a community in the URL wins), then keep it saved as you type
     useEffect(() => {
@@ -161,6 +164,10 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
         const errors = validate(draft);
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) return;
+        if (challenge.isPending) {
+            setError('Complete the check below first.');
+            return;
+        }
 
         setIsSubmitting(true);
         setError(null);
@@ -175,12 +182,14 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                     ...(draft.type === 'link' ? { url: draft.url.trim() } : {}),
                     ...(draft.flairId && availableFlairs.some((flair) => flair.id === draft.flairId) ? { flair_id: draft.flairId } : {}),
                     is_anonymous: draft.isAnonymous,
+                    turnstile_token: challenge.token,
                 },
             });
             writeDraft(null);
             router.push(getPostPath(post));
         } catch (error) {
             if (error instanceof ApiError && error.fields) setFieldErrors(error.fields);
+            challenge.afterError(error);
             setError(errorMessage(error));
             setIsSubmitting(false);
         }
@@ -389,6 +398,7 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                 </span>
             </label>
 
+            {challenge.widget}
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
 
             <div className="flex justify-end gap-2">

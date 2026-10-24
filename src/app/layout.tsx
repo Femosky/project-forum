@@ -13,6 +13,7 @@ import SignInPrompt from '@/components/common/SignInPrompt';
 import { NotificationPoller } from '@/components/notifications/NotificationBadge';
 import AdConsentGate from '@/ads/AdConsentGate';
 import PageViews from '@/components/common/PageViews';
+import ErrorReporter from '@/components/common/ErrorReporter';
 import { getTheme } from '@/components/theme/getTheme';
 import { getDataSaver } from '@/lib/dataSaver';
 
@@ -91,6 +92,7 @@ export default async function RootLayout({
                 <NotificationPoller />
                 <AdConsentGate />
                 <PageViews />
+                <ErrorReporter />
             </body>
         </html>
     );

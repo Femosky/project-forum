@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import { CRAWLER_UA } from './src/lib/bots';
+import { sentryEndpoint } from './src/lib/errorReport';
 
 const nextConfig: NextConfig = {
     // Crawlers get metadata in <head> rather than streamed after it
@@ -7,7 +8,11 @@ const nextConfig: NextConfig = {
     // Analytics events reach PostHog through the site's own origin (src/lib/analytics.ts)
     async rewrites() {
         const host = (process.env.POSTHOG_HOST || 'https://eu.i.posthog.com').replace(/\/$/, '');
-        return [{ source: '/_a/:path*', destination: `${host}/:path*` }];
+        const rules = [{ source: '/_a/:path*', destination: `${host}/:path*` }];
+        // Browser error reports reach Sentry the same way (src/lib/errorReport.ts)
+        const sentry = sentryEndpoint();
+        if (sentry) rules.push({ source: '/_e', destination: sentry });
+        return rules;
     },
     // Private testing (PRIVATE_SITE=true): every response asks search engines not to index it
     async headers() {

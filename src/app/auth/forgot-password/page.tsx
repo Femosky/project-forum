@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
+import { useChallenge } from '@/components/common/Turnstile';
 import InputField from '@/components/ui/Input';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
@@ -14,6 +15,7 @@ export default function ForgotPasswordPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSent, setIsSent] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const challenge = useChallenge(true);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -21,12 +23,17 @@ export default function ForgotPasswordPage() {
             setError('Enter a valid email address.');
             return;
         }
+        if (challenge.isPending) {
+            setError('Complete the check below first.');
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
-            await api('/auth/forgot-password', { method: 'POST', body: { email: email.trim() } });
+            await api('/auth/forgot-password', { method: 'POST', body: { email: email.trim(), turnstile_token: challenge.token } });
             setIsSent(true);
         } catch (error) {
+            challenge.afterError(error);
             setError(errorMessage(error));
         }
         setIsLoading(false);
@@ -65,6 +72,7 @@ export default function ForgotPasswordPage() {
                         onChange={(e) => setEmail(e.target.value)}
                     />
                 </div>
+                {challenge.widget}
                 <Button type="submit" size="lg" disabled={isLoading} className="mt-2 w-full">
                     {isLoading ? 'Sending...' : 'Send reset link'}
                 </Button>

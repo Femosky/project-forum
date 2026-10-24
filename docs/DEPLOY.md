@@ -27,6 +27,8 @@ Vercel's GitHub integration builds every push. `main` goes to production; every 
 | `PRIVATE_SITE` | `true` | robots.txt blocks every crawler and every page is sent `noindex`. Remove at public launch |
 | `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project key (EU) | Page views and shares. Same project as the API's `POSTHOG_API_KEY` |
 | `POSTHOG_HOST` | leave unset | Defaults to `https://eu.i.posthog.com` |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key | The bot check on signup, password reset, repeated failed logins and a new account's first posts. Set it together with the API's `TURNSTILE_SECRET_KEY`. Vercel type: Config |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry project DSN | Error alerts from browsers and the server, sent through `/_e` without the Sentry SDK (`src/lib/errorReport.ts`). Vercel type: Config |
 | `NEXT_PUBLIC_TWITTER_HANDLE` | when there is an account | |
 | `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` | at public launch | The `content` value of each verification meta tag |
 | `INDEXNOW_KEY` | at public launch | Same value as the API's |
