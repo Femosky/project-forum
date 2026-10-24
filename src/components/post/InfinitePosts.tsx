@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -46,9 +46,12 @@ type InfinitePostsProps = {
     ads?: { community?: string };
 };
 
+const subscribeNothing = () => () => {};
+
 // Loads the next page as the reader nears the end of the list. Until it hydrates, it's a plain "Next page" link.
 export function InfinitePosts({ apiPath, initialCursor, nextHref, seenIds, showCommunity, ads }: InfinitePostsProps) {
-    const [isHydrated, setIsHydrated] = useState(false);
+    // false in the server render and during hydration, true afterwards
+    const isHydrated = useSyncExternalStore(subscribeNothing, () => true, () => false);
     const [items, setItems] = useState<Item[]>([]);
     const dataSaver = useDataSaver();
     const [cursor, setCursor] = useState<string | null>(initialCursor);
@@ -56,8 +59,6 @@ export function InfinitePosts({ apiPath, initialCursor, nextHref, seenIds, showC
     const [error, setError] = useState<string | null>(null);
     const sentinel = useRef<HTMLDivElement>(null);
     const seen = useRef(new Set(seenIds));
-
-    useEffect(() => setIsHydrated(true), []);
 
     async function loadMore() {
         if (!cursor || isLoading) return;
