@@ -2,7 +2,7 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { ComponentProps } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-const badgeStyles = cva('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold', {
+const badgeStyles = cva('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-bold', {
     variants: {
         variant: {
             neutral: 'bg-surface-muted text-muted',

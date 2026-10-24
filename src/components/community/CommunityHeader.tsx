@@ -84,7 +84,7 @@ export function CommunityHeader({ community, viewer }: { community: Community; v
     return (
         <header className="flex flex-col gap-4 border-b border-border bg-surface px-4 py-5 sm:rounded-xl sm:border">
             <div className="flex items-center gap-4">
-                <Avatar name={community.name} src={community.image_url} size="xl" />
+                <Avatar name={community.name} src={community.image_url} size="xl" shape="square" />
                 <div className="min-w-0 flex-1">
                     <h1 className="truncate text-2xl font-extrabold">{community.display_name ?? `c/${community.name}`}</h1>
                     <p className="text-sm text-muted">

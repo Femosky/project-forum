@@ -79,7 +79,7 @@ export function ActionDialog({
                                     aria-pressed={days === option.days}
                                     onClick={() => setDays(option.days)}
                                     className={twMerge(
-                                        'h-8 cursor-pointer rounded-full border px-3 text-sm font-semibold transition-colors',
+                                        'h-8 cursor-pointer rounded-lg border px-3 text-sm font-semibold transition-colors',
                                         days === option.days ? 'border-accent bg-accent text-accent-fg' : 'border-border-strong hover:bg-surface-muted'
                                     )}
                                 >

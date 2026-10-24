@@ -123,7 +123,7 @@ export function ThemePicker({ initialTheme }: { initialTheme: Theme | null }) {
                         applyTheme(value);
                     }}
                     className={twMerge(
-                        'flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-colors',
+                        'flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border text-sm font-semibold transition-colors',
                         choice === value ? 'border-accent bg-accent text-accent-fg' : 'border-border-strong hover:bg-surface-muted'
                     )}
                 >

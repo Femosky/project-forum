@@ -38,9 +38,9 @@ export function UserSection() {
     return (
         <div className="flex items-center gap-2">
             {/* On mobile, Create lives in the bottom tab bar */}
-            <Button asChild variant="secondary" size="sm" className="hidden md:inline-flex">
+            <Button asChild size="sm" className="hidden md:inline-flex">
                 <Link href="/submit">
-                    <Plus className="size-4" /> Create
+                    <Plus className="size-4" /> New post
                 </Link>
             </Button>
 
@@ -49,7 +49,7 @@ export function UserSection() {
                     <button
                         type="button"
                         aria-label="Account menu"
-                        className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-highlight text-highlight-fg"
+                        className="flex size-8 cursor-pointer items-center justify-center rounded-full bg-highlight text-highlight-fg"
                     >
                         <User className="size-5" />
                     </button>

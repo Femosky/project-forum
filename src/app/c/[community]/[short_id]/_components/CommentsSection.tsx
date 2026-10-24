@@ -120,13 +120,17 @@ export function CommentsSection({
         <ThreadContext.Provider
             value={{ postId, postPath, isLocked, isModerator, baseDepth: initialComments[0]?.depth ?? 0, sort, createComment }}
         >
-            <div className="flex flex-col gap-4">
+            {/* On phones the reply box is pinned to the bottom of the screen, like a chat; pb leaves room for it */}
+            <div className="flex flex-col gap-4 max-md:pb-16">
                 {isSingleThread ? null : isLocked ? (
                     <p className="flex items-center gap-2 rounded-xl bg-surface-muted px-4 py-3 text-sm text-muted">
                         <Lock className="size-4" /> Comments are locked. You can still read and vote.
                     </p>
                 ) : (
-                    <ContentReplySection handleReply={handleTopLevelReply} />
+                    // Above the tab bar on a page; at the very bottom in the split view's reading pane (--reply-bottom)
+                    <div className="max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--reply-bottom,calc(var(--spacing-tabbar)+env(safe-area-inset-bottom)))] max-md:z-30 max-md:border-t max-md:border-border max-md:bg-bg/95 max-md:px-3 max-md:pt-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))] max-md:backdrop-blur">
+                        <ContentReplySection handleReply={handleTopLevelReply} />
+                    </div>
                 )}
 
                 {comments.length > 0 && !isSingleThread && (
@@ -352,7 +356,7 @@ function ShapeSection({
 }) {
     return (
         <div className="flex flex-col items-center gap-1">
-            <Avatar name={username} size="md" />
+            <Avatar name={username} size="md" className="size-7" />
 
             {/* Thread line: click to collapse the replies */}
             {hasChildren && isExpanded && (
@@ -362,7 +366,7 @@ function ShapeSection({
                     onClick={toggleHideAllReplies}
                     className="group flex w-full flex-1 cursor-pointer flex-col items-center"
                 >
-                    <span className="w-px flex-1 bg-border transition-colors group-hover:bg-border-strong" />
+                    <span className="w-[1.5px] flex-1 rounded-full bg-border transition-colors group-hover:bg-accent" />
                 </button>
             )}
         </div>
@@ -381,7 +385,7 @@ function TitleSection({
     editedAt: string | null;
 }) {
     return (
-        <div className="flex min-h-8 flex-wrap items-center gap-x-1.5 text-xs text-muted">
+        <div className="flex min-h-7 flex-wrap items-center gap-x-1.5 text-xs text-muted">
             {profile ? (
                 <Link href={`/u/${profile}`} className="font-bold text-text hover:underline">
                     {username}
@@ -389,14 +393,14 @@ function TitleSection({
             ) : (
                 <span className="font-bold text-text">{username}</span>
             )}
-            <span aria-hidden>•</span>
+            <span aria-hidden>·</span>
             {/* Rendered on the server and again in the browser a moment later, so the text may differ slightly */}
             <time dateTime={createdAt} suppressHydrationWarning>
                 {TimeUtility.formatTimeAgo(createdAt)}
             </time>
             {editedAt && (
                 <>
-                    <span aria-hidden>•</span>
+                    <span aria-hidden>·</span>
                     <span suppressHydrationWarning>Edited {TimeUtility.formatTimeAgo(editedAt)}</span>
                 </>
             )}

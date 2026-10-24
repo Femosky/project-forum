@@ -13,7 +13,9 @@ import { useAuthStateStore } from '@/lib/stateStore';
 import { useUIStore } from '@/lib/uiStore';
 import { isActiveRoute, NavRoute, PRIMARY_NAV } from '@/data/ui/navigation';
 
-const itemClasses = 'flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors';
+const itemClasses = 'flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold transition-colors';
+// The current page: a raised row, like a selected item in a list
+const activeClasses = 'bg-surface text-text shadow-[0_0_0_1px_var(--border)]';
 
 // onNavigate lets the mobile menu close itself when a link is followed
 export default function SidebarList({ onNavigate }: { onNavigate?: () => void }) {
@@ -39,7 +41,7 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
     }, [isAuthenticated, membershipVersion]);
 
     return (
-        <nav aria-label="Main" className="flex flex-col gap-4 p-3">
+        <nav aria-label="Main" className="flex flex-col gap-3 p-3">
             <ul className="flex flex-col gap-0.5">
                 {PRIMARY_NAV.map((route) => (
                     <SidebarItem
@@ -55,9 +57,9 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                 <>
                     <DividerLine />
                     <div className="flex flex-col gap-1">
-                        <h2 className="px-3 text-xs font-bold uppercase tracking-wide text-muted">Your communities</h2>
+                        <h2 className="px-2.5 pb-0.5 text-xs font-bold text-muted">Your communities</h2>
                         {isLoading ? (
-                            <div className="flex flex-col gap-2 px-3 py-1">
+                            <div className="flex flex-col gap-2 px-2.5 py-1">
                                 <Skeleton className="h-6 w-3/4" />
                                 <Skeleton className="h-6 w-1/2" />
                             </div>
@@ -74,11 +76,11 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                                                     itemClasses,
                                                     'font-medium',
                                                     isActiveRoute(pathname, href)
-                                                        ? 'bg-highlight text-highlight-fg'
-                                                        : 'hover:bg-surface-muted'
+                                                        ? activeClasses
+                                                        : 'text-muted hover:bg-surface-muted hover:text-text'
                                                 )}
                                             >
-                                                <Avatar name={community.name} src={community.image_url} size="sm" />
+                                                <Avatar name={community.name} src={community.image_url} size="sm" shape="square" className="size-5" />
                                                 <span className="truncate">{community.name}</span>
                                             </Link>
                                         </li>
@@ -91,7 +93,7 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
             )}
 
             <DividerLine />
-            <ul className="flex flex-wrap gap-x-3 gap-y-1 px-3 text-xs text-muted">
+            <ul className="flex flex-wrap gap-x-3 gap-y-1 px-2.5 text-xs text-muted">
                 {FOOTER_LINKS.map((link) => (
                     <li key={link.href}>
                         <Link href={link.href} onClick={onNavigate} className="hover:text-text hover:underline">
@@ -132,10 +134,10 @@ function SidebarItem({
                 aria-current={isActive ? 'page' : undefined}
                 className={twMerge(
                     itemClasses,
-                    isActive ? 'bg-highlight text-highlight-fg' : 'text-text hover:bg-surface-muted'
+                    isActive ? activeClasses : 'text-muted hover:bg-surface-muted hover:text-text'
                 )}
             >
-                <Icon className="size-5" />
+                <Icon className="size-[18px]" />
                 <span>{route.label}</span>
             </Link>
         </li>

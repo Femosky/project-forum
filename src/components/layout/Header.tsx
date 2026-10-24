@@ -14,7 +14,7 @@ export default function Header({ className, theme, ...props }: HeaderProps) {
     return (
         <header
             className={twMerge(
-                'sticky top-0 z-40 h-header w-full border-b border-border bg-surface/95 backdrop-blur',
+                'sticky top-0 z-40 h-header w-full border-b border-border bg-bg/90 backdrop-blur',
                 className
             )}
             {...props}

@@ -6,14 +6,14 @@ import { Slot } from 'radix-ui';
 export const buttonStyles = cva(
     [
         'inline-flex items-center justify-center gap-2 shrink-0 whitespace-nowrap',
-        'rounded-full font-semibold transition-colors cursor-pointer select-none',
+        'rounded-lg font-bold transition-colors cursor-pointer select-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
     ],
     {
         variants: {
             variant: {
                 primary: 'bg-accent text-accent-fg hover:bg-accent-hover',
-                secondary: 'bg-surface-muted text-text hover:bg-border',
+                secondary: 'border border-border bg-surface text-text hover:bg-surface-muted',
                 highlight: 'bg-highlight text-highlight-fg hover:brightness-95',
                 outline: 'border border-border-strong text-text hover:bg-surface-muted',
                 ghost: 'text-text hover:bg-surface-muted',
@@ -21,7 +21,7 @@ export const buttonStyles = cva(
                 link: 'h-auto px-0 text-link underline-offset-4 hover:underline',
             },
             size: {
-                sm: 'h-8 px-3 text-sm',
+                sm: 'h-8 px-3 text-[13px]',
                 md: 'h-10 px-4 text-sm',
                 lg: 'h-12 px-6 text-base',
             },

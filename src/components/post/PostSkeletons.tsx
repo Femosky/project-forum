@@ -7,7 +7,7 @@ import Skeleton from '@/components/ui/Skeleton';
 
 export function PostCardSkeleton({ className }: { className?: string }) {
     return (
-        <div className={twMerge('flex flex-col gap-3 bg-surface px-4 py-3 sm:rounded-xl sm:border sm:border-border', className)}>
+        <div className={twMerge('flex flex-col gap-3 px-4 py-3', className)}>
             <div className="flex items-center gap-2">
                 <Skeleton className="size-6 rounded-full" />
                 <Skeleton className="h-3 w-32" />
@@ -16,8 +16,8 @@ export function PostCardSkeleton({ className }: { className?: string }) {
             <Skeleton className="h-3 w-full" />
             <Skeleton className="h-3 w-2/3" />
             <div className="flex gap-2">
-                <Skeleton className="h-8 w-24 rounded-full" />
-                <Skeleton className="h-8 w-14 rounded-full" />
+                <Skeleton className="h-8 w-24 rounded-lg" />
+                <Skeleton className="h-8 w-14 rounded-lg" />
             </div>
         </div>
     );

@@ -16,6 +16,8 @@ type VoteControlProps = {
     // Which way the viewer voted (0 for guests)
     userVote?: VoteValue;
     disabled?: boolean;
+    // sm: list rows and comments; md: the open post
+    size?: 'sm' | 'md';
     className?: string;
 };
 
@@ -29,7 +31,7 @@ function applyVote(state: VoteState, next: VoteValue): VoteState {
 }
 
 // Score pill shared by posts and comments. One tap votes, a second tap on the same arrow clears it.
-export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disabled, className }: VoteControlProps) {
+export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disabled, size = 'sm', className }: VoteControlProps) {
     const [state, setState] = useState<VoteState>({ up: upvotes, down: downvotes, vote: userVote });
     const [error, setError] = useState(false);
     const requireAuth = useRequireAuth();
@@ -59,11 +61,17 @@ export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disa
 
     const score = state.up - state.down;
     const { vote: userVoteNow } = state;
+    const arrow = twMerge(
+        'flex h-full cursor-pointer items-center justify-center text-muted transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        size === 'sm' ? 'w-7 rounded-md hover:bg-surface-muted' : 'w-9 hover:bg-surface-muted'
+    );
 
     return (
+        // sm is light enough for a list row; md is a bordered segmented control under an open post
         <div
             className={twMerge(
-                'relative z-10 inline-flex h-8 items-center rounded-full bg-surface-muted text-sm font-bold',
+                'relative z-10 inline-flex items-center text-[13px] font-bold tabular-nums',
+                size === 'sm' ? 'h-7' : 'h-9 overflow-hidden rounded-lg border border-border bg-surface',
                 userVoteNow === 1 && 'text-upvote',
                 userVoteNow === -1 && 'text-downvote',
                 className
@@ -76,11 +84,11 @@ export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disa
                 aria-pressed={userVoteNow === 1}
                 disabled={disabled}
                 onClick={() => vote(1)}
-                className="flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-border hover:text-upvote disabled:cursor-not-allowed disabled:opacity-50"
+                className={twMerge(arrow, 'hover:text-upvote', userVoteNow === 1 && size === 'md' && 'bg-highlight')}
             >
-                <ArrowBigUp className={twMerge('size-5', userVoteNow === 1 && 'fill-current text-upvote')} />
+                <ArrowBigUp className={twMerge(size === 'sm' ? 'size-[18px]' : 'size-5', userVoteNow === 1 && 'fill-current text-upvote')} />
             </button>
-            <span className="min-w-6 text-center tabular-nums" aria-live="polite" aria-label={`Score ${score}`}>
+            <span className="min-w-6 px-0.5 text-center" aria-live="polite" aria-label={`Score ${score}`}>
                 {NumberUtility.compactFormatter.format(score)}
             </span>
             <button
@@ -89,9 +97,9 @@ export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disa
                 aria-pressed={userVoteNow === -1}
                 disabled={disabled}
                 onClick={() => vote(-1)}
-                className="flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-border hover:text-downvote disabled:cursor-not-allowed disabled:opacity-50"
+                className={twMerge(arrow, 'hover:text-downvote')}
             >
-                <ArrowBigDown className={twMerge('size-5', userVoteNow === -1 && 'fill-current text-downvote')} />
+                <ArrowBigDown className={twMerge(size === 'sm' ? 'size-[18px]' : 'size-5', userVoteNow === -1 && 'fill-current text-downvote')} />
             </button>
         </div>
     );

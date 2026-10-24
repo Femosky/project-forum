@@ -29,7 +29,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     });
 }
 
-const chipClasses = 'flex h-8 shrink-0 items-center gap-1 rounded-full border px-3 text-sm font-semibold transition-colors';
+const chipClasses = 'flex h-8 shrink-0 items-center gap-1 rounded-lg border px-3 text-sm font-semibold transition-colors';
 
 // The directory: category chips and a name search, all plain links and a GET form so it works without scripts
 export default async function CommunitiesPage({ searchParams }: PageProps) {
@@ -128,7 +128,7 @@ export default async function CommunitiesPage({ searchParams }: PageProps) {
                                     href={`/c/${community.name}`}
                                     className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted/60"
                                 >
-                                    <Avatar name={community.name} src={community.image_url} size="lg" />
+                                    <Avatar name={community.name} src={community.image_url} size="lg" shape="square" />
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate font-bold">c/{community.name}</p>
                                         {community.description && <p className="line-clamp-1 text-sm text-muted">{community.description}</p>}

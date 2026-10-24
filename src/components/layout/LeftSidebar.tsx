@@ -9,7 +9,7 @@ export default function LeftSidebar({ className, ...props }: LeftSidebarProps) {
     return (
         <aside
             className={twMerge(
-                'hidden md:block w-sidebar shrink-0 sticky top-header h-[calc(100dvh-var(--spacing-header))] overflow-y-auto border-r border-border',
+                'hidden md:block w-sidebar shrink-0 sticky top-header h-[calc(100dvh-var(--spacing-header))] overflow-y-auto border-r border-border bg-pane',
                 className
             )}
             {...props}

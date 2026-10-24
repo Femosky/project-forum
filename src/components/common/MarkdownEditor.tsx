@@ -103,7 +103,7 @@ export function MarkdownEditor({ name, value, onChange, placeholder, maxLength, 
                             aria-pressed={(tab === 'Preview') === isPreview}
                             onClick={() => setIsPreview(tab === 'Preview')}
                             className={twMerge(
-                                'h-7 cursor-pointer rounded-full px-2.5 transition-colors',
+                                'h-7 cursor-pointer rounded-lg px-2.5 transition-colors',
                                 (tab === 'Preview') === isPreview ? 'bg-surface-muted text-text' : 'text-muted hover:text-text'
                             )}
                         >

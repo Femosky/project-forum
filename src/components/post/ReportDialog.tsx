@@ -75,7 +75,7 @@ export function ReportDialog({ targetType, targetId, open, onOpenChange }: Repor
                             {REPORT_REASONS.map((option) => (
                                 <label
                                     key={option.value}
-                                    className="cursor-pointer rounded-full border border-border-strong px-3 py-1.5 text-sm font-semibold transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-accent-fg has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus/40"
+                                    className="cursor-pointer rounded-lg border border-border-strong px-3 py-1.5 text-sm font-semibold transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-accent-fg has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus/40"
                                 >
                                     <input
                                         type="radio"

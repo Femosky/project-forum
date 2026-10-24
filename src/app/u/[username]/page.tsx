@@ -92,7 +92,7 @@ export default async function ProfilePage({ params, searchParams }: PageProps) {
                         href={value === 'posts' ? basePath : `${basePath}?tab=comments`}
                         aria-current={tab === value ? 'page' : undefined}
                         className={twMerge(
-                            'flex h-8 items-center rounded-full px-3 text-sm font-semibold capitalize transition-colors',
+                            'flex h-8 items-center rounded-lg px-3 text-sm font-semibold capitalize transition-colors',
                             tab === value ? 'bg-highlight text-highlight-fg' : 'text-muted hover:bg-surface-muted hover:text-text'
                         )}
                     >
@@ -110,7 +110,7 @@ export default async function ProfilePage({ params, searchParams }: PageProps) {
                     description="Anonymous posts and comments never show on a profile."
                 />
             ) : (
-                <div className="flex flex-col divide-y divide-border sm:gap-3 sm:divide-y-0">
+                <div data-list className="flex flex-col divide-y divide-border border-y border-border sm:rounded-xl sm:border-x">
                     {tab === 'posts'
                         ? posts!.data!.posts.map((post) => <PostCard key={post.id} post={post} />)
                         : comments!.data!.comments.map((comment) => <CommentListItem key={comment.id} comment={comment} />)}

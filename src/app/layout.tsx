@@ -48,15 +48,18 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
     themeColor: [
-        { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-        { media: '(prefers-color-scheme: dark)', color: '#0c1a2a' },
+        { media: '(prefers-color-scheme: light)', color: '#fbfbfc' },
+        { media: '(prefers-color-scheme: dark)', color: '#0c0c0e' },
     ],
 };
 
 export default async function RootLayout({
     children,
+    reader,
 }: Readonly<{
     children: React.ReactNode;
+    // The split view's reading pane: a post opened from a list (app/@reader)
+    reader: React.ReactNode;
 }>) {
     // Get the hasRefreshToken cookie from the cookie store
     const cookieStore = await cookies();
@@ -80,11 +83,13 @@ export default async function RootLayout({
                 <Header theme={theme} />
 
                 {/* The document scrolls, not an inner container, so mobile URL bars collapse and back/forward restore position */}
-                <div className="mx-auto flex w-full max-w-7xl">
+                {/* .shell: the split-view rules in globals.css narrow <main> to a list column while a post is open */}
+                <div className="shell mx-auto flex w-full max-w-[100rem]">
                     <LeftSidebar />
                     <main className="min-w-0 flex-1 pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom))] md:pb-0">
                         {children}
                     </main>
+                    {reader}
                 </div>
 
                 <BottomTabBar />

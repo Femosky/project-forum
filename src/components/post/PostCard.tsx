@@ -53,44 +53,51 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
 
     return (
         <article
+            data-post-card={isCompact ? post.short_id : undefined}
             className={twMerge(
-                'relative flex flex-col gap-2 px-4 py-3',
-                isCompact && 'bg-surface transition-colors hover:bg-surface-muted/60 sm:rounded-xl sm:border sm:border-border',
+                'relative flex flex-col',
+                isCompact ? 'gap-1.5 px-4 py-3 transition-colors hover:bg-surface-muted/60' : 'gap-3 px-4 py-4',
                 className
             )}
         >
-            {/* Whole card is clickable; links and buttons inside sit above this with z-10 */}
-            {isCompact && <Link href={postPath} className="absolute inset-0 sm:rounded-xl" aria-label={post.title} />}
+            {/* Whole row is clickable; links and buttons inside sit above this with z-10. data-post-link: the
+                reading pane's J/K keys follow it. */}
+            {isCompact && <Link href={postPath} data-post-link className="absolute inset-0" aria-label={post.title} />}
 
             <header className="flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2 text-xs text-muted">
+                <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted">
                     {showCommunity ? (
                         <Link
                             href={`/c/${communityName}`}
                             className="relative z-10 flex min-w-0 items-center gap-1.5 font-bold text-text hover:underline"
                         >
-                            <Avatar name={communityName} src={post.community.image_url} size="sm" />
+                            <Avatar name={communityName} src={post.community.image_url} size="sm" shape="square" className="size-5" />
                             <span className="truncate">c/{communityName}</span>
                         </Link>
                     ) : (
                         <AuthorLink author={post.author} className="truncate font-bold text-text" />
                     )}
-                    <span aria-hidden>•</span>
+                    <span aria-hidden>·</span>
                     <time dateTime={post.created_at} className="shrink-0">
                         {TimeUtility.formatTimeAgo(post.created_at)}
                     </time>
                     {showCommunity && !isCompact && (
                         <>
-                            <span aria-hidden>•</span>
+                            <span aria-hidden>·</span>
                             <AuthorLink author={post.author} className="truncate" />
                         </>
                     )}
-                    {post.pinned_at && <Pin className="size-3.5 shrink-0 text-success" aria-label="Pinned" />}
+                    {post.pinned_at && <Pin className="size-3.5 shrink-0 text-accent" aria-label="Pinned" />}
                 </div>
                 <PostOptions post={post} leaveOnDelete={!isCompact} isModerator={isModerator} />
             </header>
 
-            <TitleTag className={twMerge('font-bold leading-snug break-words', isCompact ? 'text-lg' : 'text-2xl')}>
+            <TitleTag
+                className={twMerge(
+                    'break-words',
+                    isCompact ? 'text-[15px] font-bold leading-snug' : 'text-2xl font-extrabold leading-tight tracking-tight sm:text-[1.75rem]'
+                )}
+            >
                 {post.title}
             </TitleTag>
 
@@ -104,22 +111,30 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 </div>
             )}
 
-            {post.type === 'link' && post.url && <LinkPreviewCard post={post} compact={isCompact} />}
+            {/* list-extra: hidden while the list is a narrow column beside an open post */}
+            {post.type === 'link' && post.url && (
+                <div className={isCompact ? 'list-extra' : undefined}>
+                    <LinkPreviewCard post={post} compact={isCompact} />
+                </div>
+            )}
 
             {isCompact
-                ? post.body && <p className="line-clamp-3 break-words text-sm text-muted">{stripMarkdown(post.body)}</p>
+                ? post.body && <p className="list-extra line-clamp-2 break-words text-sm text-muted">{stripMarkdown(post.body)}</p>
                 : <PostBody post={post} />}
 
-            <footer className="mt-1 flex flex-wrap items-center gap-2">
+            <footer className={twMerge('flex flex-wrap items-center gap-1.5', isCompact ? '-ml-1' : 'mt-1')}>
                 <VoteControl
                     target="posts"
                     id={post.id}
                     upvotes={post.upvote_count}
                     downvotes={post.downvote_count}
                     userVote={post.viewer?.vote ?? 0}
+                    size={isCompact ? 'sm' : 'md'}
                 />
                 <CommentCountButton post={post} href={`${postPath}#comments`} />
-                <ShareButton path={postPath} title={post.title} />
+                <span className={isCompact ? 'list-extra' : undefined}>
+                    <ShareButton path={postPath} title={post.title} />
+                </span>
             </footer>
         </article>
     );
@@ -134,7 +149,7 @@ function LinkPreviewCard({ post, compact }: { post: Post; compact: boolean }) {
             href={url}
             target="_blank"
             rel="noopener noreferrer nofollow ugc"
-            className="relative z-10 flex items-stretch overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-border-strong"
+            className="relative z-10 flex items-stretch overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-border-strong"
         >
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-3 py-2">
                 {preview?.title && !compact && <span className="line-clamp-2 text-sm font-bold">{preview.title}</span>}

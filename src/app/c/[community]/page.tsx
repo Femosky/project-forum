@@ -75,11 +75,11 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
                 ])}
             />
             <CommunityHeader community={community.data.community} viewer={community.data.viewer} />
-            <div className="xl:col-start-2 xl:row-span-2 xl:row-start-1">
+            <div className="list-extra xl:col-start-2 xl:row-span-2 xl:row-start-1">
                 <CommunityRail data={community.data} />
             </div>
             <div className="flex min-w-0 flex-col gap-3 xl:col-start-1">
-                {isModerator && <ManageFlairs community={community.data.community.name} initialFlairs={flairs?.data?.flairs ?? []} />}
+                {isModerator && <div className="list-extra"><ManageFlairs community={community.data.community.name} initialFlairs={flairs?.data?.flairs ?? []} /></div>}
 
                 {isPrivateAndClosed ? (
                     <EmptyState

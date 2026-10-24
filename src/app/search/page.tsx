@@ -66,7 +66,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                             href={searchHref(q, value)}
                             aria-current={type === value ? 'page' : undefined}
                             className={twMerge(
-                                'flex h-8 items-center rounded-full px-3 text-sm font-semibold capitalize transition-colors',
+                                'flex h-8 items-center rounded-lg px-3 text-sm font-semibold capitalize transition-colors',
                                 type === value ? 'bg-highlight text-highlight-fg' : 'text-muted hover:bg-surface-muted hover:text-text'
                             )}
                         >
@@ -93,7 +93,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     description="Try fewer or different words."
                 />
             ) : posts?.data ? (
-                <div className="flex flex-col divide-y divide-border sm:gap-3 sm:divide-y-0">
+                <div data-list className="flex flex-col divide-y divide-border border-y border-border sm:rounded-xl sm:border-x">
                     {posts.data.posts.map((post) => (
                         <PostCard key={post.id} post={post} />
                     ))}
@@ -103,7 +103,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     {communities!.data!.communities.map((community) => (
                         <li key={community.id}>
                             <Link href={`/c/${community.name}`} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted/60">
-                                <Avatar name={community.name} src={community.image_url} size="lg" />
+                                <Avatar name={community.name} src={community.image_url} size="lg" shape="square" />
                                 <div className="min-w-0 flex-1">
                                     <p className="truncate font-bold">c/{community.name}</p>
                                     {community.description && <p className="line-clamp-1 text-sm text-muted">{community.description}</p>}

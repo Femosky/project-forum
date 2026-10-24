@@ -102,7 +102,7 @@ export function InfinitePosts({ apiPath, initialCursor, nextHref, seenIds, showC
 
     if (!isHydrated) {
         return (
-            <div className="flex justify-center pb-6">
+            <div className="flex justify-center py-6">
                 <Button asChild variant="secondary">
                     <Link href={nextHref} rel="next">
                         Next page <ChevronRight className="size-4" />
@@ -115,7 +115,7 @@ export function InfinitePosts({ apiPath, initialCursor, nextHref, seenIds, showC
     return (
         <>
             {items.length > 0 && (
-                <div className="flex flex-col divide-y divide-border border-t border-border sm:gap-3 sm:divide-y-0 sm:border-t-0">
+                <div className="flex flex-col divide-y divide-border border-b border-border sm:rounded-b-xl sm:border-x">
                     {items.map(({ post, ad }) => (
                         <Fragment key={post.id}>
                             <PostCard post={post} showCommunity={showCommunity} />
@@ -124,7 +124,7 @@ export function InfinitePosts({ apiPath, initialCursor, nextHref, seenIds, showC
                     ))}
                 </div>
             )}
-            <div ref={sentinel} className="flex flex-col items-center gap-3 pb-6">
+            <div ref={sentinel} className="flex flex-col items-center gap-3 py-6">
                 {isLoading && <PostCardSkeleton className="w-full" />}
                 {error && (
                     <>

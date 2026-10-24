@@ -422,7 +422,7 @@ function CampaignForm({ campaign, onSaved }: { campaign: Campaign; onSaved: () =
                     {COMMUNITY_CATEGORIES.map((category) => (
                         <label
                             key={category.id}
-                            className="cursor-pointer rounded-full border border-border-strong px-3 py-1 text-xs font-semibold has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-accent-fg"
+                            className="cursor-pointer rounded-lg border border-border-strong px-3 py-1 text-xs font-semibold has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-accent-fg"
                         >
                             <input
                                 type="checkbox"

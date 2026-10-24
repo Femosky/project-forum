@@ -5,7 +5,7 @@ import { Slot } from 'radix-ui';
 
 const iconButtonStyles = cva(
     [
-        'inline-flex items-center justify-center shrink-0 rounded-full transition-colors cursor-pointer',
+        'inline-flex items-center justify-center shrink-0 rounded-lg transition-colors cursor-pointer',
         'disabled:cursor-not-allowed disabled:opacity-50',
         '[&_svg]:size-5',
     ],
@@ -13,7 +13,7 @@ const iconButtonStyles = cva(
         variants: {
             variant: {
                 ghost: 'text-muted hover:bg-surface-muted hover:text-text',
-                secondary: 'bg-surface-muted text-text hover:bg-border',
+                secondary: 'border border-border bg-surface text-text hover:bg-surface-muted',
                 primary: 'bg-accent text-accent-fg hover:bg-accent-hover',
             },
             size: {

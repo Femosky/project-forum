@@ -238,7 +238,7 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                 {fieldErrors.community && <ErrorMessage errorMessage={fieldErrors.community} />}
             </div>
 
-            <div role="tablist" aria-label="Post type" className="flex gap-1 rounded-full bg-surface-muted p-1">
+            <div role="tablist" aria-label="Post type" className="flex gap-1 rounded-lg bg-surface-muted p-1">
                 {(
                     [
                         { value: 'text', label: 'Text', icon: FileText },
@@ -253,7 +253,7 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                         disabled={value === 'link' && !canPostLinks}
                         onClick={() => update('type', value)}
                         className={twMerge(
-                            'flex h-9 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                            'flex h-9 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
                             draft.type === value ? 'bg-surface text-text shadow-sm' : 'text-muted hover:text-text'
                         )}
                     >
@@ -354,7 +354,7 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                                 aria-pressed={draft.flairId === flair.id}
                                 onClick={() => update('flairId', draft.flairId === flair.id ? '' : flair.id)}
                                 className={twMerge(
-                                    'h-8 cursor-pointer rounded-full border px-3 text-sm font-semibold transition-colors',
+                                    'h-8 cursor-pointer rounded-lg border px-3 text-sm font-semibold transition-colors',
                                     draft.flairId === flair.id ? 'border-accent bg-accent text-accent-fg' : 'border-border-strong hover:bg-surface-muted'
                                 )}
                             >

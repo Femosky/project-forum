@@ -56,7 +56,7 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
                     // Radix opens the menu on pointer down; let handleClick decide between the share sheet and the menu
                     onPointerDown={(e) => e.preventDefault()}
                     onClick={handleClick}
-                    className="relative z-10 text-muted hover:text-text"
+                    className="relative z-10 h-7 px-2 font-bold text-muted hover:text-text"
                 >
                     {copied ? <Check className="size-4" /> : <Share2 className="size-4" />}
                     {copied ? 'Copied' : 'Share'}

@@ -54,7 +54,7 @@ export function SponsoredPostCard({ unit, className, preview = false }: { unit: 
                 <span className="flex min-w-0 items-center gap-1 truncate text-xs text-link">
                     {creative.display_url} <ExternalLink className="size-3 shrink-0" />
                 </span>
-                <span className="flex h-8 shrink-0 items-center rounded-full bg-accent px-3 text-sm font-semibold text-accent-fg">
+                <span className="flex h-8 shrink-0 items-center rounded-lg bg-accent px-3 text-sm font-semibold text-accent-fg">
                     {creative.cta_label}
                 </span>
             </footer>

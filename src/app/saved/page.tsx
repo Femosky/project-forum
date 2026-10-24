@@ -57,7 +57,7 @@ export default async function SavedPage({ searchParams }: PageProps) {
                         href={value === 'posts' ? '/saved' : '/saved?tab=comments'}
                         aria-current={tab === value ? 'page' : undefined}
                         className={twMerge(
-                            'flex h-8 items-center rounded-full px-3 text-sm font-semibold capitalize transition-colors',
+                            'flex h-8 items-center rounded-lg px-3 text-sm font-semibold capitalize transition-colors',
                             tab === value ? 'bg-highlight text-highlight-fg' : 'text-muted hover:bg-surface-muted hover:text-text'
                         )}
                     >
@@ -73,7 +73,7 @@ export default async function SavedPage({ searchParams }: PageProps) {
                     description={`Tap the ••• menu on any ${tab === 'posts' ? 'post' : 'comment'} and choose Save to keep it here.`}
                 />
             ) : (
-                <div className="flex flex-col divide-y divide-border sm:gap-3 sm:divide-y-0">
+                <div data-list className="flex flex-col divide-y divide-border border-y border-border sm:rounded-xl sm:border-x">
                     {posts?.data
                         ? posts.data.posts.map((post) => <PostCard key={post.id} post={post} />)
                         : comments!.data!.comments.map((comment) => <CommentListItem key={comment.id} comment={comment} />)}

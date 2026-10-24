@@ -18,7 +18,8 @@ export function CommunityRail({ data }: { data: CommunityResponse }) {
     return (
         <aside aria-label={`About c/${community.name}`} className="flex flex-col gap-3">
             {isModerator && (
-                <Link
+                // Plain <a>: client navigation to /mod would be read as a post by the split view's reader route
+                <a
                     href={`/c/${community.name}/mod`}
                     className="flex items-center gap-2 border-b border-border bg-highlight px-4 py-3 text-sm font-semibold text-highlight-fg sm:rounded-xl sm:border-0"
                 >
@@ -26,7 +27,7 @@ export function CommunityRail({ data }: { data: CommunityResponse }) {
                     {viewer?.queue_count ? (
                         <span className="ml-auto rounded-full bg-danger px-2 text-xs text-surface tabular-nums">{viewer.queue_count} waiting</span>
                     ) : null}
-                </Link>
+                </a>
             )}
 
             <section className={cardClasses}>

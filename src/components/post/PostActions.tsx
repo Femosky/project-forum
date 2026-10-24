@@ -14,9 +14,9 @@ export function CommentCountButton({ post, href }: { post: Post; href: string })
     const count = useUIStore((state) => state.commentCounts[post.id]) ?? post.comment_count;
 
     return (
-        <Button asChild variant="secondary" size="sm" className="relative z-10 h-8 text-sm">
+        <Button asChild variant="ghost" size="sm" className="relative z-10 h-7 gap-1.5 px-2 font-bold text-muted hover:text-text">
             <Link href={href}>
-                <MessageCircle className="size-4" />
+                <MessageCircle className="size-[15px]" />
                 <span className="tabular-nums">{NumberUtility.compactFormatter.format(count)}</span>
                 <span className="sr-only">{count === 1 ? 'comment' : 'comments'}</span>
             </Link>

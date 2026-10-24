@@ -13,7 +13,7 @@ export const fieldStyles = cva(
         variants: {
             variant: {
                 default: 'h-11 px-4 rounded-lg text-base',
-                search: 'h-10 px-4 rounded-full text-sm bg-surface-muted border-transparent focus:bg-surface',
+                search: 'h-9 px-4 rounded-lg text-sm bg-surface-muted border-transparent focus:bg-surface',
             },
             outline: {
                 default: 'border-border-strong focus:border-focus',

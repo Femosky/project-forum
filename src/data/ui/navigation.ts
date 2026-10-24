@@ -1,4 +1,4 @@
-import { Bell, Bookmark, Flame, Home, LucideIcon, PlusSquare, User, Users } from 'lucide-react';
+import { Bell, Bookmark, Flame, Home, LucideIcon, Plus, User, Users } from 'lucide-react';
 
 export interface NavRoute {
     href: string;
@@ -18,7 +18,7 @@ export const PRIMARY_NAV: NavRoute[] = [
 export const TAB_BAR_NAV: NavRoute[] = [
     { href: '/', icon: Home, label: 'Home' },
     { href: '/communities', icon: Users, label: 'Communities' },
-    { href: '/submit', icon: PlusSquare, label: 'Create' },
+    { href: '/submit', icon: Plus, label: 'Create' },
     { href: '/notifications', icon: Bell, label: 'Notifications' },
     { href: '/profile', icon: User, label: 'Profile' },
 ];

@@ -23,15 +23,15 @@ export function parsePostSort(value: string | string[] | undefined): PostSort {
 // Plain links, so sorting works without JavaScript and crawlers can follow them
 export function SortTabs({ basePath, current }: { basePath: string; current: PostSort }) {
     return (
-        <nav aria-label="Sort posts" className="flex gap-1 px-4 sm:px-0">
+        <nav aria-label="Sort posts" className="mx-4 flex w-fit gap-0.5 rounded-lg bg-surface-muted p-0.5 sm:mx-0">
             {POST_SORTS.map((sort) => (
                 <Link
                     key={sort.value}
                     href={sort.value === 'hot' ? basePath : `${basePath}?sort=${sort.value}`}
                     aria-current={current === sort.value ? 'page' : undefined}
                     className={twMerge(
-                        'flex h-8 items-center rounded-full px-3 text-sm font-semibold transition-colors',
-                        current === sort.value ? 'bg-highlight text-highlight-fg' : 'text-muted hover:bg-surface-muted hover:text-text'
+                        'flex h-7 items-center rounded-md px-3 text-[13px] font-bold transition-colors',
+                        current === sort.value ? 'bg-surface text-text shadow-sm' : 'text-muted hover:text-text'
                     )}
                 >
                     {sort.label}
@@ -69,8 +69,9 @@ export function PostList({ posts, basePath, sort, nextCursor, apiPath, showCommu
     const nextParams = new URLSearchParams({ ...(sort === 'hot' ? {} : { sort }), cursor: nextCursor ?? '' });
 
     return (
-        <div className="flex flex-col gap-3">
-            <div className="flex flex-col divide-y divide-border sm:gap-3 sm:divide-y-0">
+        // data-list: the split view narrows pages with a list into a column beside an open post (globals.css)
+        <div data-list className="flex flex-col">
+            <div className={twMerge('flex flex-col divide-y divide-border border-y border-border sm:border-x', nextCursor ? 'sm:rounded-t-xl' : 'sm:rounded-xl')}>
                 {posts.map((post, index) => {
                     const slot = ads ? slotAfter(index, 'feed') : null;
                     return (

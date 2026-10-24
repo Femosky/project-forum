@@ -5,8 +5,13 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { twMerge } from 'tailwind-merge';
 import { useDataSaver } from '@/lib/useDataSaver';
 
-const avatarStyles = cva('relative inline-flex shrink-0 overflow-hidden rounded-full bg-highlight', {
+const avatarStyles = cva('relative inline-flex shrink-0 overflow-hidden bg-highlight', {
     variants: {
+        // People are round, communities are rounded squares
+        shape: {
+            round: 'rounded-full',
+            square: 'rounded-[28%]',
+        },
         size: {
             sm: 'size-6 text-[10px]',
             md: 'size-8 text-xs',
@@ -14,7 +19,7 @@ const avatarStyles = cva('relative inline-flex shrink-0 overflow-hidden rounded-
             xl: 'size-16 text-xl',
         },
     },
-    defaultVariants: { size: 'md' },
+    defaultVariants: { size: 'md', shape: 'round' },
 });
 
 type AvatarProps = VariantProps<typeof avatarStyles> & {
@@ -25,11 +30,11 @@ type AvatarProps = VariantProps<typeof avatarStyles> & {
 
 // Shows the image when it loads, otherwise the first letter of the name on the highlight colour.
 // With data saver on, always the letter.
-export function Avatar({ name, src: imageSrc, size, className }: AvatarProps) {
+export function Avatar({ name, src: imageSrc, size, shape, className }: AvatarProps) {
     const dataSaver = useDataSaver();
     const src = dataSaver ? null : imageSrc;
     return (
-        <RadixAvatar.Root className={twMerge(avatarStyles({ size }), className)}>
+        <RadixAvatar.Root className={twMerge(avatarStyles({ size, shape }), className)}>
             {src && <RadixAvatar.Image src={src} alt={`${name}'s avatar`} className="size-full object-cover" />}
             <RadixAvatar.Fallback
                 delayMs={src ? 300 : 0}

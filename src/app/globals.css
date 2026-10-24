@@ -10,63 +10,63 @@
  * Theme selection: <html data-theme="light|dark"> when the user picked one (stored in a
  * cookie and rendered by the server), otherwise the system preference decides.
  *
- * Brand seeds: navy #00203F and mint #ADEFD1. In light mode navy is the primary action
- * colour and mint is a highlight surface only (mint text on white fails contrast). In dark
- * mode they swap roles: mint becomes the action colour with navy text on it.
- * Every text token passes WCAG AA (4.5:1) on bg, surface and surface-muted.
+ * Look: neutral greys with one blue accent; dark mode is a neutral near-black, not navy. No green
+ * accents (branding rule). Every text token passes WCAG AA (4.5:1) on bg, surface and surface-muted.
  */
 
 :root,
 :root[data-theme='light'] {
     color-scheme: light;
 
-    --bg: #f5f7fa;
+    --bg: #fbfbfc;
+    --pane: #f4f4f6;
     --surface: #ffffff;
     --surface-raised: #ffffff;
-    --surface-muted: #edf1f5;
-    --text: #0e1a26;
-    --text-muted: #526172;
-    --border: #d9e0e7;
-    --border-strong: #7f90a2;
-    --accent: #00203f;
-    --accent-hover: #0a3460;
+    --surface-muted: #f0f0f3;
+    --text: #121215;
+    --text-muted: #5d5d69;
+    --border: #e6e6ea;
+    --border-strong: #8a8a96;
+    --accent: #3d63ff;
+    --accent-hover: #2f52e6;
     --accent-fg: #ffffff;
-    --highlight: #adefd1;
-    --highlight-fg: #00203f;
-    --link: #0a7350;
-    --upvote: #0a7350;
-    --downvote: #4b57c9;
-    --danger: #c02e24;
-    --success: #13773a;
+    --highlight: #e8edff;
+    --highlight-fg: #2443c9;
+    --link: #2f52e6;
+    --upvote: #3d63ff;
+    --downvote: #b42d7e;
+    --danger: #c8302a;
+    --success: #1f7a4a;
     --sponsored: #8a5a00;
-    --focus: #0a7350;
-    --overlay: rgb(14 26 38 / 0.45);
-    --shadow: 0 1px 2px rgb(14 26 38 / 0.06), 0 8px 24px rgb(14 26 38 / 0.1);
+    --focus: #3d63ff;
+    --overlay: rgb(18 18 21 / 0.45);
+    --shadow: 0 1px 2px rgb(18 18 21 / 0.05), 0 8px 24px rgb(18 18 21 / 0.08);
 }
 
 :root[data-theme='dark'] {
     color-scheme: dark;
 
-    --bg: #06111d;
-    --surface: #0c1a2a;
-    --surface-raised: #122236;
-    --surface-muted: #16283c;
-    --text: #e4ecf3;
-    --text-muted: #97a8b9;
-    --border: #203448;
-    --border-strong: #56708a;
-    --accent: #adefd1;
-    --accent-hover: #c6f5df;
-    --accent-fg: #00203f;
-    --highlight: #173b36;
-    --highlight-fg: #adefd1;
-    --link: #7eddb4;
-    --upvote: #6fd8a8;
-    --downvote: #9ea8ff;
-    --danger: #ff8a80;
-    --success: #63d483;
+    --bg: #0c0c0e;
+    --pane: #111114;
+    --surface: #131316;
+    --surface-raised: #1a1a1f;
+    --surface-muted: #1c1c21;
+    --text: #ececf0;
+    --text-muted: #9a9aa6;
+    --border: #232329;
+    --border-strong: #4c4c57;
+    --accent: #7590ff;
+    --accent-hover: #8ea4ff;
+    --accent-fg: #0c0c0e;
+    --highlight: #1a2142;
+    --highlight-fg: #b5c4ff;
+    --link: #8ea4ff;
+    --upvote: #8ea4ff;
+    --downvote: #f07cc0;
+    --danger: #ff7a72;
+    --success: #6fcf97;
     --sponsored: #e8b54d;
-    --focus: #7eddb4;
+    --focus: #8ea4ff;
     --overlay: rgb(0 0 0 / 0.6);
     --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.45);
 }
@@ -76,26 +76,27 @@
     :root:not([data-theme='light']) {
         color-scheme: dark;
 
-        --bg: #06111d;
-        --surface: #0c1a2a;
-        --surface-raised: #122236;
-        --surface-muted: #16283c;
-        --text: #e4ecf3;
-        --text-muted: #97a8b9;
-        --border: #203448;
-        --border-strong: #56708a;
-        --accent: #adefd1;
-        --accent-hover: #c6f5df;
-        --accent-fg: #00203f;
-        --highlight: #173b36;
-        --highlight-fg: #adefd1;
-        --link: #7eddb4;
-        --upvote: #6fd8a8;
-        --downvote: #9ea8ff;
-        --danger: #ff8a80;
-        --success: #63d483;
+        --bg: #0c0c0e;
+        --pane: #111114;
+        --surface: #131316;
+        --surface-raised: #1a1a1f;
+        --surface-muted: #1c1c21;
+        --text: #ececf0;
+        --text-muted: #9a9aa6;
+        --border: #232329;
+        --border-strong: #4c4c57;
+        --accent: #7590ff;
+        --accent-hover: #8ea4ff;
+        --accent-fg: #0c0c0e;
+        --highlight: #1a2142;
+        --highlight-fg: #b5c4ff;
+        --link: #8ea4ff;
+        --upvote: #8ea4ff;
+        --downvote: #f07cc0;
+        --danger: #ff7a72;
+        --success: #6fcf97;
         --sponsored: #e8b54d;
-        --focus: #7eddb4;
+        --focus: #8ea4ff;
         --overlay: rgb(0 0 0 / 0.6);
         --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.45);
     }
@@ -106,7 +107,8 @@
     --breakpoint-xs: 390px;
 
     --spacing-header: 3.5rem;
-    --spacing-sidebar: 16rem;
+    --spacing-sidebar: 15rem;
+    --spacing-list: 26rem;
     --spacing-content: 46rem;
     --spacing-tabbar: 3.5rem;
 }
@@ -115,6 +117,7 @@
     --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
 
     --color-bg: var(--bg);
+    --color-pane: var(--pane);
     --color-surface: var(--surface);
     --color-surface-raised: var(--surface-raised);
     --color-surface-muted: var(--surface-muted);
@@ -221,4 +224,37 @@
    ones are never downloaded. */
 [data-save-data] .data-saver-hide {
     display: none;
+}
+
+/*
+ * Split view. Opening a post from a list (client navigation only) renders it in the @reader slot of the root
+ * layout instead of replacing the page; direct visits and crawlers get the normal post page.
+ * - Wide screens: the list narrows to a column on the left and the post reads beside it. If the page underneath
+ *   isn't a list (it has no [data-list]), the post takes the whole content area instead.
+ * - Narrow screens: the post covers the screen (ReaderPane positions itself) and the list stays mounted beneath,
+ *   so closing it returns to the same scroll position.
+ * The open post's row ([data-post-card]) is highlighted by a style rule ReaderPane writes.
+ */
+@media (min-width: 80rem) {
+    .shell:has([data-reader]):has(> main [data-list]) > main {
+        flex: 0 0 var(--spacing-list);
+        border-right: 1px solid var(--border);
+    }
+    .shell:has([data-reader]):not(:has(> main [data-list])) > main {
+        display: none;
+    }
+    /* A compact list while reading: one full-width column of titles and counts */
+    .shell:has([data-reader]):has(> main [data-list]) > main > * {
+        max-width: none;
+        grid-template-columns: minmax(0, 1fr);
+        padding-inline: 0;
+    }
+    .shell:has([data-reader]) > main [data-list],
+    .shell:has([data-reader]) > main [data-list] > div {
+        border-inline: 0;
+        border-radius: 0;
+    }
+    .shell:has([data-reader]) > main .list-extra {
+        display: none;
+    }
 }
