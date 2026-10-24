@@ -75,7 +75,15 @@ function validate(draft: Draft): Record<string, string> {
     return errors;
 }
 
-export function PostComposer({ communities, initialCommunity }: { communities: CommunityOption[]; initialCommunity?: string }) {
+type ComposerProps = {
+    communities: CommunityOption[];
+    initialCommunity?: string;
+    // New-account limits (the API enforces them; this explains them before anyone hits an error)
+    canPostLinks: boolean;
+    canPostAnonymously: boolean;
+};
+
+export function PostComposer({ communities, initialCommunity, canPostLinks, canPostAnonymously }: ComposerProps) {
     const router = useRouter();
     const [draft, setDraft] = useState<Draft>({ ...EMPTY_DRAFT, community: initialCommunity ?? '' });
     const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
@@ -87,9 +95,15 @@ export function PostComposer({ communities, initialCommunity }: { communities: C
     useEffect(() => {
         const saved = readDraft();
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setDraft((current) => ({ ...current, ...saved, community: initialCommunity || saved.community || current.community }));
+        setDraft((current) => ({
+            ...current,
+            ...saved,
+            community: initialCommunity || saved.community || current.community,
+            ...(canPostLinks ? {} : { type: 'text' as const }),
+            ...(canPostAnonymously ? {} : { isAnonymous: false }),
+        }));
         setHasLoadedDraft(true);
-    }, [initialCommunity]);
+    }, [initialCommunity, canPostLinks, canPostAnonymously]);
 
     useEffect(() => {
         if (hasLoadedDraft) writeDraft(draft);
@@ -227,9 +241,10 @@ export function PostComposer({ communities, initialCommunity }: { communities: C
                         type="button"
                         role="tab"
                         aria-selected={draft.type === value}
+                        disabled={value === 'link' && !canPostLinks}
                         onClick={() => update('type', value)}
                         className={twMerge(
-                            'flex h-9 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors',
+                            'flex h-9 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
                             draft.type === value ? 'bg-surface text-text shadow-sm' : 'text-muted hover:text-text'
                         )}
                     >
@@ -237,6 +252,12 @@ export function PostComposer({ communities, initialCommunity }: { communities: C
                     </button>
                 ))}
             </div>
+
+            {!canPostLinks && (
+                <p className="-mt-2 text-xs text-muted">
+                    New accounts can share links once they are a day old or have 10 karma. This keeps scammers out.
+                </p>
+            )}
 
             <div className="flex flex-col gap-1.5">
                 <div className="flex items-baseline justify-between">
@@ -350,16 +371,21 @@ export function PostComposer({ communities, initialCommunity }: { communities: C
                 {fieldErrors.body && <ErrorMessage errorMessage={fieldErrors.body} />}
             </div>
 
-            <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+            <label className={twMerge('flex items-start gap-2.5 text-sm', canPostAnonymously ? 'cursor-pointer' : 'cursor-not-allowed opacity-60')}>
                 <input
                     type="checkbox"
                     checked={draft.isAnonymous}
+                    disabled={!canPostAnonymously}
                     onChange={(e) => update('isAnonymous', e.target.checked)}
                     className="mt-0.5 size-4 accent-accent"
                 />
                 <span>
                     <span className="font-semibold">Post anonymously</span>
-                    <span className="block text-muted">Your username is hidden from everyone except the community&apos;s moderators.</span>
+                    <span className="block text-muted">
+                        {canPostAnonymously
+                            ? "Your username is hidden from everyone except the community's moderators."
+                            : 'Available once your account is a day old and your email is verified.'}
+                    </span>
                 </span>
             </label>
 

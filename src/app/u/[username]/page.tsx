@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import PostCard from '@/components/post/PostCard';
 import CommentListItem from '@/components/post/CommentListItem';
+import ReportUserButton from '@/components/post/ReportUserButton';
 import NumberUtility from '@/lib/utils/NumberUtility';
 import JsonLd from '@/components/common/JsonLd';
 import { noindexMetadata, pageMetadata, profileJsonLd } from '@/lib/seo';
@@ -81,6 +82,7 @@ export default async function ProfilePage({ params, searchParams }: PageProps) {
                         </Badge>
                     )}
                 </div>
+                <ReportUserButton userId={user.id} username={user.username} />
             </header>
 
             <nav aria-label="Profile sections" className="flex gap-1 px-4 sm:px-0">

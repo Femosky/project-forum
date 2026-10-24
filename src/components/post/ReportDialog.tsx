@@ -8,22 +8,12 @@ import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { ReportReason } from '@/types/api';
+import { REPORT_REASONS } from '@/lib/moderation';
 
-const REASONS: { value: ReportReason; label: string }[] = [
-    { value: 'spam', label: 'Spam or scam' },
-    { value: 'harassment', label: 'Harassment or bullying' },
-    { value: 'hate', label: 'Hate speech' },
-    { value: 'violence', label: 'Violence or threats' },
-    { value: 'sexual', label: 'Sexual content' },
-    { value: 'self_harm', label: 'Self-harm' },
-    { value: 'misinformation', label: 'False information' },
-    { value: 'illegal', label: 'Illegal content' },
-    { value: 'impersonation', label: 'Impersonation' },
-    { value: 'other', label: 'Something else' },
-];
+
 
 type ReportDialogProps = {
-    targetType: 'post' | 'comment';
+    targetType: 'post' | 'comment' | 'user';
     targetId: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -68,7 +58,9 @@ export function ReportDialog({ targetType, targetId, open, onOpenChange }: Repor
                 title={status === 'sent' ? 'Thanks for reporting' : `Report this ${targetType}`}
                 description={
                     status === 'sent'
-                        ? "The community's moderators will review it."
+                        ? targetType === 'user'
+                            ? 'The site team will review it.'
+                            : "The community's moderators will review it."
                         : "Reports are anonymous. Moderators see the reason, not who sent it."
                 }
             >
@@ -80,7 +72,7 @@ export function ReportDialog({ targetType, targetId, open, onOpenChange }: Repor
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         <fieldset className="flex flex-wrap gap-2">
                             <legend className="sr-only">Reason</legend>
-                            {REASONS.map((option) => (
+                            {REPORT_REASONS.map((option) => (
                                 <label
                                     key={option.value}
                                     className="cursor-pointer rounded-full border border-border-strong px-3 py-1.5 text-sm font-semibold transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-accent-fg has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus/40"

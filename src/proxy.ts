@@ -61,7 +61,7 @@ function plainResponse(status: number, message: string) {
 async function crawlerStatus(request: NextRequest): Promise<NextResponse | null> {
     const { pathname, search } = request.nextUrl;
     const match = PAGE_PATTERNS.map(([pattern, type]) => ({ type, id: pattern.exec(pathname)?.[1] })).find((item) => item.id);
-    if (!match?.id || match.id === 'submit') return null;
+    if (!match?.id || match.id === 'submit' || match.id === 'mod') return null;
 
     let page: PageState;
     try {

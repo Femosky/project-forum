@@ -98,8 +98,6 @@ export function CommunityHeader({ community, viewer }: { community: Community; v
                 {joinButton('hidden sm:inline-flex')}
             </div>
 
-            {community.description && <p className="text-sm">{community.description}</p>}
-
             {joinButton('w-full sm:hidden')}
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
         </header>

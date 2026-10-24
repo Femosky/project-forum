@@ -89,9 +89,27 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                     </div>
                 </>
             )}
+
+            <DividerLine />
+            <ul className="flex flex-wrap gap-x-3 gap-y-1 px-3 text-xs text-muted">
+                {FOOTER_LINKS.map((link) => (
+                    <li key={link.href}>
+                        <Link href={link.href} onClick={onNavigate} className="hover:text-text hover:underline">
+                            {link.label}
+                        </Link>
+                    </li>
+                ))}
+            </ul>
         </nav>
     );
 }
+
+const FOOTER_LINKS = [
+    { href: '/policies/content', label: 'Content policy' },
+    { href: '/policies/community-guidelines', label: 'Guidelines' },
+    { href: '/policies/moderators', label: 'For moderators' },
+    { href: '/policies/legal', label: 'Legal and takedowns' },
+];
 
 function SidebarItem({
     route,

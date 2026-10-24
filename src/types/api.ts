@@ -50,6 +50,8 @@ export interface Post {
     is_nsfw: boolean;
     is_sponsored: boolean;
     status: ContentStatus;
+    // Why the automatic filters held it for review; moderators only
+    held_reason: string | null;
     flair: { id: string; name: string; color: string | null } | null;
     created_at: string;
     edited_at: string | null;
@@ -75,6 +77,7 @@ export interface Comment {
     is_anonymous: boolean;
     is_sponsored: boolean;
     status: ContentStatus;
+    held_reason: string | null;
     created_at: string;
     edited_at: string | null;
     pinned_at: string | null;
@@ -95,7 +98,8 @@ export interface Community {
     display_name: string | null;
     description: string | null;
     image_url: string | null;
-    rules: unknown;
+    rules: CommunityRule[] | null;
+    category: CommunityCategoryId | null;
     visibility: 'public' | 'private';
     status: string;
     is_nsfw: boolean;
@@ -104,11 +108,45 @@ export interface Community {
     created_at: string;
 }
 
+export interface CommunityRule {
+    title: string;
+    description: string;
+}
+
+export type CommunityCategoryId =
+    | 'careers'
+    | 'tech'
+    | 'relocation'
+    | 'education'
+    | 'housing'
+    | 'money'
+    | 'business'
+    | 'cars'
+    | 'health'
+    | 'relationships'
+    | 'sports'
+    | 'food'
+    | 'entertainment'
+    | 'other';
+
+export interface CommunityCategory {
+    id: CommunityCategoryId;
+    label: string;
+    count: number;
+}
+
+export interface CategoriesResponse {
+    categories: CommunityCategory[];
+}
+
 export interface CommunityViewer {
     is_member: boolean;
     role: 'owner' | 'moderator' | 'member' | null;
     is_banned: boolean;
     has_pending_request: boolean;
+    muted_until: string | null;
+    // Moderators only: items waiting in the mod queue
+    queue_count: number | null;
 }
 
 export interface PrivateUser {
@@ -123,6 +161,9 @@ export interface PrivateUser {
     has_password: boolean;
     has_google: boolean;
     created_at: string;
+    // New-account limits, so the composer can explain them up front
+    can_post_links: boolean;
+    can_post_anonymously: boolean;
 }
 
 export interface Session {
@@ -142,6 +183,7 @@ export interface SessionsResponse {
 }
 
 export interface PublicUser {
+    id: string;
     username: string;
     display_name: string | null;
     avatar_id: string;
@@ -290,12 +332,109 @@ export interface UserResponse {
 
 export type ReportReason =
     | 'spam'
+    | 'scam'
     | 'harassment'
     | 'hate'
-    | 'violence'
     | 'sexual'
-    | 'self_harm'
+    | 'violence'
     | 'misinformation'
+    | 'personal_info'
+    | 'other'
+    // Older reports may carry these
+    | 'self_harm'
     | 'illegal'
-    | 'impersonation'
-    | 'other';
+    | 'impersonation';
+
+export type ReportTargetType = 'post' | 'comment' | 'user' | 'community';
+
+// One entry in a mod queue: something with open reports, held by the filters, or both
+export interface QueueItem {
+    target_type: ReportTargetType;
+    target_id: string;
+    updated_at: string;
+    held_reason: string | null;
+    reports: { total: number; reasons: Partial<Record<ReportReason, number>>; notes: { note: string; reporter: string; created_at: string }[] };
+    report_ids: string[];
+    post?: Post;
+    comment?: ListedComment;
+    user?: { username: string; status: string; karma: number; created_at: string };
+    community?: { name: string; display_name: string | null; status: string };
+}
+
+export interface QueueResponse {
+    items: QueueItem[];
+}
+
+export interface ModLogEntry {
+    id: string;
+    created_at: string;
+    action: string;
+    target_type: ReportTargetType;
+    target_id: string;
+    reason: string | null;
+    details: Record<string, unknown> | null;
+    actor: { username: string };
+    community?: { name: string } | null;
+}
+
+export interface ModLogResponse {
+    actions: ModLogEntry[];
+    next_cursor: string | null;
+}
+
+export interface Restriction {
+    username: string;
+    until: string | null;
+    reason: string | null;
+}
+
+export interface RestrictionsResponse {
+    bans: Restriction[];
+    mutes: Restriction[];
+}
+
+export interface AdminUser {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+    status: string;
+    karma: number;
+    created_at: string;
+    last_login_at: string | null;
+    email_verified_at: string | null;
+    suspended_until: string | null;
+    suspension_reason: string | null;
+    shadow_banned_at: string | null;
+    _count: { posts: number; comments: number; reports_sent: number };
+}
+
+export interface AdminOverview {
+    queue: number;
+    users: number;
+    new_users_24h: number;
+    posts_24h: number;
+    comments_24h: number;
+    suspended: number;
+    shadow_banned: number;
+}
+
+export interface AdminCommunity {
+    id: string;
+    name: string;
+    display_name: string | null;
+    status: string;
+    visibility: string;
+    member_count: number;
+    post_count: number;
+    created_at: string;
+}
+
+export interface BlockedTerm {
+    id: string;
+    kind: 'domain' | 'keyword';
+    value: string;
+    note: string | null;
+    created_at: string;
+    creator?: { username: string };
+}

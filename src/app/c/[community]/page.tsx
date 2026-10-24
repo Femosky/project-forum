@@ -7,6 +7,7 @@ import { serverApi } from '@/lib/api/server';
 import { CommunityResponse, FlairsResponse, PostsResponse } from '@/types/api';
 import CommunityHeader from '@/components/community/CommunityHeader';
 import ManageFlairs from '@/components/community/ManageFlairs';
+import CommunityRail from '@/components/community/CommunityRail';
 import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
 import { PostList, SortTabs, parsePostSort } from '@/components/post/PostList';
@@ -61,7 +62,8 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
     const isPrivateAndClosed = !posts.data && (posts.status === 403 || posts.status === 404);
 
     return (
-        <div className="mx-auto flex w-full max-w-content flex-col gap-3 sm:px-4 sm:py-4">
+        // One column on small screens (header, about and rules, posts); on wide ones the about panel moves to a right rail
+        <div className="mx-auto grid w-full max-w-content grid-cols-1 content-start gap-3 sm:px-4 sm:py-4 xl:max-w-[64rem] xl:grid-cols-[minmax(0,1fr)_17rem] xl:grid-rows-[auto_1fr]">
             <JsonLd
                 data={breadcrumbJsonLd([
                     { name: APP_NAME, path: '/' },
@@ -69,40 +71,45 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
                 ])}
             />
             <CommunityHeader community={community.data.community} viewer={community.data.viewer} />
-            {isModerator && <ManageFlairs community={community.data.community.name} initialFlairs={flairs?.data?.flairs ?? []} />}
+            <div className="xl:col-start-2 xl:row-span-2 xl:row-start-1">
+                <CommunityRail data={community.data} />
+            </div>
+            <div className="flex min-w-0 flex-col gap-3 xl:col-start-1">
+                {isModerator && <ManageFlairs community={community.data.community.name} initialFlairs={flairs?.data?.flairs ?? []} />}
 
-            {isPrivateAndClosed ? (
-                <EmptyState
-                    icon={<Lock />}
-                    title="This community is private"
-                    description="Join to see its posts. A moderator will look at your request."
-                />
-            ) : (
-                <>
-                    <div className="flex items-center justify-between gap-2 pr-4 sm:pr-0">
-                        <SortTabs basePath={basePath} current={sort} />
-                        <Button asChild variant="secondary" size="sm">
-                            <Link href={`/submit?community=${community.data.community.name}`}>
-                                <Plus className="size-4" /> Post
-                            </Link>
-                        </Button>
-                    </div>
-                    <PostList
-                        posts={posts.data?.posts ?? []}
-                        basePath={basePath}
-                        sort={sort}
-                        nextCursor={posts.data?.next_cursor ?? null}
-                        apiPath={postsPath}
-                        showCommunity={false}
-                        empty={{
-                            title: posts.data ? 'No posts here yet' : "Couldn't load posts",
-                            description: posts.data
-                                ? 'Start the first conversation in this community.'
-                                : 'Something went wrong on our side. Try again in a moment.',
-                        }}
+                {isPrivateAndClosed ? (
+                    <EmptyState
+                        icon={<Lock />}
+                        title="This community is private"
+                        description="Join to see its posts. A moderator will look at your request."
                     />
-                </>
-            )}
+                ) : (
+                    <>
+                        <div className="flex items-center justify-between gap-2 pr-4 sm:pr-0">
+                            <SortTabs basePath={basePath} current={sort} />
+                            <Button asChild variant="secondary" size="sm">
+                                <Link href={`/submit?community=${community.data.community.name}`}>
+                                    <Plus className="size-4" /> Post
+                                </Link>
+                            </Button>
+                        </div>
+                        <PostList
+                            posts={posts.data?.posts ?? []}
+                            basePath={basePath}
+                            sort={sort}
+                            nextCursor={posts.data?.next_cursor ?? null}
+                            apiPath={postsPath}
+                            showCommunity={false}
+                            empty={{
+                                title: posts.data ? 'No posts here yet' : "Couldn't load posts",
+                                description: posts.data
+                                    ? 'Start the first conversation in this community.'
+                                    : 'Something went wrong on our side. Try again in a moment.',
+                            }}
+                        />
+                    </>
+                )}
+            </div>
         </div>
     );
 }
