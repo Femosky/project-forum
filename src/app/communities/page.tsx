@@ -130,7 +130,7 @@ export default async function CommunitiesPage({ searchParams }: PageProps) {
                                 >
                                     <Avatar name={community.name} src={community.image_url} size="lg" />
                                     <div className="min-w-0 flex-1">
-                                        <p className="truncate font-bold">c/{community.name}</p>
+                                        <p className="truncate font-bold">{community.display_name || community.name}</p>
                                         {community.description && <p className="line-clamp-1 text-sm text-muted">{community.description}</p>}
                                         {!category && categoryLabel(community.category) && (
                                             <p className="text-xs text-muted">{categoryLabel(community.category)}</p>

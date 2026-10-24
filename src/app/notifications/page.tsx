@@ -81,7 +81,7 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
                                     <div className="min-w-0 flex-1">
                                         <p className="text-sm">
                                             <span className="font-bold">{describe(notification)}</span>
-                                            <span className="text-muted"> in c/{post.community}</span>
+                                            <span className="text-muted"> in {post.community}</span>
                                         </p>
                                         <p className="truncate text-xs text-muted">{post.title}</p>
                                         <p className="mt-1 line-clamp-2 text-sm">{stripMarkdown(notification.comment.excerpt)}</p>

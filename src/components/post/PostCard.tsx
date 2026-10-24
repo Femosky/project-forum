@@ -11,6 +11,11 @@ import { CommentCountButton, PostOptions } from './PostActions';
 import PostBody from './PostBody';
 import { stripMarkdown } from '@/components/common/Markdown';
 
+// How a community is named in the interface: its display name, or its name. URLs keep /c/{name}.
+export function communityLabel(community: Pick<Post['community'], 'name' | 'display_name'>): string {
+    return community.display_name || community.name;
+}
+
 export function getPostPath(post: Pick<Post, 'community' | 'short_id' | 'slug'>): string {
     return `/c/${post.community.name}/${post.short_id}${post.slug ? `/${post.slug}` : ''}`;
 }
@@ -47,7 +52,6 @@ type PostCardProps = {
 export function PostCard({ post, variant = 'compact', showCommunity = true, isModerator = false, className }: PostCardProps) {
     const isCompact = variant === 'compact';
     const postPath = getPostPath(post);
-    const communityName = post.community.name;
     const TitleTag = isCompact ? 'h2' : 'h1';
     const isLocked = post.status === 'locked';
 
@@ -62,37 +66,23 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
             {/* Whole card is clickable; links and buttons inside sit above this with z-10 */}
             {isCompact && <Link href={postPath} className="absolute inset-0 sm:rounded-xl" aria-label={post.title} />}
 
-            <header className="flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2 text-xs text-muted">
-                    {showCommunity ? (
-                        <Link
-                            href={`/c/${communityName}`}
-                            className="relative z-10 flex min-w-0 items-center gap-1.5 font-bold text-text hover:underline"
-                        >
-                            <Avatar name={communityName} src={post.community.image_url} size="sm" />
-                            <span className="truncate">c/{communityName}</span>
-                        </Link>
-                    ) : (
-                        <AuthorLink author={post.author} className="truncate font-bold text-text" />
-                    )}
-                    <span aria-hidden>•</span>
-                    <time dateTime={post.created_at} className="shrink-0">
-                        {TimeUtility.formatTimeAgo(post.created_at)}
-                    </time>
-                    {showCommunity && !isCompact && (
-                        <>
-                            <span aria-hidden>•</span>
-                            <AuthorLink author={post.author} className="truncate" />
-                        </>
-                    )}
-                    {post.pinned_at && <Pin className="size-3.5 shrink-0 text-success" aria-label="Pinned" />}
+            {/* Who and where: above the title on the post's own page, in the footer of a feed item */}
+            {isCompact ? (
+                <div className="flex items-start justify-between gap-2">
+                    <TitleTag className="text-lg font-bold leading-snug break-words">{post.title}</TitleTag>
+                    <div className="-mr-2 -mt-1">
+                        <PostOptions post={post} leaveOnDelete={false} isModerator={isModerator} />
+                    </div>
                 </div>
-                <PostOptions post={post} leaveOnDelete={!isCompact} isModerator={isModerator} />
-            </header>
-
-            <TitleTag className={twMerge('font-bold leading-snug break-words', isCompact ? 'text-lg' : 'text-2xl')}>
-                {post.title}
-            </TitleTag>
+            ) : (
+                <>
+                    <header className="flex items-center justify-between gap-2">
+                        <PostMeta post={post} showCommunity={showCommunity} withAuthor />
+                        <PostOptions post={post} leaveOnDelete isModerator={isModerator} />
+                    </header>
+                    <TitleTag className="text-2xl font-bold leading-snug break-words">{post.title}</TitleTag>
+                </>
+            )}
 
             {(post.flair || post.is_nsfw || isLocked || post.status === 'removed' || post.status === 'pending') && (
                 <div className="flex flex-wrap gap-1.5">
@@ -110,18 +100,52 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 ? post.body && <p className="line-clamp-3 break-words text-sm text-muted">{stripMarkdown(post.body)}</p>
                 : <PostBody post={post} />}
 
-            <footer className="mt-1 flex flex-wrap items-center gap-2">
-                <VoteControl
-                    target="posts"
-                    id={post.id}
-                    upvotes={post.upvote_count}
-                    downvotes={post.downvote_count}
-                    userVote={post.viewer?.vote ?? 0}
-                />
-                <CommentCountButton post={post} href={`${postPath}#comments`} />
-                <ShareButton path={postPath} title={post.title} />
+            <footer className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                {isCompact && <PostMeta post={post} showCommunity={showCommunity} />}
+                <div className="flex items-center gap-1.5">
+                    <VoteControl
+                        target="posts"
+                        id={post.id}
+                        upvotes={post.upvote_count}
+                        downvotes={post.downvote_count}
+                        userVote={post.viewer?.vote ?? 0}
+                    />
+                    <CommentCountButton post={post} href={`${postPath}#comments`} />
+                    <ShareButton path={postPath} title={post.title} />
+                </div>
             </footer>
         </article>
+    );
+}
+
+// Community (or author, inside a community) and age. Community names are shown as names, without a prefix.
+function PostMeta({ post, showCommunity, withAuthor = false }: { post: Post; showCommunity: boolean; withAuthor?: boolean }) {
+    const communityName = post.community.name;
+    return (
+        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted">
+            {showCommunity ? (
+                <Link
+                    href={`/c/${communityName}`}
+                    className="relative z-10 flex min-w-0 items-center gap-1.5 font-bold text-text hover:underline"
+                >
+                    <Avatar name={communityName} src={post.community.image_url} size="sm" />
+                    <span className="truncate">{communityLabel(post.community)}</span>
+                </Link>
+            ) : (
+                <AuthorLink author={post.author} className="truncate font-bold text-text" />
+            )}
+            <span aria-hidden>·</span>
+            <time dateTime={post.created_at} className="shrink-0">
+                {TimeUtility.formatTimeAgo(post.created_at)}
+            </time>
+            {showCommunity && withAuthor && (
+                <>
+                    <span aria-hidden>·</span>
+                    <AuthorLink author={post.author} className="truncate" />
+                </>
+            )}
+            {post.pinned_at && <Pin className="size-3.5 shrink-0 text-accent" aria-label="Pinned" />}
+        </div>
     );
 }
 

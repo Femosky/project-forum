@@ -240,7 +240,7 @@ function QueueSummary({ item }: { item: QueueItem }) {
             </div>
             {item.reports.notes.map((note) => (
                 <p key={`${note.reporter}-${note.created_at}`} className="rounded-lg bg-surface-muted px-3 py-2 text-sm">
-                    &ldquo;{note.note}&rdquo; <span className="text-muted">from u/{note.reporter}</span>
+                    &ldquo;{note.note}&rdquo; <span className="text-muted">from @{note.reporter}</span>
                 </p>
             ))}
         </div>
@@ -253,7 +253,7 @@ function QueueTarget({ item }: { item: QueueItem }) {
         return (
             <div className="flex flex-col gap-1">
                 <p className="text-xs text-muted">
-                    Post in c/{post.community.name} by {post.author ? `u/${post.author.username}` : '[deleted]'}
+                    Post in {post.community.name} by {post.author ? `@${post.author.username}` : '[deleted]'}
                     {post.is_anonymous && ' (posted anonymously)'}
                 </p>
                 <Link href={getPostPath(post)} className="font-bold hover:underline" target="_blank">
@@ -269,7 +269,7 @@ function QueueTarget({ item }: { item: QueueItem }) {
         return (
             <div className="flex flex-col gap-1">
                 <p className="flex items-center gap-1 text-xs text-muted">
-                    <MessageSquare className="size-3.5" /> Comment by {comment.author ? `u/${comment.author.username}` : '[deleted]'}
+                    <MessageSquare className="size-3.5" /> Comment by {comment.author ? `@${comment.author.username}` : '[deleted]'}
                     {comment.is_anonymous && ' (posted anonymously)'} on{' '}
                     <Link
                         href={`/c/${comment.post.community}/${comment.post.short_id}/${comment.post.slug}?comment=${comment.short_id}`}
@@ -288,7 +288,7 @@ function QueueTarget({ item }: { item: QueueItem }) {
             <p className="text-sm">
                 Account{' '}
                 <Link href={`/u/${item.user.username}`} className="font-bold hover:underline" target="_blank">
-                    u/{item.user.username}
+                    @{item.user.username}
                 </Link>{' '}
                 <span className="text-muted">
                     · {item.user.karma} karma · joined <span suppressHydrationWarning>{TimeUtility.formatTimeAgo(item.user.created_at)}</span> · {item.user.status}
@@ -312,7 +312,7 @@ function QueueTarget({ item }: { item: QueueItem }) {
             <p className="text-sm">
                 Community{' '}
                 <Link href={`/c/${item.community.name}`} className="font-bold hover:underline" target="_blank">
-                    c/{item.community.name}
+                    {item.community.name}
                 </Link>{' '}
                 <span className="text-muted">· {item.community.status}</span>
             </p>

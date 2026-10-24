@@ -113,7 +113,7 @@ function RestrictionList({
                     {entries.map((entry) => (
                         <li key={entry.username} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                             <div className="min-w-0 flex-1">
-                                <p className="font-semibold">u/{entry.username}</p>
+                                <p className="font-semibold">@{entry.username}</p>
                                 <p className="text-xs text-muted">
                                     {untilLabel(entry.until)}
                                     {entry.reason ? ` · ${entry.reason}` : ''}

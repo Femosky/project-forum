@@ -12,7 +12,7 @@ export function CommentListItem({ comment }: { comment: ListedComment }) {
         <article className="flex flex-col gap-1.5 bg-surface px-4 py-3 sm:rounded-xl sm:border sm:border-border">
             <p className="text-xs text-muted">
                 <Link href={`/c/${comment.post.community}`} className="font-bold text-text hover:underline">
-                    c/{comment.post.community}
+                    {comment.post.community}
                 </Link>{' '}
                 • on{' '}
                 <Link href={`${postPath}?comment=${comment.short_id}`} className="font-semibold text-link hover:underline">

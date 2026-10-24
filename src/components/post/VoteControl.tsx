@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ArrowBigDown, ArrowBigUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import NumberUtility from '@/lib/utils/NumberUtility';
 import { api } from '@/lib/api/client';
@@ -78,7 +78,7 @@ export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disa
                 onClick={() => vote(1)}
                 className="flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-border hover:text-upvote disabled:cursor-not-allowed disabled:opacity-50"
             >
-                <ArrowBigUp className={twMerge('size-5', userVoteNow === 1 && 'fill-current text-upvote')} />
+                <ChevronUp className={twMerge('size-5', userVoteNow === 1 && 'text-upvote')} strokeWidth={userVoteNow === 1 ? 3 : 2.25} />
             </button>
             <span className="min-w-6 text-center tabular-nums" aria-live="polite" aria-label={`Score ${score}`}>
                 {NumberUtility.compactFormatter.format(score)}
@@ -91,7 +91,7 @@ export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disa
                 onClick={() => vote(-1)}
                 className="flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-border hover:text-downvote disabled:cursor-not-allowed disabled:opacity-50"
             >
-                <ArrowBigDown className={twMerge('size-5', userVoteNow === -1 && 'fill-current text-downvote')} />
+                <ChevronDown className={twMerge('size-5', userVoteNow === -1 && 'text-downvote')} strokeWidth={userVoteNow === -1 ? 3 : 2.25} />
             </button>
         </div>
     );

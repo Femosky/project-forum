@@ -88,7 +88,7 @@ export function CommunityRail({ data }: { data: CommunityResponse }) {
                             <li key={moderator.username}>
                                 <Link href={`/u/${moderator.username}`} className="flex items-center gap-2 text-sm hover:underline">
                                     <Avatar name={moderator.username} size="sm" />
-                                    <span className="truncate font-semibold">u/{moderator.username}</span>
+                                    <span className="truncate font-semibold">@{moderator.username}</span>
                                     {moderator.role === 'owner' && <span className="text-xs text-muted">owner</span>}
                                 </Link>
                             </li>

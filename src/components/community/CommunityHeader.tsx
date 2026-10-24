@@ -86,9 +86,9 @@ export function CommunityHeader({ community, viewer }: { community: Community; v
             <div className="flex items-center gap-4">
                 <Avatar name={community.name} src={community.image_url} size="xl" />
                 <div className="min-w-0 flex-1">
-                    <h1 className="truncate text-2xl font-extrabold">{community.display_name ?? `c/${community.name}`}</h1>
+                    <h1 className="truncate text-2xl font-extrabold">{community.display_name || community.name}</h1>
                     <p className="text-sm text-muted">
-                        {community.display_name && <span>c/{community.name} • </span>}
+                        {community.display_name && <span>{community.name} • </span>}
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(members)}</span>{' '}
                         {members === 1 ? 'member' : 'members'} •{' '}
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(community.post_count)}</span>{' '}

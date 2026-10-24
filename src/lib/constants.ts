@@ -2,7 +2,7 @@
  * Application-wide constants and configuration
  */
 
-// Branding lives here: renaming the site means changing this block (and /public/logo.jpg). Page titles, share
+// Branding lives here: renaming the site means changing this block (the logo mark is drawn in src/app/_components/LogoSection.tsx). Page titles, share
 // previews, generated images, structured data, robots.txt and llms.txt all read from it.
 export const APP_NAME = 'Project Forum';
 export const APP_DESCRIPTION =
@@ -14,7 +14,7 @@ export const SITE_OG_LOCALE = 'en_NG';
 // The site's X/Twitter account for twitter:site, e.g. '@projectforum'; left out until there is one
 export const TWITTER_HANDLE = process.env.NEXT_PUBLIC_TWITTER_HANDLE || undefined;
 // Colours for generated share images (match --accent and friends in globals.css)
-export const BRAND_COLORS = { background: '#00203f', text: '#ffffff', accent: '#adefd1', muted: '#9fb6cc' } as const;
+export const BRAND_COLORS = { background: '#00203f', text: '#ffffff', accent: '#9db8ff', muted: '#9fb6cc' } as const;
 // Where legal requests, takedown notices and appeals go (shown on the policy pages)
 export const LEGAL_EMAIL = process.env.NEXT_PUBLIC_LEGAL_EMAIL || 'legal@forum.oskeylabs.com';
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:3001';

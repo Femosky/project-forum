@@ -22,7 +22,7 @@ function ThreadList({ title, posts, showCommunity }: { title: string; posts: Rel
                         >
                             <span className="line-clamp-2 font-semibold">{post.title}</span>
                             <span className="text-xs text-muted">
-                                {showCommunity && <>c/{post.community} • </>}
+                                {showCommunity && <>{post.community} • </>}
                                 <span className="tabular-nums">{NumberUtility.compactFormatter.format(post.score)}</span> points •{' '}
                                 <span className="tabular-nums">{NumberUtility.compactFormatter.format(post.comment_count)}</span>{' '}
                                 {post.comment_count === 1 ? 'comment' : 'comments'}

@@ -31,7 +31,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     if (!data) return noindexMetadata(`User not found | ${APP_NAME}`);
 
     const { user } = data;
-    const name = user.display_name ? `${user.display_name} (u/${user.username})` : `u/${user.username}`;
+    const name = user.display_name ? `${user.display_name} (u/${user.username})` : `@${user.username}`;
     return pageMetadata({
         title: `${name} | ${APP_NAME}`,
         description: `Posts and comments by u/${user.username} on ${APP_NAME}. Joined ${JOINED_FORMAT.format(new Date(user.created_at))}.`,
@@ -70,9 +70,9 @@ export default async function ProfilePage({ params, searchParams }: PageProps) {
             <header className="flex items-center gap-4 border-b border-border bg-surface px-4 py-5 sm:rounded-xl sm:border">
                 <Avatar name={user.username} size="xl" />
                 <div className="min-w-0 flex-1">
-                    <h1 className="truncate text-2xl font-extrabold">{user.display_name ?? `u/${user.username}`}</h1>
+                    <h1 className="truncate text-2xl font-extrabold">{user.display_name ?? `@${user.username}`}</h1>
                     <p className="text-sm text-muted">
-                        {user.display_name && <span>u/{user.username} • </span>}
+                        {user.display_name && <span>@{user.username} • </span>}
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(user.karma)}</span> karma • Joined{' '}
                         {JOINED_FORMAT.format(new Date(user.created_at))}
                     </p>

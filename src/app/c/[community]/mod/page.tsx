@@ -46,7 +46,7 @@ export default async function ModToolsPage({ params, searchParams }: PageProps) 
         <div className="mx-auto flex w-full max-w-content flex-col gap-4 py-3 sm:px-4 sm:py-4">
             <div className="flex flex-col gap-1 px-4 sm:px-0">
                 <Link href={`/c/${info.name}`} className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:underline">
-                    <ArrowLeft className="size-4" /> c/{info.name}
+                    <ArrowLeft className="size-4" /> {info.name}
                 </Link>
                 <h1 className="text-2xl font-extrabold">Mod tools</h1>
             </div>

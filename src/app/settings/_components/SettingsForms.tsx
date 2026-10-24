@@ -92,7 +92,7 @@ export function ProfileForm({ user }: { user: PrivateUser }) {
                     onChange={(e) => setDisplayName(e.target.value)}
                 />
             </Field>
-            <p className="text-xs text-muted">Shown on your profile. Your username, u/{user.username}, can&apos;t change.</p>
+            <p className="text-xs text-muted">Shown on your profile. Your username, @{user.username}, can&apos;t change.</p>
             <FormStatus error={error} success={success} />
             <Button type="submit" className="self-start" disabled={isSaving || displayName.trim() === (user.display_name ?? '')}>
                 {isSaving ? 'Saving...' : 'Save'}

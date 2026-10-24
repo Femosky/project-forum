@@ -41,8 +41,8 @@ export function ModLog({ path, initial }: { path: string; initial: ModLogRespons
                 {actions.map((entry) => (
                     <li key={entry.id} className="flex flex-col gap-0.5 px-4 py-3 text-sm">
                         <p>
-                            <span className="font-semibold">u/{entry.actor.username}</span> {actionLabel(entry.action)}
-                            {entry.community && <span className="text-muted"> in c/{entry.community.name}</span>}
+                            <span className="font-semibold">@{entry.actor.username}</span> {actionLabel(entry.action)}
+                            {entry.community && <span className="text-muted"> in {entry.community.name}</span>}
                         </p>
                         {entry.reason && <p className="text-muted">Reason: {entry.reason}</p>}
                         <time dateTime={entry.created_at} className="text-xs text-muted" suppressHydrationWarning>

@@ -67,7 +67,7 @@ export function CommunitySettingsForm({ community }: { community: Community }) {
                 <label htmlFor="display_name" className="text-sm font-semibold">
                     Display name
                 </label>
-                <InputField name="display_name" placeholder={`c/${community.name}`} maxLength={50} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                <InputField name="display_name" placeholder={community.name} maxLength={50} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
                 <label htmlFor="description" className="text-sm font-semibold">

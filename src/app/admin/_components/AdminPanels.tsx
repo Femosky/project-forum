@@ -99,7 +99,7 @@ export function AdminUsers({ initialUsers }: { initialUsers: AdminUser[] }) {
                             <div className="min-w-0 flex-1">
                                 <p className="flex flex-wrap items-center gap-1.5">
                                     <Link href={`/u/${user.username}`} className="font-bold hover:underline" target="_blank">
-                                        u/{user.username}
+                                        @{user.username}
                                     </Link>
                                     {user.role === 'admin' && <Badge variant="highlight">Admin</Badge>}
                                     {user.status === 'suspended' && (
@@ -249,7 +249,7 @@ export function AdminCommunities({ initialCommunities }: { initialCommunities: A
                         <div className="min-w-0 flex-1">
                             <p className="flex flex-wrap items-center gap-1.5">
                                 <Link href={`/c/${community.name}`} className="font-bold hover:underline" target="_blank">
-                                    c/{community.name}
+                                    {community.name}
                                 </Link>
                                 {community.visibility === 'private' && <Badge>Private</Badge>}
                                 {community.status === 'deleted' && <Badge variant="danger">Taken down</Badge>}

@@ -211,14 +211,14 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                     className={twMerge(fieldStyles({ outline: fieldErrors.community ? 'error' : 'default' }), 'cursor-pointer appearance-auto')}
                 >
                     <option value="">Choose a community</option>
-                    {draft.community && !hasSelectedOption && <option value={draft.community}>c/{draft.community}</option>}
+                    {draft.community && !hasSelectedOption && <option value={draft.community}>{draft.community}</option>}
                     {communities.some((c) => c.joined) && (
                         <optgroup label="Your communities">
                             {communities
                                 .filter((c) => c.joined)
                                 .map((c) => (
                                     <option key={c.name} value={c.name}>
-                                        c/{c.name}
+                                        {c.name}
                                     </option>
                                 ))}
                         </optgroup>
@@ -229,7 +229,7 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                                 .filter((c) => !c.joined)
                                 .map((c) => (
                                     <option key={c.name} value={c.name}>
-                                        c/{c.name}
+                                        {c.name}
                                     </option>
                                 ))}
                         </optgroup>
@@ -332,7 +332,7 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                                             {post.title}
                                         </Link>{' '}
                                         <span className="text-muted">
-                                            in c/{post.community.name} · {post.comment_count} {post.comment_count === 1 ? 'comment' : 'comments'}
+                                            in {post.community.name} · {post.comment_count} {post.comment_count === 1 ? 'comment' : 'comments'}
                                         </span>
                                     </li>
                                 ))}

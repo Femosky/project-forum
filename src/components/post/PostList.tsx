@@ -11,7 +11,7 @@ import { slotAfter } from '@/ads/config';
 import type { AdUnit } from '@/ads/types';
 
 export const POST_SORTS: { value: PostSort; label: string }[] = [
-    { value: 'hot', label: 'Hot' },
+    { value: 'hot', label: 'Popular' },
     { value: 'new', label: 'New' },
     { value: 'top', label: 'Top' },
 ];
