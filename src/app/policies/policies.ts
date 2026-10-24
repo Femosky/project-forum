@@ -163,6 +163,130 @@ export const POLICIES: Policy[] = [
         ],
     },
     {
+        slug: 'terms',
+        title: 'Terms of use',
+        summary: `The agreement between you and ${APP_NAME} when you use the site.`,
+        updated: UPDATED,
+        sections: [
+            {
+                heading: 'Using the site',
+                items: [
+                    'You must be 18 or older to create an account.',
+                    'Keep your password to yourself. You are responsible for what happens on your account.',
+                    'Follow the content policy and community guidelines. Moderators and the site team can remove content and limit or close accounts that break them.',
+                    "Don't scrape the site in a way that slows it down, try to break its security, or use it to send spam.",
+                ],
+            },
+            {
+                heading: 'Your content',
+                paragraphs: [
+                    'You keep ownership of what you post. By posting, you give us a worldwide, free licence to host, show, share and adapt it (for example in previews and search results) so the site can work. The licence ends when you delete the content, except where others have quoted it or we must keep it for legal reasons.',
+                    'Posts are public unless they are in a private community. Anonymous posts hide your username from other people, but the site team can see who wrote them when that is needed to deal with abuse or a legal request.',
+                ],
+            },
+            {
+                heading: 'No advice',
+                paragraphs: [
+                    'Answers on the site come from other people, not from professionals. Nothing here is legal, medical, financial or immigration advice. Check anything important with a qualified person.',
+                ],
+            },
+            {
+                heading: 'Availability and liability',
+                paragraphs: [
+                    `The site is provided as it is. We try to keep it running and correct, but we don't promise that it will always be available or free of errors. To the extent the law allows, ${APP_NAME} is not liable for losses that come from using the site or from what other people post.`,
+                ],
+            },
+            {
+                heading: 'Changes and contact',
+                paragraphs: [
+                    `We may update these terms. If a change matters, we will say so on the site before it takes effect. Questions go to ${LEGAL_EMAIL}.`,
+                ],
+            },
+        ],
+    },
+    {
+        slug: 'privacy',
+        title: 'Privacy policy',
+        summary: `What ${APP_NAME} collects, why, who it is shared with, and how to see or delete it.`,
+        updated: UPDATED,
+        sections: [
+            {
+                heading: 'What we collect',
+                items: [
+                    'Account details: your email address, username, password (stored only as a secure hash) and, if you use Google sign-in, your Google account id.',
+                    'What you post: posts, comments, votes, saved posts, community memberships and reports.',
+                    'Sign-in sessions: the device type, browser, approximate location (country and city from your IP address) and IP address, so you can see and sign out of your sessions and so we can stop abuse.',
+                    'Usage counts: page views, shares and searches, and events such as "signed up" or "posted a comment". These are linked to your account id when you are signed in, never to what you wrote.',
+                ],
+            },
+            {
+                heading: 'Why we use it',
+                items: [
+                    'To run your account and show your content (performing our agreement with you).',
+                    'To keep the site safe: spam and scam filters, rate limits and moderation (our legitimate interest in a safe site).',
+                    'To understand which features and topics people use, so we can improve them (legitimate interest). Visitors who are not signed in are counted without any id that lasts beyond the current tab.',
+                    'To show ads. Sponsored posts are chosen by the community you are reading, not by your personal details. Google ads only use cookies if you allow them.',
+                ],
+            },
+            {
+                heading: 'Who we share it with',
+                paragraphs: [
+                    'We do not sell your data. Service providers process it for us under contract: Neon (database), Render and Vercel (hosting), Resend (email), PostHog (usage counts, stored in the EU), Cloudflare (bot checks) and Google (sign-in, and ads if you allow them). Some of them store data outside Nigeria, including in the United States and the European Union. We share data with authorities only when the law requires it.',
+                ],
+            },
+            {
+                heading: 'How long we keep it',
+                items: [
+                    'Your account and content: until you delete them.',
+                    'Sign-in sessions: until they expire or you sign out.',
+                    'Moderation records: kept after removal, because we need them to handle appeals and legal requests.',
+                    'Usage counts: kept in aggregate; individual events are deleted after a year.',
+                ],
+            },
+            {
+                heading: 'Your rights',
+                paragraphs: [
+                    `In Settings you can download a copy of your data and delete your account. You can also ask us to correct your data, or object to how we use it, by emailing ${LEGAL_EMAIL}. If you are in Nigeria, this policy follows the Nigeria Data Protection Act 2023, and you can complain to the Nigeria Data Protection Commission.`,
+                ],
+            },
+            {
+                heading: 'Security',
+                paragraphs: [
+                    "Connections are encrypted, passwords are hashed, and access to personal data is limited to the people who run the site. If a breach puts your data at risk, we will tell you and the regulator as the law requires.",
+                ],
+            },
+        ],
+    },
+    {
+        slug: 'cookies',
+        title: 'Cookies',
+        summary: `The small number of cookies ${APP_NAME} sets, and the ones it asks about first.`,
+        updated: UPDATED,
+        sections: [
+            {
+                heading: 'Cookies the site needs',
+                items: [
+                    'access_token, refresh_token and is_authenticated keep you signed in.',
+                    'theme and data_saver remember the settings you pick.',
+                    'ad_seen counts how often you have seen each ad today, so the same ad does not follow you around. It holds no personal details and lasts a day.',
+                    'ad_consent remembers your answer about Google ads.',
+                ],
+            },
+            {
+                heading: 'Cookies we ask about',
+                paragraphs: [
+                    'Google AdSense sets its own cookies only after you allow personalised ads. If you choose general ads only, Google shows ads without using your browsing history. To change your answer, clear this site\'s cookies and you will be asked again.',
+                ],
+            },
+            {
+                heading: 'No tracking cookies',
+                paragraphs: [
+                    'Usage counts do not use cookies or any other storage on your device, and nothing is counted when your browser sends a Do Not Track or Global Privacy Control signal.',
+                ],
+            },
+        ],
+    },
+    {
         slug: 'ads',
         title: 'Ads and sponsored posts',
         summary: `How ads appear on ${APP_NAME}, how they are chosen, and the rules advertisers follow.`,

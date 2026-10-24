@@ -5,6 +5,7 @@ import { Check, Link2, Send, Share2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from '@/components/ui/Dropdown';
 import { APP_URL } from '@/lib/constants';
+import { trackEvent } from '@/lib/analytics';
 
 // Places people share to, most-used first. Each opens the service's own share page in a new tab.
 const TARGETS: { label: string; href: (url: string, title: string) => string }[] = [
@@ -26,6 +27,7 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
         if (typeof navigator.share === 'function') {
             try {
                 await navigator.share({ title, url: url() });
+                trackEvent('share', { channel: 'native' });
             } catch {
                 // The user closed the share sheet
             }
@@ -37,6 +39,7 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
     async function copyLink() {
         try {
             await navigator.clipboard.writeText(url());
+            trackEvent('share', { channel: 'copy_link' });
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch {
@@ -62,7 +65,12 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
             <DropdownContent align="start">
                 {TARGETS.map((target) => (
                     <DropdownItem key={target.label} asChild>
-                        <a href={target.href(url(), title)} target="_blank" rel="noopener noreferrer">
+                        <a
+                            href={target.href(url(), title)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => trackEvent('share', { channel: target.label.toLowerCase() })}
+                        >
                             <Send /> {target.label}
                         </a>
                     </DropdownItem>
