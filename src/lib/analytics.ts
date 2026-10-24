@@ -26,7 +26,8 @@ export function trackEvent(event: string, properties: Record<string, unknown> = 
             $process_person_profile: false,
         },
     });
-    fetch('/_a/i/v0/e/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(
+    // No trailing slash: Next would answer /e/ with a 308 redirect first
+    fetch('/_a/i/v0/e', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(
         () => undefined
     );
 }
