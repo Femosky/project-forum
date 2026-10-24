@@ -345,7 +345,7 @@ export type ReportReason =
     | 'illegal'
     | 'impersonation';
 
-export type ReportTargetType = 'post' | 'comment' | 'user' | 'community';
+export type ReportTargetType = 'post' | 'comment' | 'user' | 'community' | 'ad';
 
 // One entry in a mod queue: something with open reports, held by the filters, or both
 export interface QueueItem {
@@ -359,6 +359,7 @@ export interface QueueItem {
     comment?: ListedComment;
     user?: { username: string; status: string; karma: number; created_at: string };
     community?: { name: string; display_name: string | null; status: string };
+    ad?: { headline: string; advertiser: string; campaign_id: string; campaign: string; is_active: boolean };
 }
 
 export interface QueueResponse {
@@ -425,6 +426,10 @@ export interface AdminCommunity {
     display_name: string | null;
     status: string;
     visibility: string;
+    category: string | null;
+    is_nsfw: boolean;
+    // null follows the default (no ads in sensitive categories)
+    ads_enabled: boolean | null;
     member_count: number;
     post_count: number;
     created_at: string;

@@ -11,6 +11,7 @@ import { AuthHydrator } from '@/lib/authHydrator';
 import TopLoader from '@/components/common/TopLoader';
 import SignInPrompt from '@/components/common/SignInPrompt';
 import { NotificationPoller } from '@/components/notifications/NotificationBadge';
+import AdConsentGate from '@/ads/AdConsentGate';
 import { getTheme } from '@/components/theme/getTheme';
 import { getDataSaver } from '@/lib/dataSaver';
 
@@ -87,6 +88,7 @@ export default async function RootLayout({
                 <BottomTabBar />
                 <SignInPrompt />
                 <NotificationPoller />
+                <AdConsentGate />
             </body>
         </html>
     );

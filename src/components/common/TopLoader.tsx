@@ -1,18 +1,77 @@
 'use client';
 
-import NextTopLoader from 'nextjs-toploader';
+import { useEffect, useRef } from 'react';
 
+// A thin progress bar while a link navigation loads (the site has no loading.tsx skeletons, see docs/ROADMAP.md
+// Phase 3). Written by hand rather than with nextjs-toploader + nprogress to save about 4 KB of first-load JS.
+// It starts on a click on an internal link and finishes when the URL changes (Next calls pushState/replaceState
+// once the new page is ready), on back/forward, or when the page is left.
 export default function TopLoader() {
+    const bar = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const element = bar.current;
+        if (!element) return;
+        let timer: ReturnType<typeof setInterval> | null = null;
+        let progress = 0;
+
+        const show = (value: number, opacity = 1) => {
+            element.style.transform = `scaleX(${value})`;
+            element.style.opacity = String(opacity);
+        };
+        const start = () => {
+            if (timer) return;
+            progress = 0.08;
+            show(progress);
+            // Crawl towards the end without reaching it
+            timer = setInterval(() => show((progress += (0.95 - progress) * 0.08)), 250);
+        };
+        const done = () => {
+            if (!timer) return;
+            clearInterval(timer);
+            timer = null;
+            show(1);
+            setTimeout(() => show(1, 0), 200);
+            setTimeout(() => !timer && show(0, 0), 450);
+        };
+
+        function onClick(event: MouseEvent) {
+            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            const link = (event.target as Element | null)?.closest?.('a');
+            if (!link || !link.href || (link.target && link.target !== '_self') || link.hasAttribute('download')) return;
+            const url = new URL(link.href, location.href);
+            if (url.origin !== location.origin || (url.pathname === location.pathname && url.search === location.search)) return;
+            start();
+        }
+
+        const { pushState, replaceState } = history;
+        history.pushState = function (...args) {
+            done();
+            return pushState.apply(this, args);
+        };
+        history.replaceState = function (...args) {
+            done();
+            return replaceState.apply(this, args);
+        };
+        document.addEventListener('click', onClick);
+        window.addEventListener('popstate', done);
+        window.addEventListener('pagehide', done);
+        return () => {
+            history.pushState = pushState;
+            history.replaceState = replaceState;
+            document.removeEventListener('click', onClick);
+            window.removeEventListener('popstate', done);
+            window.removeEventListener('pagehide', done);
+            if (timer) clearInterval(timer);
+        };
+    }, []);
+
     return (
-        <NextTopLoader
-            color="var(--link)"
-            height={2}
-            showSpinner={false}
-            crawl={true}
-            speed={250}
-            easing="ease-in-out"
-            shadow={false}
-            zIndex={9999}
+        <div
+            ref={bar}
+            aria-hidden
+            className="pointer-events-none fixed inset-x-0 top-0 z-[9999] h-0.5 origin-left bg-link opacity-0 transition-[transform,opacity] duration-200 ease-in-out"
+            style={{ transform: 'scaleX(0)' }}
         />
     );
 }

@@ -15,7 +15,6 @@
         "device-detector-js": "^3.0.3",
         "lucide-react": "^0.564.0",
         "next": "16.0.3",
-        "nextjs-toploader": "^3.9.17",
         "radix-ui": "1.7.0",
         "react": "19.2.0",
         "react-dom": "19.2.0",

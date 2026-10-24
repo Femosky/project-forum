@@ -12,6 +12,8 @@ import RelatedThreads from '@/components/post/RelatedThreads';
 import { breadcrumbJsonLd, discussionJsonLd, noindexMetadata, pageMetadata, postTitle, summarize } from '@/lib/seo';
 import { CommentsSection } from '../_components/CommentsSection';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from '../_components/commentsApi';
+import { loadAds } from '@/ads/server';
+import { slotsBetween } from '@/ads/config';
 
 type PageProps = {
     params: Promise<{ community: string; short_id: string; slug?: string[] }>;
@@ -68,13 +70,15 @@ export default async function PostPage({ params, searchParams }: PageProps) {
     const { community, short_id, slug } = await params;
     const { comment: focusId } = await searchParams;
 
-    const [postResult, commentsResult, focused, related] = await Promise.all([
+    const [postResult, commentsResult, focused, related, ads] = await Promise.all([
         serverApi<PostResponse>(`/posts/${encodeURIComponent(short_id)}`),
         focusId
             ? null
             : serverApi<CommentsResponse>(`/posts/${encodeURIComponent(short_id)}/comments?${commentsQuery(DEFAULT_COMMENT_SORT, COMMENT_PAGE_SIZE)}`),
         focusId ? loadFocusedThread(focusId) : null,
         serverApi<RelatedPostsResponse>(`/posts/${encodeURIComponent(short_id)}/related`),
+        // No ads in the single-comment view. The API skips locked, removed and NSFW threads itself.
+        focusId ? [] : loadAds('thread', { post: short_id }, slotsBetween(0, COMMENT_PAGE_SIZE, 'thread')),
     ]);
 
     // Missing, deleted, removed and private posts. Crawlers already got a 404 or 410 from the proxy.
@@ -148,6 +152,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                     initialCursor={showingOneThread ? null : (commentsResult?.data?.next_cursor ?? null)}
                     loadFailed={!showingOneThread && !commentsResult?.data}
                     isSingleThread={showingOneThread}
+                    ads={ads}
                 />
             </section>
 

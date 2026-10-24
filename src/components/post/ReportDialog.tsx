@@ -13,7 +13,7 @@ import { REPORT_REASONS } from '@/lib/moderation';
 
 
 type ReportDialogProps = {
-    targetType: 'post' | 'comment' | 'user';
+    targetType: 'post' | 'comment' | 'user' | 'ad';
     targetId: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -58,7 +58,7 @@ export function ReportDialog({ targetType, targetId, open, onOpenChange }: Repor
                 title={status === 'sent' ? 'Thanks for reporting' : `Report this ${targetType}`}
                 description={
                     status === 'sent'
-                        ? targetType === 'user'
+                        ? targetType === 'user' || targetType === 'ad'
                             ? 'The site team will review it.'
                             : "The community's moderators will review it."
                         : "Reports are anonymous. Moderators see the reason, not who sent it."

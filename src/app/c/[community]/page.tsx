@@ -13,6 +13,8 @@ import Button from '@/components/ui/Button';
 import { PostList, SortTabs, parsePostSort } from '@/components/post/PostList';
 import JsonLd from '@/components/common/JsonLd';
 import { breadcrumbJsonLd, communityDescription, noindexMetadata, pageMetadata } from '@/lib/seo';
+import { loadAds } from '@/ads/server';
+import { slotsBetween } from '@/ads/config';
 
 type PageProps = {
     params: Promise<{ community: string }>;
@@ -45,9 +47,11 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
 
     const listQuery = new URLSearchParams({ sort, ...(sort === 'top' ? { t: 'all' } : {}) });
     const postsPath = `/communities/${encodeURIComponent(name)}/posts?${listQuery}`;
-    const [community, posts] = await Promise.all([
+    const [community, posts, ads] = await Promise.all([
         serverApi<CommunityResponse>(`/communities/${encodeURIComponent(name)}`),
         serverApi<PostsResponse>(`${postsPath}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`),
+        // The API decides whether this community carries ads at all (NSFW, private and sensitive ones don't)
+        loadAds('feed', { community: name.toLowerCase() }, slotsBetween(0, 25, 'feed')),
     ]);
 
     if (community.status === 404) notFound();
@@ -100,6 +104,7 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
                             nextCursor={posts.data?.next_cursor ?? null}
                             apiPath={postsPath}
                             showCommunity={false}
+                            ads={{ units: ads, community: community.data.community.name }}
                             empty={{
                                 title: posts.data ? 'No posts here yet' : "Couldn't load posts",
                                 description: posts.data
