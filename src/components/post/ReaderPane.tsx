@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, Maximize2, X } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 
@@ -16,15 +16,22 @@ function isTyping(target: EventTarget | null): boolean {
 // The split view's reading pane (see globals.css). Beside the list on wide screens, over it on narrow ones.
 export default function ReaderPane({ shortId, community, children }: ReaderPaneProps) {
     const router = useRouter();
+    const pathname = usePathname();
     const pane = useRef<HTMLElement>(null);
+    // A slot keeps its last content when client navigation leaves for a page it has no route for, so the pane
+    // closes itself once the URL is no longer this post. (A catch-all route in the slot would do this too, but it
+    // sends the dev server into an endless reload loop.)
+    const isOpen = pathname.split('/')[3] === shortId;
 
     // Each post starts at its top, and keyboard focus moves into the pane
     useEffect(() => {
+        if (!isOpen) return;
         pane.current?.scrollTo({ top: 0 });
         pane.current?.focus({ preventScroll: true });
-    }, [shortId]);
+    }, [shortId, isOpen]);
 
     useEffect(() => {
+        if (!isOpen) return;
         function onKey(event: KeyboardEvent) {
             if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return;
             if (event.key === 'Escape') {
@@ -42,7 +49,9 @@ export default function ReaderPane({ shortId, community, children }: ReaderPaneP
         }
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [router, shortId]);
+    }, [router, shortId, isOpen]);
+
+    if (!isOpen) return null;
 
     return (
         <aside
