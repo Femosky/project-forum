@@ -28,7 +28,7 @@ function applyVote(state: VoteState, next: VoteValue): VoteState {
     return { up, down, vote: next };
 }
 
-// Score pill shared by posts and comments. One tap votes, a second tap on the same arrow clears it.
+// Vote pill shared by posts and comments: likes and dislikes, each with its own count. One tap votes, a second tap on the same arrow clears it.
 export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disabled, className }: VoteControlProps) {
     const [state, setState] = useState<VoteState>({ up: upvotes, down: downvotes, vote: userVote });
     const [error, setError] = useState(false);
@@ -57,41 +57,41 @@ export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disa
         }
     }
 
-    const score = state.up - state.down;
     const { vote: userVoteNow } = state;
+    const side =
+        'flex h-full cursor-pointer items-center gap-1 px-2.5 tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-50';
 
+    // Likes and dislikes are both shown, as separate counts, rather than folded into one score
     return (
         <div
             className={twMerge(
-                'relative z-10 inline-flex h-8 items-center rounded-full bg-surface-muted text-sm font-bold',
-                userVoteNow === 1 && 'text-upvote',
-                userVoteNow === -1 && 'text-downvote',
+                'relative z-10 inline-flex h-8 items-stretch overflow-hidden rounded-full bg-surface-muted text-sm font-bold text-muted',
                 className
             )}
             title={error ? "Your vote didn't go through. Try again." : undefined}
         >
             <button
                 type="button"
-                aria-label="Upvote"
+                aria-label={`Upvote, ${state.up} ${state.up === 1 ? 'upvote' : 'upvotes'}`}
                 aria-pressed={userVoteNow === 1}
                 disabled={disabled}
                 onClick={() => vote(1)}
-                className="flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-border hover:text-upvote disabled:cursor-not-allowed disabled:opacity-50"
+                className={twMerge(side, 'pl-2', userVoteNow === 1 ? 'bg-upvote/15 text-upvote' : 'hover:bg-upvote/10 hover:text-upvote')}
             >
-                <ChevronUp className={twMerge('size-5', userVoteNow === 1 && 'text-upvote')} strokeWidth={userVoteNow === 1 ? 3 : 2.25} />
+                <ChevronUp className="size-5" strokeWidth={userVoteNow === 1 ? 3 : 2.25} />
+                <span aria-live="polite">{NumberUtility.compactFormatter.format(state.up)}</span>
             </button>
-            <span className="min-w-6 text-center tabular-nums" aria-live="polite" aria-label={`Score ${score}`}>
-                {NumberUtility.compactFormatter.format(score)}
-            </span>
+            <span aria-hidden className="my-2 w-px bg-border" />
             <button
                 type="button"
-                aria-label="Downvote"
+                aria-label={`Downvote, ${state.down} ${state.down === 1 ? 'downvote' : 'downvotes'}`}
                 aria-pressed={userVoteNow === -1}
                 disabled={disabled}
                 onClick={() => vote(-1)}
-                className="flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-border hover:text-downvote disabled:cursor-not-allowed disabled:opacity-50"
+                className={twMerge(side, 'pr-3', userVoteNow === -1 ? 'bg-downvote/15 text-downvote' : 'hover:bg-downvote/10 hover:text-downvote')}
             >
-                <ChevronDown className={twMerge('size-5', userVoteNow === -1 && 'text-downvote')} strokeWidth={userVoteNow === -1 ? 3 : 2.25} />
+                <ChevronDown className="size-5" strokeWidth={userVoteNow === -1 ? 3 : 2.25} />
+                <span aria-live="polite">{NumberUtility.compactFormatter.format(state.down)}</span>
             </button>
         </div>
     );

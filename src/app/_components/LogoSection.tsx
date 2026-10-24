@@ -2,7 +2,7 @@ import { APP_NAME } from '@/lib/constants';
 import Link from 'next/link';
 
 // The mark: the brand ring on the accent colour. Drawn inline (no image request) so it follows light and dark mode.
-// src/app/favicon.ico, icon.png and apple-icon.png are the same drawing in navy.
+// src/app/favicon.ico, icon.png and apple-icon.png are the same drawing in the light-mode accent.
 export function LogoMark({ className }: { className?: string }) {
     return (
         <svg viewBox="0 0 32 32" aria-hidden className={className}>

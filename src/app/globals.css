@@ -10,8 +10,9 @@
  * Theme selection: <html data-theme="light|dark"> when the user picked one (stored in a
  * cookie and rendered by the server), otherwise the system preference decides.
  *
- * Brand: navy #00203F is the action colour in light mode; dark mode is a neutral near-black with
- * a soft periwinkle (a lighter navy) for actions. No green or mint anywhere (branding rule).
+ * Brand: navy #00203F stays for text-weight brand moments (header mark ring, headings); the action colour
+ * is a vivid indigo-violet, with rose for dislikes. Dark mode is a neutral near-black. No green or mint
+ * anywhere (branding rule).
  * Every text token passes WCAG AA (4.5:1) on bg, surface and surface-muted.
  */
 
@@ -27,18 +28,18 @@
     --text-muted: #526172;
     --border: #d9e0e7;
     --border-strong: #7f90a2;
-    --accent: #00203f;
-    --accent-hover: #0a3460;
+    --accent: #5046e5;
+    --accent-hover: #4338ca;
     --accent-fg: #ffffff;
-    --highlight: #e3eaf6;
-    --highlight-fg: #00203f;
-    --link: #1f5fbf;
-    --upvote: #1f5fbf;
-    --downvote: #b33a6a;
+    --highlight: #ecebff;
+    --highlight-fg: #3b30c4;
+    --link: #4f46e5;
+    --upvote: #5046e5;
+    --downvote: #d02a6c;
     --danger: #c02e24;
     --success: #13773a;
     --sponsored: #8a5a00;
-    --focus: #1f5fbf;
+    --focus: #5046e5;
     --overlay: rgb(14 26 38 / 0.45);
     --shadow: 0 1px 2px rgb(14 26 38 / 0.06), 0 8px 24px rgb(14 26 38 / 0.1);
 }
@@ -54,18 +55,18 @@
     --text-muted: #9d9ea8;
     --border: #2a2b30;
     --border-strong: #5b5c65;
-    --accent: #9db8ff;
-    --accent-hover: #b6caff;
+    --accent: #8f87ff;
+    --accent-hover: #a7a1ff;
     --accent-fg: #0f1012;
-    --highlight: #1f2840;
-    --highlight-fg: #c3d3ff;
-    --link: #a6c0ff;
-    --upvote: #a6c0ff;
-    --downvote: #f08bb4;
+    --highlight: #25214a;
+    --highlight-fg: #d0ccff;
+    --link: #a7a1ff;
+    --upvote: #a29bff;
+    --downvote: #ff7aa8;
     --danger: #ff8a80;
     --success: #63d483;
     --sponsored: #e8b54d;
-    --focus: #a6c0ff;
+    --focus: #a7a1ff;
     --overlay: rgb(0 0 0 / 0.6);
     --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.45);
 }
@@ -83,18 +84,18 @@
         --text-muted: #9d9ea8;
         --border: #2a2b30;
         --border-strong: #5b5c65;
-        --accent: #9db8ff;
-        --accent-hover: #b6caff;
+        --accent: #8f87ff;
+        --accent-hover: #a7a1ff;
         --accent-fg: #0f1012;
-        --highlight: #1f2840;
-        --highlight-fg: #c3d3ff;
-        --link: #a6c0ff;
-        --upvote: #a6c0ff;
-        --downvote: #f08bb4;
+        --highlight: #25214a;
+        --highlight-fg: #d0ccff;
+        --link: #a7a1ff;
+        --upvote: #a29bff;
+        --downvote: #ff7aa8;
         --danger: #ff8a80;
         --success: #63d483;
         --sponsored: #e8b54d;
-        --focus: #a6c0ff;
+        --focus: #a7a1ff;
         --overlay: rgb(0 0 0 / 0.6);
         --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.45);
     }
