@@ -53,7 +53,7 @@ export function UnreadBadge({ className }: { className?: string }) {
     return (
         <span
             className={twMerge(
-                'absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold leading-none text-surface tabular-nums',
+                'absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-semibold leading-none text-white tabular-nums',
                 className
             )}
         >

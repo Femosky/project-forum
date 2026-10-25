@@ -1,74 +1,87 @@
 @import 'tailwindcss';
 
 /*
- * Design tokens.
+ * Design tokens (design brief v11: https://claude.ai/artifact/6Cnch1CodD5FsBJmb4sqsS).
  *
- * Components use the semantic names below (bg-surface, text-muted, border-border...),
- * never raw colours. The palette is a one-file swap: change the values in the light and
- * dark blocks and the whole app follows.
+ * Components use the semantic names below (bg-surface, text-muted, border-border...), never raw colours.
  *
- * Theme selection: <html data-theme="light|dark"> when the user picked one (stored in a
- * cookie and rendered by the server), otherwise the system preference decides.
+ * Theme selection: <html data-theme="light|dark"> when the user picked one (stored in a cookie and rendered by the
+ * server), otherwise the system preference decides.
  *
- * Brand: navy #00203F stays for text-weight brand moments (header mark ring, headings); the action colour
- * is a vivid indigo-violet, with rose for dislikes. Dark mode is a neutral near-black. No green or mint
- * anywhere (branding rule).
- * Every text token passes WCAG AA (4.5:1) on bg, surface and surface-muted.
+ * Neutrals and ink carry the interface: buttons, votes and links are ink (black in light mode, white in dark).
+ * Apple red (--brand) is kept for brand moments only: the logo, the current-page marker, unread counts, live labels,
+ * and errors (always with an icon and words). No green accents anywhere (branding rule).
  */
 
 :root,
 :root[data-theme='light'] {
     color-scheme: light;
 
-    --bg: #f5f7fa;
+    --bg: #ffffff;
     --surface: #ffffff;
     --surface-raised: #ffffff;
-    --surface-muted: #edf1f5;
-    --text: #0e1a26;
-    --text-muted: #526172;
-    --border: #d9e0e7;
-    --border-strong: #7f90a2;
-    --accent: #5046e5;
-    --accent-hover: #4338ca;
+    --surface-muted: #f4f4f6;
+    --hover: rgb(15 15 20 / 0.04);
+    --active: rgb(15 15 20 / 0.065);
+    --text: #111113;
+    --text-body: #3c3c44;
+    --text-muted: #6c6c76;
+    --text-subtle: #8e8e98;
+    --border: #ebebee;
+    --border-strong: #dcdce1;
+    --line: #d4d4da;
+    --accent: #18181b;
+    --accent-hover: #2f2f35;
     --accent-fg: #ffffff;
-    --highlight: #ecebff;
-    --highlight-fg: #3b30c4;
-    --link: #4f46e5;
-    --upvote: #5046e5;
-    --downvote: #d02a6c;
-    --danger: #c02e24;
+    --highlight: rgb(15 15 20 / 0.065);
+    --highlight-fg: #111113;
+    --link: #111113;
+    --upvote: #111113;
+    --downvote: #111113;
+    --brand: #ff3b30;
+    --brand-text: #d70015;
+    --danger: #d70015;
     --success: #13773a;
-    --sponsored: #8a5a00;
-    --focus: #5046e5;
-    --overlay: rgb(14 26 38 / 0.45);
-    --shadow: 0 1px 2px rgb(14 26 38 / 0.06), 0 8px 24px rgb(14 26 38 / 0.1);
+    --sponsored: #6c6c76;
+    --focus: #6c6c76;
+    --overlay: rgb(10 10 12 / 0.4);
+    --shadow: 0 0 0 1px #ebebee, 0 12px 32px -8px rgb(0 0 0 / 0.14), 0 2px 6px -2px rgb(0 0 0 / 0.06);
+    --bar: rgb(255 255 255 / 0.78);
 }
 
 :root[data-theme='dark'] {
     color-scheme: dark;
 
-    --bg: #0f1012;
-    --surface: #17181b;
-    --surface-raised: #1d1e22;
-    --surface-muted: #222327;
-    --text: #ececef;
-    --text-muted: #9d9ea8;
-    --border: #2a2b30;
-    --border-strong: #5b5c65;
-    --accent: #8f87ff;
-    --accent-hover: #a7a1ff;
-    --accent-fg: #0f1012;
-    --highlight: #25214a;
-    --highlight-fg: #d0ccff;
-    --link: #a7a1ff;
-    --upvote: #a29bff;
-    --downvote: #ff7aa8;
-    --danger: #ff8a80;
+    --bg: #0e0e10;
+    --surface: #141416;
+    --surface-raised: #1a1a1d;
+    --surface-muted: #1c1c1f;
+    --hover: rgb(255 255 255 / 0.04);
+    --active: rgb(255 255 255 / 0.07);
+    --text: #f4f4f5;
+    --text-body: #c2c2ca;
+    --text-muted: #8e8e98;
+    --text-subtle: #6e6e78;
+    --border: #222227;
+    --border-strong: #2f2f35;
+    --line: #34343b;
+    --accent: #ededef;
+    --accent-hover: #ffffff;
+    --accent-fg: #0e0e10;
+    --highlight: rgb(255 255 255 / 0.07);
+    --highlight-fg: #f4f4f5;
+    --link: #f4f4f5;
+    --upvote: #f4f4f5;
+    --downvote: #f4f4f5;
+    --brand: #ff453a;
+    --brand-text: #ff6961;
+    --danger: #ff6961;
     --success: #63d483;
-    --sponsored: #e8b54d;
-    --focus: #a7a1ff;
+    --sponsored: #8e8e98;
+    --focus: #8e8e98;
     --overlay: rgb(0 0 0 / 0.6);
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.45);
+    --shadow: 0 0 0 1px #2f2f35, 0 16px 40px -8px rgb(0 0 0 / 0.7);
+    --bar: rgb(14 14 16 / 0.72);
 }
 
 /* System preference, when the user hasn't picked a theme. Keep in sync with the block above. */
@@ -76,28 +89,36 @@
     :root:not([data-theme='light']) {
         color-scheme: dark;
 
-        --bg: #0f1012;
-        --surface: #17181b;
-        --surface-raised: #1d1e22;
-        --surface-muted: #222327;
-        --text: #ececef;
-        --text-muted: #9d9ea8;
-        --border: #2a2b30;
-        --border-strong: #5b5c65;
-        --accent: #8f87ff;
-        --accent-hover: #a7a1ff;
-        --accent-fg: #0f1012;
-        --highlight: #25214a;
-        --highlight-fg: #d0ccff;
-        --link: #a7a1ff;
-        --upvote: #a29bff;
-        --downvote: #ff7aa8;
-        --danger: #ff8a80;
+        --bg: #0e0e10;
+        --surface: #141416;
+        --surface-raised: #1a1a1d;
+        --surface-muted: #1c1c1f;
+        --hover: rgb(255 255 255 / 0.04);
+        --active: rgb(255 255 255 / 0.07);
+        --text: #f4f4f5;
+        --text-body: #c2c2ca;
+        --text-muted: #8e8e98;
+        --text-subtle: #6e6e78;
+        --border: #222227;
+        --border-strong: #2f2f35;
+        --line: #34343b;
+        --accent: #ededef;
+        --accent-hover: #ffffff;
+        --accent-fg: #0e0e10;
+        --highlight: rgb(255 255 255 / 0.07);
+        --highlight-fg: #f4f4f5;
+        --link: #f4f4f5;
+        --upvote: #f4f4f5;
+        --downvote: #f4f4f5;
+        --brand: #ff453a;
+        --brand-text: #ff6961;
+        --danger: #ff6961;
         --success: #63d483;
-        --sponsored: #e8b54d;
-        --focus: #a7a1ff;
+        --sponsored: #8e8e98;
+        --focus: #8e8e98;
         --overlay: rgb(0 0 0 / 0.6);
-        --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.45);
+        --shadow: 0 0 0 1px #2f2f35, 0 16px 40px -8px rgb(0 0 0 / 0.7);
+        --bar: rgb(14 14 16 / 0.72);
     }
 }
 
@@ -106,19 +127,32 @@
     --breakpoint-xs: 390px;
 
     --spacing-header: 3.5rem;
-    --spacing-sidebar: 16rem;
+
+    /* Hanken Grotesk reads heavy at Nunito's weights; the scale steps down one notch */
+    --font-weight-semibold: 550;
+    --font-weight-bold: 600;
+    --font-weight-extrabold: 650;
+    --spacing-sidebar: 15rem;
     --spacing-content: 46rem;
     --spacing-tabbar: 3.5rem;
 }
 
 @theme inline {
-    --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+    --font-sans: var(--font-hanken), ui-sans-serif, system-ui, -apple-system, sans-serif;
 
     --color-bg: var(--bg);
     --color-surface: var(--surface);
     --color-surface-raised: var(--surface-raised);
     --color-surface-muted: var(--surface-muted);
     --color-text: var(--text);
+    --color-body: var(--text-body);
+    --color-subtle: var(--text-subtle);
+    --color-hover: var(--hover);
+    --color-active: var(--active);
+    --color-line: var(--line);
+    --color-brand: var(--brand);
+    --color-brand-text: var(--brand-text);
+    --color-bar: var(--bar);
     --color-muted: var(--text-muted);
     --color-border: var(--border);
     --color-border-strong: var(--border-strong);
@@ -221,4 +255,85 @@
    ones are never downloaded. */
 [data-save-data] .data-saver-hide {
     display: none;
+}
+
+/* Type and layout defaults from the design brief */
+@layer base {
+    body {
+        font-size: 15px;
+        line-height: 1.5;
+    }
+}
+
+/* On desktop the sidebar replaces the top header, so sticky offsets and scroll margins drop to zero */
+@media (min-width: 48rem) {
+    :root {
+        --spacing-header: 0px;
+    }
+}
+
+/*
+ * Reply connectors (Reddit-style, design brief v11). A comment's avatar is 28px wide with a 10px gap, so its replies'
+ * column starts at 38px; .replies pulls back 24px so each .reply starts exactly under the avatar's centre (14px).
+ * - .thread-line: a 17px-wide button whose 1px line drops from under the avatar; hovering darkens it and every curve
+ *   hanging off it, clicking collapses the replies.
+ * - .reply::after: the curve from that line into the reply's avatar. Same 1px border, same colour, same pixel column,
+ *   so line and curve join without a seam.
+ * - .reply:last-child::before: masks the parent's line below the last curve. The curve (z-index 3) draws over it.
+ */
+@layer components {
+    .thread-line {
+        position: absolute;
+        left: 6px;
+        top: 34px;
+        bottom: 0;
+        z-index: 1;
+        width: 17px;
+        cursor: pointer;
+    }
+    .thread-line::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 0;
+        bottom: 0;
+        border-left: 1px solid var(--line);
+        transition: border-color 0.12s;
+    }
+    .thread-line:hover::before,
+    .thread-line:focus-visible::before,
+    .comment:has(> .thread-line:hover) > div > .replies > .reply::after,
+    .comment:has(> .thread-line:focus-visible) > div > .replies > .reply::after {
+        border-color: var(--text-muted);
+    }
+    .replies {
+        margin-left: -24px;
+    }
+    .reply {
+        position: relative;
+        padding: 14px 0 0 26px;
+    }
+    .reply::after {
+        content: '';
+        position: absolute;
+        z-index: 3;
+        left: 0;
+        top: 0;
+        width: 20px;
+        height: 28px;
+        border-left: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        border-bottom-left-radius: 12px;
+        transition: border-color 0.12s;
+    }
+    .reply:last-child::before {
+        content: '';
+        position: absolute;
+        z-index: 2;
+        left: -1px;
+        top: 14px;
+        bottom: 0;
+        width: 3px;
+        background: var(--bg);
+    }
 }

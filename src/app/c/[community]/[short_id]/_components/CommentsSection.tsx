@@ -2,7 +2,7 @@
 
 import { Fragment, createContext, useContext, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ChevronUp, Lock, MessagesSquare } from 'lucide-react';
+import { Lock, MessagesSquare, Plus } from 'lucide-react';
 import { SortByDropdown } from './SortByDropdown';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import Button from '@/components/ui/Button';
@@ -35,6 +35,8 @@ interface ThreadContextValue {
     // Depth of the comments at the top of this view (not 0 when showing one comment's thread)
     baseDepth: number;
     sort: CommentSort;
+    // The post's author, for the OP label on their replies (null when the post is anonymous)
+    opUsername: string | null;
     createComment: (body: string, parentId?: string) => Promise<Comment>;
 }
 
@@ -54,6 +56,7 @@ type CommentsSectionProps = {
     // Showing one comment and its replies (?comment=) rather than the whole thread
     isSingleThread: boolean;
     commentCount: number;
+    opUsername?: string | null;
     initialComments: Comment[];
     initialCursor: string | null;
     loadFailed: boolean;
@@ -68,6 +71,7 @@ export function CommentsSection({
     isModerator,
     isSingleThread,
     commentCount,
+    opUsername = null,
     initialComments,
     initialCursor,
     loadFailed,
@@ -118,11 +122,11 @@ export function CommentsSection({
 
     return (
         <ThreadContext.Provider
-            value={{ postId, postPath, isLocked, isModerator, baseDepth: initialComments[0]?.depth ?? 0, sort, createComment }}
+            value={{ postId, postPath, isLocked, isModerator, baseDepth: initialComments[0]?.depth ?? 0, sort, opUsername, createComment }}
         >
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
                 {isSingleThread ? null : isLocked ? (
-                    <p className="flex items-center gap-2 rounded-xl bg-surface-muted px-4 py-3 text-sm text-muted">
+                    <p className="my-3 flex items-center gap-2 rounded-[10px] bg-active px-4 py-3 text-sm text-muted">
                         <Lock className="size-4" /> Comments are locked. You can still read and vote.
                     </p>
                 ) : (
@@ -130,7 +134,7 @@ export function CommentsSection({
                 )}
 
                 {comments.length > 0 && !isSingleThread && (
-                    <div className="-ml-3">
+                    <div className="flex justify-end pt-3">
                         <SortByDropdown sort={sort} onChange={changeSort} disabled={isLoading} />
                     </div>
                 )}
@@ -144,12 +148,16 @@ export function CommentsSection({
                     </div>
                 )}
 
-                <div className="flex w-full flex-col gap-4 pb-6" aria-busy={isLoading}>
+                {/* Each top-level thread is its own block, set apart by a hairline */}
+                <div className="flex w-full flex-col divide-y divide-border pb-6 [&>*]:py-4" aria-busy={isLoading}>
                     {comments.map((comment, index) => {
                         const slot = slotAfter(index, 'thread');
                         return (
                             <Fragment key={comment.id}>
-                                <CommentBlock initialComment={comment} />
+                                {/* Wrapped so the thread's padding sits outside the comment its line is measured against */}
+                                <div>
+                                    <CommentBlock initialComment={comment} />
+                                </div>
                                 {slot !== null && <ThreadAdSlot unit={ads[slot]} />}
                             </Fragment>
                         );
@@ -163,7 +171,7 @@ export function CommentsSection({
                     )}
 
                     {cursor && (
-                        <Button variant="secondary" onClick={() => load(sort, cursor)} disabled={isLoading} className="self-center">
+                        <Button variant="secondary" size="sm" onClick={() => load(sort, cursor)} disabled={isLoading} className="mx-auto mt-4 !py-0">
                             {isLoading ? 'Loading...' : 'Load more comments'}
                         </Button>
                     )}
@@ -252,119 +260,95 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
         setComment((current) => ({ ...current, status: updated.status, body: updated.body, pinned_at: updated.pinned_at }));
     }
 
+    const showsReplies = hasChildren && !continuesElsewhere && isExpanded;
+
     return (
-        // Notifications link here with #c-{shortId}
-        <div id={`c-${comment.short_id}`} className="flex w-full scroll-mt-header gap-2.5">
-            <ShapeSection
-                username={getAuthorName(comment)}
-                hasChildren={hasChildren && !continuesElsewhere}
-                isExpanded={isExpanded}
-                toggleHideAllReplies={() => setIsExpanded(false)}
-            />
+        // Notifications link here with #c-{shortId}. Replies hang off a line from this avatar (see .comment in
+        // globals.css); the line is a button that collapses them.
+        <div id={`c-${comment.short_id}`} className="comment relative grid w-full scroll-mt-header grid-cols-[28px_minmax(0,1fr)] gap-x-2.5">
+            {showsReplies && (
+                <button
+                    type="button"
+                    className="thread-line"
+                    aria-label={`Collapse ${totalReplies} ${totalReplies === 1 ? 'reply' : 'replies'} to ${getAuthorName(comment)}`}
+                    aria-expanded
+                    onClick={() => setIsExpanded(false)}
+                />
+            )}
+            <Avatar name={getAuthorName(comment)} size="md" className="size-7 text-[11px]" />
 
-            <div className="flex min-w-0 w-full flex-col gap-3">
-                <div className="flex w-full flex-col gap-1">
-                    {isEditing ? (
-                        <>
-                            <TitleSection username={getAuthorName(comment)} createdAt={comment.created_at} editedAt={comment.edited_at} />
-                            <EditBox initialBody={comment.body} onSave={handleEdit} onCancel={() => setIsEditing(false)} />
-                        </>
-                    ) : (
-                        <TextSection comment={comment} />
-                    )}
+            <div className="flex min-w-0 flex-col">
+                {isEditing ? (
+                    <>
+                        <TitleSection username={getAuthorName(comment)} createdAt={comment.created_at} editedAt={comment.edited_at} />
+                        <EditBox initialBody={comment.body} onSave={handleEdit} onCancel={() => setIsEditing(false)} />
+                    </>
+                ) : (
+                    <TextSection comment={comment} isOp={Boolean(thread.opUsername && comment.author?.username === thread.opUsername)} />
+                )}
 
-                    {!isEditing && (
-                        <ReplyActions
-                            comment={comment}
-                            canReply={canReply}
-                            isReplying={isReplying}
-                            toggleReplyMode={() => setIsReplying(!isReplying)}
-                            onDeleted={handleDeleted}
-                            onModerated={thread.isModerator ? handleModerated : undefined}
-                            onEdit={() => {
-                                setIsReplying(false);
-                                setIsEditing(true);
-                            }}
-                        />
-                    )}
+                {!isEditing && (
+                    <ReplyActions
+                        comment={comment}
+                        canReply={canReply}
+                        isReplying={isReplying}
+                        toggleReplyMode={() => setIsReplying(!isReplying)}
+                        onDeleted={handleDeleted}
+                        onModerated={thread.isModerator ? handleModerated : undefined}
+                        onEdit={() => {
+                            setIsReplying(false);
+                            setIsEditing(true);
+                        }}
+                    />
+                )}
 
-                    {isReplying && (
+                {isReplying && (
+                    <div className="mt-2">
                         <ContentReplySection fromReply toggleReplyMode={() => setIsReplying(false)} handleReply={handleReply} />
-                    )}
-                </div>
+                    </div>
+                )}
 
                 {continuesElsewhere && (
-                    <Link href={`${thread.postPath}?comment=${comment.short_id}`} className="-mt-1 text-sm font-semibold text-link hover:underline">
+                    <Link href={`${thread.postPath}?comment=${comment.short_id}`} className="mt-1 text-[13px] font-semibold text-text hover:underline">
                         Continue this thread ({totalReplies} {totalReplies === 1 ? 'reply' : 'replies'}) →
                     </Link>
                 )}
 
-                {!continuesElsewhere && isExpanded && replies.length > 0 && (
-                    <div className="flex flex-col gap-3">
+                {showsReplies && (
+                    <div className="replies">
                         {replies.map((reply) => (
-                            <CommentBlock key={reply.id} initialComment={reply} />
+                            <div key={reply.id} className="reply">
+                                <CommentBlock initialComment={reply} />
+                            </div>
                         ))}
+                        {hiddenReplies > 0 && (
+                            <div className="reply reply-more">
+                                <button
+                                    type="button"
+                                    onClick={loadMoreReplies}
+                                    disabled={isLoadingReplies}
+                                    className="flex h-7 cursor-pointer items-center rounded-md px-2 text-[13px] font-semibold text-text transition-colors hover:bg-hover disabled:opacity-50"
+                                >
+                                    {isLoadingReplies ? 'Loading...' : `${hiddenReplies} more ${hiddenReplies === 1 ? 'reply' : 'replies'}`}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {hasChildren && !continuesElsewhere && (
-                    <div className="-ml-3 flex flex-wrap items-center gap-1">
-                        {(!isExpanded || hiddenReplies > 0) && (
-                            <Button
-                                onClick={showReplies}
-                                variant="ghost"
-                                size="sm"
-                                className="text-link"
-                                disabled={isLoadingReplies}
-                            >
-                                <ChevronDown className="size-4" />
-                                {isLoadingReplies
-                                    ? 'Loading...'
-                                    : isExpanded
-                                      ? `${hiddenReplies} more ${hiddenReplies === 1 ? 'reply' : 'replies'}`
-                                      : `${totalReplies} ${totalReplies === 1 ? 'reply' : 'replies'}`}
-                            </Button>
-                        )}
-                        {isExpanded && replies.length > 0 && (
-                            <Button variant="ghost" size="sm" className="text-muted" onClick={() => setIsExpanded(false)}>
-                                <ChevronUp className="size-4" />
-                                Hide replies
-                            </Button>
-                        )}
-                        {repliesError && <ErrorMessage errorMessage={repliesError} role="alert" />}
-                    </div>
+                {hasChildren && !continuesElsewhere && !isExpanded && (
+                    <button
+                        type="button"
+                        onClick={showReplies}
+                        aria-expanded={false}
+                        className="mt-1 flex h-[26px] w-fit cursor-pointer items-center gap-1.5 rounded-[7px] pl-1 pr-2 text-[13px] font-semibold text-muted ring-1 ring-inset ring-border-strong transition-colors hover:bg-hover hover:text-text"
+                    >
+                        <Plus className="size-4" />
+                        {totalReplies} {totalReplies === 1 ? 'reply' : 'replies'}
+                    </button>
                 )}
+                {repliesError && <ErrorMessage size="small" errorMessage={repliesError} role="alert" />}
             </div>
-        </div>
-    );
-}
-
-function ShapeSection({
-    username,
-    hasChildren,
-    isExpanded,
-    toggleHideAllReplies,
-}: {
-    username: string;
-    hasChildren: boolean;
-    isExpanded: boolean;
-    toggleHideAllReplies: () => void;
-}) {
-    return (
-        <div className="flex flex-col items-center gap-1">
-            <Avatar name={username} size="md" />
-
-            {/* Thread line: click to collapse the replies */}
-            {hasChildren && isExpanded && (
-                <button
-                    type="button"
-                    aria-label={`Hide replies to ${username}`}
-                    onClick={toggleHideAllReplies}
-                    className="group flex w-full flex-1 cursor-pointer flex-col items-center"
-                >
-                    <span className="w-px flex-1 bg-border transition-colors group-hover:bg-border-strong" />
-                </button>
-            )}
         </div>
     );
 }
@@ -372,31 +356,33 @@ function ShapeSection({
 function TitleSection({
     username,
     profile,
+    isOp = false,
     createdAt,
     editedAt,
 }: {
     username: string;
     profile?: string;
+    isOp?: boolean;
     createdAt: string;
     editedAt: string | null;
 }) {
     return (
-        <div className="flex min-h-8 flex-wrap items-center gap-x-1.5 text-xs text-muted">
+        <div className="flex min-h-7 flex-wrap items-center gap-x-1.5 text-[13px] text-subtle">
             {profile ? (
-                <Link href={`/u/${profile}`} className="font-bold text-text hover:underline">
+                <Link href={`/u/${profile}`} className="font-semibold text-text hover:underline">
                     {username}
                 </Link>
             ) : (
-                <span className="font-bold text-text">{username}</span>
+                <span className="font-semibold text-text">{username}</span>
             )}
-            <span aria-hidden>•</span>
+            {isOp && <span className="rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-muted">OP</span>}
             {/* Rendered on the server and again in the browser a moment later, so the text may differ slightly */}
             <time dateTime={createdAt} suppressHydrationWarning>
                 {TimeUtility.formatTimeAgo(createdAt)}
             </time>
             {editedAt && (
                 <>
-                    <span aria-hidden>•</span>
+                    <span aria-hidden>·</span>
                     <span suppressHydrationWarning>Edited {TimeUtility.formatTimeAgo(editedAt)}</span>
                 </>
             )}
@@ -404,13 +390,14 @@ function TitleSection({
     );
 }
 
-function TextSection({ comment }: { comment: Comment }) {
+function TextSection({ comment, isOp }: { comment: Comment; isOp: boolean }) {
     const isGone = comment.status === 'deleted' || comment.status === 'removed';
     return (
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col">
             <TitleSection
                 username={getAuthorName(comment)}
                 profile={comment.author?.username}
+                isOp={isOp}
                 createdAt={comment.created_at}
                 editedAt={comment.edited_at}
             />
@@ -423,7 +410,11 @@ function TextSection({ comment }: { comment: Comment }) {
                     {comment.held_reason ? `Held for review: ${comment.held_reason}` : 'Waiting for a moderator to review it. Only you can see it for now.'}
                 </p>
             )}
-            {isGone ? <p className="italic text-muted">{comment.body}</p> : <Markdown text={comment.body} />}
+            {isGone ? (
+                <p className="text-sm italic text-muted">{comment.body}</p>
+            ) : (
+                <Markdown text={comment.body} className="text-sm leading-[21px] text-body" />
+            )}
         </div>
     );
 }
@@ -450,7 +441,7 @@ function EditBox({ initialBody, onSave, onCancel }: { initialBody: string; onSav
     return (
         <form
             onSubmit={handleSubmit}
-            className="flex flex-col gap-2 rounded-2xl border border-border-strong bg-surface px-3 py-2 focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/40"
+            className="mt-1 flex flex-col gap-2 rounded-[10px] border border-border-strong bg-surface px-3 py-2 focus-within:border-muted focus-within:ring-4 focus-within:ring-active"
         >
             <TextArea
                 variant="bare"

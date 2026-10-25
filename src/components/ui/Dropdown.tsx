@@ -25,7 +25,7 @@ export function DropdownContent({
                 align={align}
                 {...props}
                 className={twMerge(
-                    'z-50 min-w-44 rounded-xl border border-border bg-surface-raised p-1 text-sm text-text shadow-raised',
+                    'z-50 min-w-44 rounded-[10px] bg-surface-raised p-1 text-[13.5px] text-text shadow-raised',
                     className
                 )}
             />
@@ -34,7 +34,7 @@ export function DropdownContent({
 }
 
 const itemClasses =
-    'flex h-9 cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 outline-none data-[highlighted]:bg-surface-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:text-muted';
+    'flex h-8 cursor-pointer select-none items-center gap-2.5 rounded-md px-2 font-medium text-muted outline-none data-[highlighted]:bg-active data-[highlighted]:text-text data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:text-muted';
 
 export function DropdownItem({
     className,
@@ -64,7 +64,7 @@ export function DropdownLabel({ className, ...props }: ComponentProps<typeof Dro
     return (
         <DropdownMenu.Label
             {...props}
-            className={twMerge('px-2.5 py-1.5 text-xs font-semibold text-muted', className)}
+            className={twMerge('px-2 py-1.5 text-xs font-semibold text-subtle', className)}
         />
     );
 }

@@ -60,9 +60,10 @@ export default function ContentReplySection({
             <button
                 type="button"
                 onClick={toggleOpen}
-                className="flex h-11 w-full cursor-text items-center rounded-full border border-border-strong bg-surface px-4 text-left text-muted transition-colors hover:border-text"
+                className="flex w-full cursor-text items-center gap-3 border-y border-border py-3 text-left text-[15px] text-subtle transition-colors hover:text-muted"
             >
-                Add a reply
+                <span className="flex-1">Add a reply…</span>
+                <span className="flex h-8 items-center rounded-[7px] bg-accent px-3 text-[13.5px] font-semibold text-accent-fg">Reply</span>
             </button>
         );
     }
@@ -70,7 +71,7 @@ export default function ContentReplySection({
     return (
         <form
             onSubmit={handleSubmit}
-            className="flex flex-col gap-2 rounded-2xl border border-border-strong bg-surface px-3 py-2 focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/40"
+            className="flex flex-col gap-2 rounded-[10px] border border-border-strong bg-surface px-3 py-2 focus-within:border-muted focus-within:ring-4 focus-within:ring-active"
         >
             <TextArea
                 variant="bare"

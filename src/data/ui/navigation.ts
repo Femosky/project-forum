@@ -1,4 +1,4 @@
-import { Bell, Bookmark, Flame, Home, LucideIcon, PlusSquare, User, Users } from 'lucide-react';
+import { Bell, Bookmark, Flame, Home, LucideIcon, Plus, User, Users } from 'lucide-react';
 
 export interface NavRoute {
     href: string;
@@ -6,11 +6,12 @@ export interface NavRoute {
     label: string;
 }
 
-// Left sidebar (desktop) and the slide-out menu (mobile)
+// Left sidebar (desktop) and the slide-out menu (mobile). Notifications shows the unread count.
 export const PRIMARY_NAV: NavRoute[] = [
     { href: '/', icon: Home, label: 'Home' },
     { href: '/trending', icon: Flame, label: 'Trending' },
     { href: '/communities', icon: Users, label: 'Communities' },
+    { href: '/notifications', icon: Bell, label: 'Notifications' },
     { href: '/saved', icon: Bookmark, label: 'Saved' },
 ];
 
@@ -18,7 +19,7 @@ export const PRIMARY_NAV: NavRoute[] = [
 export const TAB_BAR_NAV: NavRoute[] = [
     { href: '/', icon: Home, label: 'Home' },
     { href: '/communities', icon: Users, label: 'Communities' },
-    { href: '/submit', icon: PlusSquare, label: 'Create' },
+    { href: '/submit', icon: Plus, label: 'New post' },
     { href: '/notifications', icon: Bell, label: 'Notifications' },
     { href: '/profile', icon: User, label: 'Profile' },
 ];

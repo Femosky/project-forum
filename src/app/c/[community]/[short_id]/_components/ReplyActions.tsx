@@ -4,7 +4,6 @@ import Button from '@/components/ui/Button';
 import VoteControl from '@/components/post/VoteControl';
 import ContentOptionsMenu from '@/components/post/ContentOptionsMenu';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { MessageCircle } from 'lucide-react';
 import { ComponentProps } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { Comment } from '@/types/api';
@@ -40,7 +39,7 @@ export function ReplyActions({
     }
 
     return (
-        <div {...props} className={twMerge('-ml-1 flex items-center gap-1', className)}>
+        <div {...props} className={twMerge('mt-1 flex items-center gap-1', className)}>
             <VoteControl
                 target="comments"
                 id={comment.id}
@@ -48,7 +47,6 @@ export function ReplyActions({
                 downvotes={comment.downvote_count}
                 userVote={comment.viewer?.vote ?? 0}
                 disabled={isGone}
-                className="bg-transparent"
             />
 
             {canReply && (
@@ -57,9 +55,8 @@ export function ReplyActions({
                     variant="ghost"
                     size="sm"
                     aria-expanded={isReplying}
-                    className="text-muted hover:text-text"
+                    className="h-7 px-2 font-semibold text-subtle hover:text-text"
                 >
-                    <MessageCircle className="size-4" />
                     Reply
                 </Button>
             )}

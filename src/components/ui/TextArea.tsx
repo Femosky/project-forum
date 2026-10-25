@@ -11,12 +11,12 @@ const textAreaStyles = cva(
     {
         variants: {
             variant: {
-                default: 'min-h-24 px-4 py-3 rounded-lg text-base border focus:ring-2 focus:ring-focus/40',
+                default: 'min-h-24 px-3 py-2.5 rounded-[7px] text-[15px] border focus:ring-4 focus:ring-active',
                 // Borderless, for use inside a composer that draws its own frame
-                bare: 'min-h-16 px-1 py-1 text-base bg-transparent border-none',
+                bare: 'min-h-16 px-1 py-1 text-[15px] bg-transparent border-none',
             },
             outline: {
-                default: 'border-border-strong focus:border-focus',
+                default: 'border-border-strong focus:border-muted',
                 error: 'border-danger focus:border-danger',
             },
         },

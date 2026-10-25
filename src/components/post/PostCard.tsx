@@ -40,116 +40,151 @@ function linkHost(url: string): string {
 
 type PostCardProps = {
     post: Post;
-    // compact: a feed item that links to the thread. full: the post at the top of its own thread.
+    // compact: a feed row that links to the thread. full: the post at the top of its own page.
     variant?: 'compact' | 'full';
-    // Hide the community name when the list is already inside that community
+    // Hide the community tag when the list is already inside that community
     showCommunity?: boolean;
     // Shows moderator tools in the post's menu
     isModerator?: boolean;
     className?: string;
 };
 
+// The community a post lives in, as a small outlined tag with its icon
+export function CommunityTag({ community, className }: { community: Post['community']; className?: string }) {
+    return (
+        <Link
+            href={`/c/${community.name}`}
+            className={twMerge(
+                'relative z-10 inline-flex h-[22px] min-w-0 shrink items-center gap-1.5 rounded-md pl-[3px] pr-2 text-[12.5px] font-medium text-muted ring-1 ring-inset ring-border transition-colors hover:text-text hover:ring-border-strong',
+                className
+            )}
+        >
+            <Avatar name={community.name} src={community.image_url} shape="square" className="size-4 text-[9px]" />
+            <span className="truncate">{communityLabel(community)}</span>
+        </Link>
+    );
+}
+
+// Threads-style feed row (author avatar on the left, title first, preview, actions) or the head of a post's page
 export function PostCard({ post, variant = 'compact', showCommunity = true, isModerator = false, className }: PostCardProps) {
     const isCompact = variant === 'compact';
     const postPath = getPostPath(post);
-    const TitleTag = isCompact ? 'h2' : 'h1';
     const isLocked = post.status === 'locked';
+    const authorName = post.author?.username ?? 'Anonymous';
+
+    const badges = (post.flair || post.is_nsfw || isLocked || post.status === 'removed' || post.status === 'pending') && (
+        <div className="flex flex-wrap gap-1.5">
+            {post.flair && <Badge>{post.flair.name}</Badge>}
+            {post.is_nsfw && <Badge variant="danger">NSFW</Badge>}
+            {isLocked && <Badge>Locked</Badge>}
+            {post.status === 'removed' && <Badge variant="danger">Removed by moderators</Badge>}
+            {post.status === 'pending' && <Badge variant="highlight">{post.held_reason ? `Held: ${post.held_reason}` : 'Waiting for review'}</Badge>}
+        </div>
+    );
+
+    const actions = (
+        <div className="-ml-0.5 flex flex-wrap items-center gap-1">
+            <VoteControl
+                target="posts"
+                id={post.id}
+                upvotes={post.upvote_count}
+                downvotes={post.downvote_count}
+                userVote={post.viewer?.vote ?? 0}
+            />
+            <CommentCountButton post={post} href={`${postPath}#comments`} />
+            <ShareButton path={postPath} title={post.title} />
+        </div>
+    );
+
+    if (!isCompact) {
+        return (
+            <article className={twMerge('flex flex-col gap-3 px-4 pb-5 pt-7 sm:px-0', className)}>
+                <header className="flex items-center gap-2">
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px] text-subtle">
+                        <Avatar name={authorName} size="sm" className="size-[22px]" />
+                        <AuthorLink author={post.author} className="font-semibold text-text" />
+                        {showCommunity && (
+                            <>
+                                <span>in</span>
+                                <CommunityTag community={post.community} />
+                            </>
+                        )}
+                        <span aria-hidden>·</span>
+                        <PostTime post={post} />
+                    </div>
+                    <PostOptions post={post} leaveOnDelete isModerator={isModerator} />
+                </header>
+                <h1 className="text-[22px] font-medium leading-[29px] tracking-[-0.015em] break-words text-pretty">{post.title}</h1>
+                {badges}
+                {post.type === 'link' && post.url && <LinkPreviewCard post={post} />}
+                <div className="text-[15px] leading-6 text-body">
+                    <PostBody post={post} />
+                </div>
+                <div className="pt-1">{actions}</div>
+            </article>
+        );
+    }
 
     return (
         <article
             className={twMerge(
-                'relative flex flex-col gap-2 px-4 py-3',
-                isCompact && 'bg-surface transition-colors hover:bg-surface-muted/60 sm:rounded-xl sm:border sm:border-border',
+                // The hover wash reaches a little past the text on both sides, like a list row
+                "group relative grid grid-cols-[36px_minmax(0,1fr)] gap-3 px-4 pb-4 pt-[22px] before:absolute before:inset-y-1 before:inset-x-1 before:-z-0 before:rounded-[10px] before:transition-colors before:content-[''] hover:before:bg-hover sm:px-0 sm:before:-inset-x-3",
                 className
             )}
         >
-            {/* Whole card is clickable; links and buttons inside sit above this with z-10 */}
-            {isCompact && <Link href={postPath} className="absolute inset-0 sm:rounded-xl" aria-label={post.title} />}
+            {/* Whole row is clickable; links and buttons inside sit above this with z-10 */}
+            <Link href={postPath} className="absolute inset-0 z-[1]" aria-label={post.title} />
 
-            {/* Who and where: above the title on the post's own page, in the footer of a feed item */}
-            {isCompact ? (
-                <div className="flex items-start justify-between gap-2">
-                    <TitleTag className="text-lg font-bold leading-snug break-words">{post.title}</TitleTag>
-                    <div className="-mr-2 -mt-1">
+            <AuthorAvatar author={post.author} />
+
+            <div className="relative z-[2] flex min-w-0 flex-col pointer-events-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
+                <div className="flex min-w-0 items-center gap-1.5 text-[13px] leading-[18px] text-muted">
+                    <AuthorLink author={post.author} className="shrink-0 font-semibold text-text" />
+                    {showCommunity && <CommunityTag community={post.community} />}
+                    <PostTime post={post} className="text-subtle" />
+                    <div className="-my-1 -mr-1.5 ml-auto">
                         <PostOptions post={post} leaveOnDelete={false} isModerator={isModerator} />
                     </div>
                 </div>
-            ) : (
-                <>
-                    <header className="flex items-center justify-between gap-2">
-                        <PostMeta post={post} showCommunity={showCommunity} withAuthor />
-                        <PostOptions post={post} leaveOnDelete isModerator={isModerator} />
-                    </header>
-                    <TitleTag className="text-2xl font-bold leading-snug break-words">{post.title}</TitleTag>
-                </>
-            )}
 
-            {(post.flair || post.is_nsfw || isLocked || post.status === 'removed' || post.status === 'pending') && (
-                <div className="flex flex-wrap gap-1.5">
-                    {post.flair && <Badge>{post.flair.name}</Badge>}
-                    {post.is_nsfw && <Badge variant="danger">NSFW</Badge>}
-                    {isLocked && <Badge>Locked</Badge>}
-                    {post.status === 'removed' && <Badge variant="danger">Removed by moderators</Badge>}
-                    {post.status === 'pending' && <Badge variant="highlight">{post.held_reason ? `Held: ${post.held_reason}` : 'Waiting for review'}</Badge>}
-                </div>
-            )}
+                <h2 className="mb-1 mt-2 text-[15.5px] font-medium leading-[22px] tracking-[-0.003em] break-words text-pretty">{post.title}</h2>
+                {badges && <div className="mb-1">{badges}</div>}
+                {post.body && post.type !== 'link' && (
+                    <p className="line-clamp-2 break-words text-[14.5px] leading-[22px] text-muted">{stripMarkdown(post.body)}</p>
+                )}
+                {post.type === 'link' && post.url && (
+                    <div className="mt-2.5">
+                        <LinkPreviewCard post={post} />
+                    </div>
+                )}
 
-            {post.type === 'link' && post.url && <LinkPreviewCard post={post} compact={isCompact} />}
-
-            {isCompact
-                ? post.body && <p className="line-clamp-3 break-words text-sm text-muted">{stripMarkdown(post.body)}</p>
-                : <PostBody post={post} />}
-
-            <footer className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                {isCompact && <PostMeta post={post} showCommunity={showCommunity} />}
-                <div className="flex items-center gap-1.5">
-                    <VoteControl
-                        target="posts"
-                        id={post.id}
-                        upvotes={post.upvote_count}
-                        downvotes={post.downvote_count}
-                        userVote={post.viewer?.vote ?? 0}
-                    />
-                    <CommentCountButton post={post} href={`${postPath}#comments`} />
-                    <ShareButton path={postPath} title={post.title} />
-                </div>
-            </footer>
+                <div className="mt-3.5">{actions}</div>
+            </div>
         </article>
     );
 }
 
-// Community (or author, inside a community) and age. Community names are shown as names, without a prefix.
-function PostMeta({ post, showCommunity, withAuthor = false }: { post: Post; showCommunity: boolean; withAuthor?: boolean }) {
-    const communityName = post.community.name;
+// The author's picture, linking to their profile; a neutral letter for anonymous posts
+function AuthorAvatar({ author }: { author: Post['author'] }) {
+    if (!author) return <Avatar name="?" size="lg" className="size-9" />;
     return (
-        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted">
-            {showCommunity ? (
-                <Link
-                    href={`/c/${communityName}`}
-                    className="relative z-10 flex min-w-0 items-center gap-1.5 font-bold text-text hover:underline"
-                >
-                    <Avatar name={communityName} src={post.community.image_url} size="sm" />
-                    <span className="truncate">{communityLabel(post.community)}</span>
-                </Link>
-            ) : (
-                <AuthorLink author={post.author} className="truncate font-bold text-text" />
-            )}
-            <span aria-hidden>·</span>
-            <time dateTime={post.created_at} className="shrink-0">
-                {TimeUtility.formatTimeAgo(post.created_at)}
-            </time>
-            {showCommunity && withAuthor && (
-                <>
-                    <span aria-hidden>·</span>
-                    <AuthorLink author={post.author} className="truncate" />
-                </>
-            )}
-            {post.pinned_at && <Pin className="size-3.5 shrink-0 text-accent" aria-label="Pinned" />}
-        </div>
+        <Link href={`/u/${author.username}`} className="relative z-10 self-start" aria-label={author.username} tabIndex={-1}>
+            <Avatar name={author.username} size="lg" className="size-9" />
+        </Link>
     );
 }
 
-function LinkPreviewCard({ post, compact }: { post: Post; compact: boolean }) {
+function PostTime({ post, className }: { post: Post; className?: string }) {
+    return (
+        <span className={twMerge('flex shrink-0 items-center gap-1', className)}>
+            <time dateTime={post.created_at}>{TimeUtility.formatTimeAgo(post.created_at)}</time>
+            {post.pinned_at && <Pin className="size-3.5 text-brand" aria-label="Pinned" />}
+        </span>
+    );
+}
+
+function LinkPreviewCard({ post }: { post: Post }) {
     const url = post.url!;
     const preview = post.link_preview;
 
@@ -158,18 +193,18 @@ function LinkPreviewCard({ post, compact }: { post: Post; compact: boolean }) {
             href={url}
             target="_blank"
             rel="noopener noreferrer nofollow ugc"
-            className="relative z-10 flex items-stretch overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-border-strong"
+            className="relative z-10 flex items-center overflow-hidden rounded-[10px] ring-1 ring-inset ring-border transition-colors hover:ring-border-strong"
         >
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-3 py-2">
-                {preview?.title && !compact && <span className="line-clamp-2 text-sm font-bold">{preview.title}</span>}
-                <span className="flex items-center gap-1 truncate text-xs text-link">
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-3 py-2.5">
+                {preview?.title && <span className="line-clamp-2 text-sm font-semibold">{preview.title}</span>}
+                <span className="flex items-center gap-1 truncate text-[12.5px] text-subtle">
                     {linkHost(url)} <ExternalLink className="size-3 shrink-0" />
                 </span>
             </div>
             {preview?.image && (
                 // Remote preview images come from any site, so next/image's allow-list doesn't apply
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview.image} alt="" loading="lazy" className="data-saver-hide h-16 w-24 shrink-0 object-cover sm:h-20 sm:w-32" />
+                <img src={preview.image} alt="" loading="lazy" className="data-saver-hide h-16 w-24 shrink-0 object-cover" />
             )}
         </a>
     );

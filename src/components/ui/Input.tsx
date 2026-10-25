@@ -5,18 +5,18 @@ import TextUtility from '@/lib/utils/TextUtility';
 
 export const fieldStyles = cva(
     [
-        'w-full bg-surface text-text placeholder:text-muted transition-colors',
-        'border outline-none focus-visible:outline-none focus:ring-2 focus:ring-focus/40',
+        'w-full bg-surface text-text placeholder:text-subtle transition-colors',
+        'border outline-none focus-visible:outline-none focus:ring-4 focus:ring-active',
         'disabled:cursor-not-allowed disabled:opacity-50',
     ],
     {
         variants: {
             variant: {
-                default: 'h-11 px-4 rounded-lg text-base',
-                search: 'h-10 px-4 rounded-full text-sm bg-surface-muted border-transparent focus:bg-surface',
+                default: 'h-10 px-3 rounded-[7px] text-[15px]',
+                search: 'h-9 px-3 rounded-[7px] text-sm bg-hover border-transparent focus:bg-surface',
             },
             outline: {
-                default: 'border-border-strong focus:border-focus',
+                default: 'border-border-strong focus:border-muted',
                 error: 'border-danger focus:border-danger focus:ring-danger/30',
             },
         },

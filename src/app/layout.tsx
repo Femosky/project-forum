@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Nunito } from 'next/font/google';
+import { Hanken_Grotesk } from 'next/font/google';
 import './globals.css';
 import { APP_NAME, APP_DESCRIPTION, APP_URL, REFRESH_TOKEN_COOKIE_NAME, SITE_LANG } from '@/lib/constants';
 import { pageMetadata } from '@/lib/seo';
@@ -20,8 +20,8 @@ import { getDataSaver } from '@/lib/dataSaver';
 // Self-hosted at build time by next/font: no request to Google at runtime. "optional" means a slow first visit
 // keeps the (size-matched) system font instead of swapping late: no repaint, no wait for 40 KB on a slow
 // connection. The font is cached by the next page.
-const nunito = Nunito({
-    variable: '--font-nunito',
+const hanken = Hanken_Grotesk({
+    variable: '--font-hanken',
     subsets: ['latin'],
     weight: 'variable',
     display: 'optional',
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
     themeColor: [
         { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-        { media: '(prefers-color-scheme: dark)', color: '#17181b' },
+        { media: '(prefers-color-scheme: dark)', color: '#0e0e10' },
     ],
 };
 
@@ -70,7 +70,7 @@ export default async function RootLayout({
             lang={SITE_LANG}
             data-theme={theme ?? undefined}
             data-save-data={dataSaver.enabled ? '' : undefined}
-            className={nunito.variable}
+            className={hanken.variable}
             suppressHydrationWarning
         >
             <body>
@@ -80,8 +80,8 @@ export default async function RootLayout({
                 <Header theme={theme} />
 
                 {/* The document scrolls, not an inner container, so mobile URL bars collapse and back/forward restore position */}
-                <div className="mx-auto flex w-full max-w-7xl">
-                    <LeftSidebar />
+                <div className="flex w-full">
+                    <LeftSidebar theme={theme} />
                     <main className="min-w-0 flex-1 pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom))] md:pb-0">
                         {children}
                     </main>

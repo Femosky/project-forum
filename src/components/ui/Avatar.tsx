@@ -5,8 +5,13 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { twMerge } from 'tailwind-merge';
 import { useDataSaver } from '@/lib/useDataSaver';
 
-const avatarStyles = cva('relative inline-flex shrink-0 overflow-hidden rounded-full', {
+const avatarStyles = cva('relative inline-flex shrink-0 overflow-hidden', {
     variants: {
+        // People are round, communities and advertisers are rounded squares
+        shape: {
+            round: 'rounded-full',
+            square: 'rounded-[28%]',
+        },
         size: {
             sm: 'size-6 text-[10px]',
             md: 'size-8 text-xs',
@@ -14,7 +19,7 @@ const avatarStyles = cva('relative inline-flex shrink-0 overflow-hidden rounded-
             xl: 'size-16 text-xl',
         },
     },
-    defaultVariants: { size: 'md' },
+    defaultVariants: { size: 'md', shape: 'round' },
 });
 
 type AvatarProps = VariantProps<typeof avatarStyles> & {
@@ -27,7 +32,7 @@ type AvatarProps = VariantProps<typeof avatarStyles> & {
 // All take white text at AA contrast; no greens (branding rule).
 const FALLBACK_COLOURS = ['#5046e5', '#7c3aed', '#2563eb', '#c026d3', '#db2777', '#e11d48', '#b45309', '#475569'];
 
-function colourFor(name: string): string {
+export function colourFor(name: string): string {
     let hash = 0;
     for (const char of name.toLowerCase()) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
     return FALLBACK_COLOURS[hash % FALLBACK_COLOURS.length];
@@ -35,11 +40,11 @@ function colourFor(name: string): string {
 
 // Shows the image when it loads, otherwise the first letter of the name on the name's colour.
 // With data saver on, always the letter.
-export function Avatar({ name, src: imageSrc, size, className }: AvatarProps) {
+export function Avatar({ name, src: imageSrc, size, shape, className }: AvatarProps) {
     const dataSaver = useDataSaver();
     const src = dataSaver ? null : imageSrc;
     return (
-        <RadixAvatar.Root className={twMerge(avatarStyles({ size }), className)} style={{ backgroundColor: colourFor(name) }}>
+        <RadixAvatar.Root className={twMerge(avatarStyles({ size, shape }), className)} style={{ backgroundColor: colourFor(name) }}>
             {src && <RadixAvatar.Image src={src} alt={`${name}'s avatar`} className="size-full object-cover" />}
             <RadixAvatar.Fallback
                 delayMs={src ? 300 : 0}

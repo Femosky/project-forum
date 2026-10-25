@@ -128,7 +128,7 @@ export default async function CommunitiesPage({ searchParams }: PageProps) {
                                     href={`/c/${community.name}`}
                                     className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted/60"
                                 >
-                                    <Avatar name={community.name} src={community.image_url} size="lg" />
+                                    <Avatar name={community.name} src={community.image_url} size="lg" shape="square" />
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate font-bold">{community.display_name || community.name}</p>
                                         {community.description && <p className="line-clamp-1 text-sm text-muted">{community.description}</p>}

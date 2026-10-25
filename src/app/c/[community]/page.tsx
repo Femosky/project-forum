@@ -9,9 +9,10 @@ import CommunityHeader from '@/components/community/CommunityHeader';
 import ManageFlairs from '@/components/community/ManageFlairs';
 import CommunityRail from '@/components/community/CommunityRail';
 import EmptyState from '@/components/ui/EmptyState';
-import Button from '@/components/ui/Button';
 import { PostList, SortTabs, parsePostSort } from '@/components/post/PostList';
 import JsonLd from '@/components/common/JsonLd';
+import PageBar from '@/components/layout/PageBar';
+import Avatar from '@/components/ui/Avatar';
 import { breadcrumbJsonLd, communityDescription, noindexMetadata, pageMetadata } from '@/lib/seo';
 import { loadAds } from '@/ads/server';
 import { slotsBetween } from '@/ads/config';
@@ -67,7 +68,17 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
 
     return (
         // One column on small screens (header, about and rules, posts); on wide ones the about panel moves to a right rail
-        <div className="mx-auto grid w-full max-w-content grid-cols-1 content-start gap-3 sm:px-4 sm:py-4 xl:max-w-[64rem] xl:grid-cols-[minmax(0,1fr)_17rem] xl:grid-rows-[auto_1fr]">
+        <>
+        <PageBar
+            title={
+                <>
+                    <Avatar name={community.data.community.name} src={community.data.community.image_url} shape="square" className="size-[18px] text-[10px]" />
+                    <span className="truncate">{community.data.community.display_name || community.data.community.name}</span>
+                </>
+            }
+            actions={!isPrivateAndClosed && <SortTabs basePath={basePath} current={sort} />}
+        />
+        <div className="mx-auto grid w-full max-w-[40rem] grid-cols-1 content-start gap-x-12 sm:px-5 xl:max-w-[62rem] xl:grid-cols-[minmax(0,40rem)_16rem] xl:grid-rows-[auto_1fr]">
             <JsonLd
                 data={breadcrumbJsonLd([
                     { name: APP_NAME, path: '/' },
@@ -75,10 +86,10 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
                 ])}
             />
             <CommunityHeader community={community.data.community} viewer={community.data.viewer} />
-            <div className="xl:col-start-2 xl:row-span-2 xl:row-start-1">
+            <div className="border-b border-border xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:border-0 xl:pt-6">
                 <CommunityRail data={community.data} />
             </div>
-            <div className="flex min-w-0 flex-col gap-3 xl:col-start-1">
+            <div className="flex min-w-0 flex-col xl:col-start-1">
                 {isModerator && <ManageFlairs community={community.data.community.name} initialFlairs={flairs?.data?.flairs ?? []} />}
 
                 {isPrivateAndClosed ? (
@@ -89,14 +100,17 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
                     />
                 ) : (
                     <>
-                        <div className="flex items-center justify-between gap-2 pr-4 sm:pr-0">
-                            <SortTabs basePath={basePath} current={sort} />
-                            <Button asChild variant="secondary" size="sm">
-                                <Link href={`/submit?community=${community.data.community.name}`}>
-                                    <Plus className="size-4" /> Post
-                                </Link>
-                            </Button>
-                        </div>
+                        <Link
+                            href={`/submit?community=${community.data.community.name}`}
+                            className="group flex items-center gap-3 border-b border-border px-4 py-4 text-subtle sm:px-0"
+                        >
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-active text-muted">
+                                <Plus className="size-4" />
+                            </span>
+                            <span className="flex-1 text-[15px] group-hover:text-muted">
+                                Post in {community.data.community.display_name || community.data.community.name}
+                            </span>
+                        </Link>
                         <PostList
                             posts={posts.data?.posts ?? []}
                             basePath={basePath}
@@ -116,5 +130,6 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
                 )}
             </div>
         </div>
+        </>
     );
 }

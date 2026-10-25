@@ -1,6 +1,5 @@
 'use client';
 import { ChevronDown } from 'lucide-react';
-import Button from '@/components/ui/Button';
 import {
     Dropdown,
     DropdownContent,
@@ -26,13 +25,17 @@ export function SortByDropdown({
     return (
         <Dropdown>
             <DropdownTrigger asChild>
-                <Button variant="ghost" size="sm" className="group text-muted hover:text-text" disabled={disabled}>
-                    Sort by: <span className="text-text">{TextUtility.capitalize(sort)}</span>
+                <button
+                    type="button"
+                    disabled={disabled}
+                    className="group flex h-7 cursor-pointer items-center gap-1 rounded-md px-2 text-[13px] font-medium text-muted transition-colors hover:bg-hover disabled:opacity-50"
+                >
+                    Sort by <span className="font-semibold text-text">{TextUtility.capitalize(sort)}</span>
                     <ChevronDown className="size-4 transition-transform group-data-[state=open]:rotate-180" />
-                </Button>
+                </button>
             </DropdownTrigger>
-            <DropdownContent align="start">
-                <DropdownLabel>Sort comments by</DropdownLabel>
+            <DropdownContent align="end">
+                <DropdownLabel>Sort replies by</DropdownLabel>
                 <DropdownRadioGroup value={sort} onValueChange={(value) => onChange(value as CommentSort)}>
                     {SORT_OPTIONS.map((option) => (
                         <DropdownRadioItem key={option} value={option}>
