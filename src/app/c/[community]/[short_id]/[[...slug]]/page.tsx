@@ -89,7 +89,8 @@ export default async function PostPage({ params, searchParams }: PageProps) {
         focusId ? [] : loadAds('thread', { post: short_id }, slotsBetween(0, COMMENT_PAGE_SIZE, 'thread')),
     ]);
 
-    // Missing, deleted, removed and private posts. Crawlers already got a 404 or 410 from the proxy.
+    // Missing, removed and private posts, and deleted ones with no comments left. Crawlers already got a 404 or
+    // 410 from the proxy. A deleted post with comments comes back as a tombstone and renders below.
     if (postResult.status === 404 || postResult.status === 403) notFound();
     if (!postResult.data) {
         return <EmptyState icon={<CloudOff />} title="Couldn't load this post" description="Try again in a moment." />;
@@ -165,7 +166,8 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                 <CommentsSection
                     postId={post.id}
                     postPath={canonical}
-                    isLocked={post.status === 'locked'}
+                    isLocked={post.status === 'locked' || post.status === 'deleted'}
+                    isPostDeleted={post.status === 'deleted'}
                     isModerator={isModerator}
                     commentCount={post.comment_count}
                     opUsername={post.author?.username ?? null}

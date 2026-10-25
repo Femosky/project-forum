@@ -52,6 +52,8 @@ type CommentsSectionProps = {
     postId: string;
     postPath: string;
     isLocked: boolean;
+    // The author deleted the post: its comments stay up but take no new ones
+    isPostDeleted?: boolean;
     isModerator: boolean;
     // Showing one comment and its replies (?comment=) rather than the whole thread
     isSingleThread: boolean;
@@ -68,6 +70,7 @@ export function CommentsSection({
     postId,
     postPath,
     isLocked,
+    isPostDeleted = false,
     isModerator,
     isSingleThread,
     commentCount,
@@ -125,7 +128,11 @@ export function CommentsSection({
             value={{ postId, postPath, isLocked, isModerator, baseDepth: initialComments[0]?.depth ?? 0, sort, opUsername, createComment }}
         >
             <div className="flex flex-col">
-                {isSingleThread ? null : isLocked ? (
+                {isSingleThread ? null : isPostDeleted ? (
+                    <p className="my-3 flex items-center gap-2 rounded-[10px] bg-active px-4 py-3 text-sm text-muted">
+                        <Lock className="size-4" /> The author deleted this post. Its comments stay up, but new ones are off.
+                    </p>
+                ) : isLocked ? (
                     <p className="my-3 flex items-center gap-2 rounded-[10px] bg-active px-4 py-3 text-sm text-muted">
                         <Lock className="size-4" /> Comments are locked. You can still read and vote.
                     </p>
@@ -195,6 +202,8 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
     const [isExpanded, setIsExpanded] = useState(true);
     const [isLoadingReplies, setIsLoadingReplies] = useState(false);
     const [repliesError, setRepliesError] = useState<string | null>(null);
+    // A comment deleted with nothing under it leaves the thread, as it would after a reload
+    const [isDropped, setIsDropped] = useState(false);
 
     const replies = comment.replies ?? [];
     const totalReplies = Math.max(comment.reply_count, replies.length);
@@ -244,6 +253,10 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
     }
 
     function handleDeleted() {
+        if (totalReplies === 0) {
+            setIsDropped(true);
+            return;
+        }
         setComment((current) => ({
             ...current,
             status: 'deleted',
@@ -261,6 +274,7 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
     }
 
     const showsReplies = hasChildren && !continuesElsewhere && isExpanded;
+    if (isDropped) return null;
 
     return (
         // Notifications link here with #c-{shortId}. Replies hang off a line from this avatar (see .comment in
