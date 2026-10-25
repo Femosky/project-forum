@@ -7,7 +7,7 @@ import { ExternalLink, FileText, Link2, Repeat } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import { useChallenge } from '@/components/common/Turnstile';
-import InputField, { fieldStyles } from '@/components/ui/Input';
+import InputField from '@/components/ui/Input';
 import MarkdownEditor from '@/components/common/MarkdownEditor';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { getPostPath } from '@/components/post/PostCard';
@@ -15,9 +15,10 @@ import { api } from '@/lib/api/client';
 import { ApiError, errorMessage } from '@/lib/api/errors';
 import { POST_BODY_MAX, POST_TITLE_MAX, POST_TITLE_MIN } from '@/lib/constants';
 import { Flair, FlairsResponse, LinkPreview, LinkPreviewResponse, Post, PostResponse, PostsResponse } from '@/types/api';
-import { communityLabel, humanizeHandle } from '@/lib/communityName';
+import { communityLabel } from '@/lib/communityName';
+import CommunityPicker, { CommunityOption } from './CommunityPicker';
 
-export type CommunityOption = { name: string; label: string | null; joined: boolean };
+export type { CommunityOption };
 
 type Draft = {
     community: string;
@@ -78,14 +79,15 @@ function validate(draft: Draft): Record<string, string> {
 }
 
 type ComposerProps = {
-    communities: CommunityOption[];
+    joined: CommunityOption[];
+    popular: CommunityOption[];
     initialCommunity?: string;
     // New-account limits (the API enforces them; this explains them before anyone hits an error)
     canPostLinks: boolean;
     canPostAnonymously: boolean;
 };
 
-export function PostComposer({ communities, initialCommunity, canPostLinks, canPostAnonymously }: ComposerProps) {
+export function PostComposer({ joined, popular, initialCommunity, canPostLinks, canPostAnonymously }: ComposerProps) {
     const router = useRouter();
     const [draft, setDraft] = useState<Draft>({ ...EMPTY_DRAFT, community: initialCommunity ?? '' });
     const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
@@ -196,46 +198,19 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
         }
     }
 
-    const hasSelectedOption = communities.some((c) => c.name === draft.community);
-
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
             <div className="flex flex-col gap-1.5">
                 <label htmlFor="community" className="text-sm font-semibold">
                     Community
                 </label>
-                <select
-                    id="community"
-                    name="community"
+                <CommunityPicker
                     value={draft.community}
-                    onChange={(e) => update('community', e.target.value)}
-                    className={twMerge(fieldStyles({ outline: fieldErrors.community ? 'error' : 'default' }), 'cursor-pointer appearance-auto')}
-                >
-                    <option value="">Choose a community</option>
-                    {draft.community && !hasSelectedOption && <option value={draft.community}>{humanizeHandle(draft.community)}</option>}
-                    {communities.some((c) => c.joined) && (
-                        <optgroup label="Your communities">
-                            {communities
-                                .filter((c) => c.joined)
-                                .map((c) => (
-                                    <option key={c.name} value={c.name}>
-                                        {communityLabel(c)}
-                                    </option>
-                                ))}
-                        </optgroup>
-                    )}
-                    {communities.some((c) => !c.joined) && (
-                        <optgroup label="Other communities">
-                            {communities
-                                .filter((c) => !c.joined)
-                                .map((c) => (
-                                    <option key={c.name} value={c.name}>
-                                        {communityLabel(c)}
-                                    </option>
-                                ))}
-                        </optgroup>
-                    )}
-                </select>
+                    onChange={(name) => update('community', name)}
+                    joined={joined}
+                    popular={popular}
+                    invalid={Boolean(fieldErrors.community)}
+                />
                 {fieldErrors.community && <ErrorMessage errorMessage={fieldErrors.community} />}
             </div>
 

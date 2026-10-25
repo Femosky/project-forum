@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, ChevronDown, Ellipsis, Link2, Mail, Send, Share2 } from 'lucide-react';
+import { Check, ChevronDown, Ellipsis, Link2, Mail, Send, Share, Share2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Dropdown, DropdownContent, DropdownItem, DropdownSeparator, DropdownTrigger } from '@/components/ui/Dropdown';
 import { APP_URL } from '@/lib/constants';
@@ -18,8 +18,8 @@ const TARGETS: { label: string; href: (url: string, title: string) => string }[]
 ];
 
 // Our own share menu, the same on every device: copy the link, send it to a common app, or hand it to the device's
-// share sheet ("More options", where the browser has one).
-export function ShareButton({ path, title }: { path: string; title: string }) {
+// share sheet ("More options", where the browser has one). In a page's top bar it drops the chevron, and its label on phones.
+export function ShareButton({ path, title, inBar = false }: { path: string; title: string; inBar?: boolean }) {
     const [copied, setCopied] = useState(false);
     const [canShareNatively, setCanShareNatively] = useState(false);
 
@@ -49,13 +49,20 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
     return (
         <Dropdown onOpenChange={(open) => open && setCanShareNatively(typeof navigator.share === 'function')}>
             <DropdownTrigger asChild>
-                <Button variant="ghost" size="sm" className="group relative z-10 h-7 gap-1 px-2 font-semibold text-subtle hover:text-text">
-                    {copied ? <Check className="size-4" /> : <Share2 className="size-4" />}
-                    {copied ? 'Copied' : 'Share'}
-                    <ChevronDown className="size-3.5 transition-transform group-data-[state=open]:rotate-180" />
-                </Button>
+                {inBar ? (
+                    <Button variant="ghost" size="sm" aria-label="Share" className="h-8 gap-1.5 px-2 font-semibold text-muted hover:text-text sm:px-2.5">
+                        {copied ? <Check className="size-4" /> : <Share className="size-4" />}
+                        <span className="hidden sm:inline">{copied ? 'Copied' : 'Share'}</span>
+                    </Button>
+                ) : (
+                    <Button variant="ghost" size="sm" className="group relative z-10 h-7 gap-1 px-2 font-semibold text-subtle hover:text-text">
+                        {copied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                        {copied ? 'Copied' : 'Share'}
+                        <ChevronDown className="size-3.5 transition-transform group-data-[state=open]:rotate-180" />
+                    </Button>
+                )}
             </DropdownTrigger>
-            <DropdownContent align="start" className="w-52">
+            <DropdownContent align={inBar ? 'end' : 'start'} className="w-52">
                 <DropdownItem onSelect={copyLink}>
                     <Link2 /> Copy link
                 </DropdownItem>

@@ -19,8 +19,12 @@ export default function TopLoader() {
             element.style.transform = `scaleX(${value})`;
             element.style.opacity = String(opacity);
         };
+        let safety: ReturnType<typeof setTimeout> | null = null;
         const start = () => {
             if (timer) return;
+            // Something may still cancel the navigation (a handler further down, a blocked route), so a bar that is
+            // still running after a while finishes on its own
+            safety = setTimeout(done, 10_000);
             progress = 0.08;
             show(progress);
             // Crawl towards the end without reaching it
@@ -28,6 +32,7 @@ export default function TopLoader() {
         };
         const done = () => {
             if (!timer) return;
+            if (safety) clearTimeout(safety);
             clearInterval(timer);
             timer = null;
             show(1);
@@ -35,8 +40,10 @@ export default function TopLoader() {
             setTimeout(() => !timer && show(0, 0), 450);
         };
 
+        // Runs in the capture phase: by the time a click bubbles up, Next's <Link> has already called
+        // preventDefault() to navigate on the client, so a bubbling listener can't tell its clicks from cancelled ones
         function onClick(event: MouseEvent) {
-            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
             const link = (event.target as Element | null)?.closest?.('a');
             if (!link || !link.href || (link.target && link.target !== '_self') || link.hasAttribute('download')) return;
             const url = new URL(link.href, location.href);
@@ -53,16 +60,17 @@ export default function TopLoader() {
             done();
             return replaceState.apply(this, args);
         };
-        document.addEventListener('click', onClick);
+        document.addEventListener('click', onClick, true);
         window.addEventListener('popstate', done);
         window.addEventListener('pagehide', done);
         return () => {
             history.pushState = pushState;
             history.replaceState = replaceState;
-            document.removeEventListener('click', onClick);
+            document.removeEventListener('click', onClick, true);
             window.removeEventListener('popstate', done);
             window.removeEventListener('pagehide', done);
             if (timer) clearInterval(timer);
+            if (safety) clearTimeout(safety);
         };
     }, []);
 

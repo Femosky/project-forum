@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
-import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
-import InputField, { fieldStyles } from '@/components/ui/Input';
+import InputField, { selectStyles } from '@/components/ui/Input';
 import TextArea from '@/components/ui/TextArea';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
@@ -83,7 +82,7 @@ export function CommunitySettingsForm({ community }: { community: Community }) {
                     id="category"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className={twMerge(fieldStyles(), 'cursor-pointer appearance-auto')}
+                    className={selectStyles}
                 >
                     <option value="">None</option>
                     {COMMUNITY_CATEGORIES.map((option) => (

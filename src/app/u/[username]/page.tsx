@@ -15,6 +15,7 @@ import CommentListItem from '@/components/post/CommentListItem';
 import ReportUserButton from '@/components/post/ReportUserButton';
 import NumberUtility from '@/lib/utils/NumberUtility';
 import JsonLd from '@/components/common/JsonLd';
+import ShareButton from '@/components/post/ShareButton';
 import PageBar from '@/components/layout/PageBar';
 import { noindexMetadata, pageMetadata, profileJsonLd } from '@/lib/seo';
 
@@ -82,7 +83,7 @@ export default async function ProfilePage({ params, searchParams }: PageProps) {
 
     return (
         <>
-            <PageBar title={`@${user.username}`} />
+            <PageBar title={`@${user.username}`} actions={<ShareButton path={`/u/${user.username}`} title={`@${user.username}`} inBar />} />
             <div className="mx-auto flex w-full max-w-[45rem] flex-col sm:px-5">
                 <JsonLd data={profileJsonLd(user)} />
                 <header className="flex flex-col gap-5 border-b border-border px-4 pb-6 pt-7 sm:px-0">

@@ -6,7 +6,7 @@ import { ArrowLeft, Copy, Pause, Play, Plus } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import InputField, { fieldStyles } from '@/components/ui/Input';
+import InputField, { selectStyles } from '@/components/ui/Input';
 import TextArea from '@/components/ui/TextArea';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
@@ -19,8 +19,6 @@ import type { AdsOverview, Advertiser, Campaign, CampaignDetail, Creative, Nativ
 
 // Ad campaign management (Phase 6). Direct deals are set up by hand: advertiser, then campaign (dates, targeting,
 // price), then creatives. Money is typed in major units (naira) and stored in minor units (kobo).
-
-const selectStyles = twMerge(fieldStyles(), 'cursor-pointer appearance-auto');
 
 const toMajor = (minor: number | null | undefined) => (minor === null || minor === undefined ? '' : String(minor / 100));
 const toMinor = (major: string) => (major.trim() === '' ? null : Math.round(Number(major) * 100));

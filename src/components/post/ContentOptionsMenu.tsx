@@ -12,6 +12,7 @@ import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import ReportDialog from './ReportDialog';
+import { useSaved } from './SaveButton';
 
 type ContentOptionsMenuProps = {
     targetType: 'post' | 'comment';
@@ -59,24 +60,13 @@ export function ContentOptionsMenu({
     moderation,
     label,
 }: ContentOptionsMenuProps) {
-    const [isSaved, setIsSaved] = useState(saved);
+    const path = `/${targetType}s/${id}`;
+    const { isSaved, toggleSave } = useSaved(path, saved);
     const [isReporting, setIsReporting] = useState(false);
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const requireAuth = useRequireAuth();
-    const path = `/${targetType}s/${id}`;
-
-    async function toggleSave() {
-        if (!requireAuth('save')) return;
-        const next = !isSaved;
-        setIsSaved(next);
-        try {
-            await api(`${path}/save`, { method: next ? 'PUT' : 'DELETE' });
-        } catch {
-            setIsSaved(!next);
-        }
-    }
 
     function openReport() {
         if (!requireAuth('report')) return;

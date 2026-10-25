@@ -45,7 +45,7 @@ export function ManageFlairs({ community, initialFlairs }: { community: string; 
     }
 
     return (
-        <details className="group border-b border-border bg-surface px-4 py-3 sm:rounded-xl sm:border">
+        <details className="group border-b border-border bg-surface px-4 py-3 sm:mt-4 sm:rounded-[10px] sm:border">
             <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold">
                 <Tag className="size-4 text-muted" /> Post flairs
                 <span className="font-normal text-muted">
