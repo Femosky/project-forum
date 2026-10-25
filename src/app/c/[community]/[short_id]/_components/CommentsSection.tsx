@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, createContext, useContext, useState } from 'react';
+import { Fragment, createContext, useContext, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Lock, MessagesSquare, Plus } from 'lucide-react';
 import { SortByDropdown } from './SortByDropdown';
@@ -15,7 +15,7 @@ import { errorMessage } from '@/lib/api/errors';
 import { useUIStore } from '@/lib/uiStore';
 import { Comment, CommentResponse, CommentSort, CommentsResponse } from '@/types/api';
 import Markdown from '@/components/common/Markdown';
-import TextArea from '@/components/ui/TextArea';
+import MarkdownEditor from '@/components/common/MarkdownEditor';
 import { COMMENT_BODY_MAX } from '@/lib/constants';
 import { CommentSkeleton } from '@/components/post/PostSkeletons';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from './commentsApi';
@@ -424,6 +424,7 @@ function EditBox({ initialBody, onSave, onCancel }: { initialBody: string; onSav
     const [body, setBody] = useState(initialBody);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const formRef = useRef<HTMLFormElement>(null);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -439,29 +440,28 @@ function EditBox({ initialBody, onSave, onCancel }: { initialBody: string; onSav
     }
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="mt-1 flex flex-col gap-2 rounded-[10px] border border-border-strong bg-surface px-3 py-2 focus-within:border-muted focus-within:ring-4 focus-within:ring-active"
-        >
-            <TextArea
-                variant="bare"
+        <form ref={formRef} onSubmit={handleSubmit} className="mt-1 flex flex-col gap-2">
+            <MarkdownEditor
                 name="edit-comment"
-                aria-label="Edit your comment"
+                variant="compact"
                 placeholder="Edit your comment"
                 autoFocus
                 maxLength={COMMENT_BODY_MAX}
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
+                onChange={setBody}
+                onSubmitShortcut={() => formRef.current?.requestSubmit()}
+                footer={
+                    <>
+                        <Button size="sm" variant="ghost" onClick={onCancel} disabled={isSaving}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" size="sm" disabled={!body.trim() || body.trim() === initialBody || isSaving}>
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </Button>
+                    </>
+                }
             />
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
-            <div className="flex justify-end gap-2">
-                <Button size="sm" variant="ghost" onClick={onCancel} disabled={isSaving}>
-                    Cancel
-                </Button>
-                <Button type="submit" size="sm" disabled={!body.trim() || body.trim() === initialBody || isSaving}>
-                    {isSaving ? 'Saving...' : 'Save'}
-                </Button>
-            </div>
         </form>
     );
 }

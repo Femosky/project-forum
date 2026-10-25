@@ -337,3 +337,68 @@
         background: var(--bg);
     }
 }
+
+/* More of the Markdown subset (components/common/Markdown.tsx) */
+@layer components {
+    .markdown h3 {
+        font-size: 1.125rem;
+        line-height: 1.4;
+        font-weight: 600;
+        color: var(--text);
+    }
+    .markdown h4 {
+        font-weight: 600;
+        color: var(--text);
+    }
+    .markdown sup,
+    .markdown sub {
+        font-size: 0.75em;
+    }
+    .markdown del {
+        color: var(--text-muted);
+    }
+    .markdown .table-wrap {
+        overflow-x: auto;
+        border-radius: 10px;
+        box-shadow: inset 0 0 0 1px var(--border);
+    }
+    .markdown table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9375em;
+    }
+    .markdown th,
+    .markdown td {
+        padding: 0.45rem 0.75rem;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+    }
+    .markdown th {
+        font-weight: 600;
+        color: var(--text);
+        background: var(--hover);
+    }
+    .markdown tr:last-child td {
+        border-bottom: 0;
+    }
+    /* Spoilers: a solid bar until tapped or focused */
+    .markdown .spoiler {
+        border-radius: 4px;
+        padding: 0 2px;
+        background: var(--text-muted);
+        color: transparent;
+        cursor: pointer;
+        transition: background-color 0.15s, color 0.15s;
+    }
+    .markdown .spoiler * {
+        color: transparent;
+    }
+    .markdown .spoiler:focus {
+        background: var(--active);
+        color: inherit;
+        outline: none;
+    }
+    .markdown .spoiler:focus * {
+        color: inherit;
+    }
+}

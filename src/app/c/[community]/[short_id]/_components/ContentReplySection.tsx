@@ -1,12 +1,12 @@
 'use client';
 
 import Button from '@/components/ui/Button';
-import TextArea from '@/components/ui/TextArea';
+import MarkdownEditor from '@/components/common/MarkdownEditor';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { COMMENT_BODY_MAX } from '@/lib/constants';
 import { errorMessage } from '@/lib/api/errors';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 // Reply composer. handleReply resolves when the comment is saved; the text is kept if it fails.
 export default function ContentReplySection({
@@ -23,6 +23,7 @@ export default function ContentReplySection({
     const [isSending, setIsSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const requireAuth = useRequireAuth();
+    const formRef = useRef<HTMLFormElement>(null);
 
     function toggleOpen() {
         if (!requireAuth('reply')) return;
@@ -69,31 +70,28 @@ export default function ContentReplySection({
     }
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-2 rounded-[10px] border border-border-strong bg-surface px-3 py-2 focus-within:border-muted focus-within:ring-4 focus-within:ring-active"
-        >
-            <TextArea
-                variant="bare"
+        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-2">
+            <MarkdownEditor
                 name="comment"
-                aria-label="Your reply"
+                variant="compact"
                 placeholder="Add a reply"
                 autoFocus
                 maxLength={COMMENT_BODY_MAX}
                 value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
+                onChange={setReplyContent}
+                onSubmitShortcut={() => formRef.current?.requestSubmit()}
+                footer={
+                    <>
+                        <Button size="sm" variant="ghost" onClick={toggleCancel} disabled={isSending}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" size="sm" disabled={replyContent.trim() === '' || isSending}>
+                            {isSending ? 'Replying...' : 'Reply'}
+                        </Button>
+                    </>
+                }
             />
-
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
-
-            <div className="flex justify-end gap-2">
-                <Button size="sm" variant="ghost" onClick={toggleCancel} disabled={isSending}>
-                    Cancel
-                </Button>
-                <Button type="submit" size="sm" disabled={replyContent.trim() === '' || isSending}>
-                    {isSending ? 'Replying...' : 'Reply'}
-                </Button>
-            </div>
         </form>
     );
 }
