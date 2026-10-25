@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { SquarePen } from 'lucide-react';
+import { Plus, SquarePen } from 'lucide-react';
 
 // The quiet "start a post" row at the top of the home feed. A link, so it works for everyone; the composer asks
 // guests to sign in.
@@ -13,7 +13,8 @@ export function ComposePrompt() {
                 <SquarePen className="size-4" />
             </span>
             <span className="flex-1 text-[15px] group-hover:text-muted">What do you want to talk about?</span>
-            <span className="hidden h-8 items-center rounded-[7px] bg-accent px-3 text-[13.5px] font-semibold text-accent-fg sm:flex">
+            <span className="hidden h-8 items-center gap-1.5 rounded-[7px] bg-accent pl-2.5 pr-3 text-[13.5px] font-semibold text-accent-fg sm:flex">
+                <Plus className="size-4" strokeWidth={2.4} />
                 New post
             </span>
         </Link>

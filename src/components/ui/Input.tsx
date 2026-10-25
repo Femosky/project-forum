@@ -28,6 +28,9 @@ export const fieldStyles = cva(
     }
 );
 
+// Native <select>s share the field look, with our own chevron (globals.css) inset from the right edge
+export const selectStyles = twMerge(fieldStyles(), 'select-chevron cursor-pointer pr-9');
+
 type InputProps = VariantProps<typeof fieldStyles> & ComponentProps<'input'>;
 
 export function InputField({ variant, outline, className, type, name, placeholder, ...props }: InputProps) {

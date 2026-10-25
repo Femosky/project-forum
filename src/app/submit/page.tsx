@@ -15,7 +15,7 @@ export default async function SubmitPage({ searchParams }: PageProps) {
     const { community } = await searchParams;
     const [mine, popular, me] = await Promise.all([
         serverApi<MyCommunitiesResponse>('/users/me/communities'),
-        serverApi<CommunitiesResponse>('/communities?sort=popular&limit=100'),
+        serverApi<CommunitiesResponse>('/communities?sort=popular&limit=30'),
         serverApi<UserResponse>('/auth/me'),
     ]);
 
@@ -35,18 +35,19 @@ export default async function SubmitPage({ searchParams }: PageProps) {
         );
     }
 
-    // Communities you joined first, then the rest of the public ones you can post in
-    const joined: CommunityOption[] = (mine.data?.communities ?? []).map((c) => ({ name: c.name, label: c.display_name, joined: true }));
+    // Communities you joined, and popular public ones to suggest; the picker searches for the rest
+    const joined: CommunityOption[] = (mine.data?.communities ?? []).map((c) => ({ name: c.name, label: c.display_name, image: c.image_url, joined: true }));
     const joinedNames = new Set(joined.map((c) => c.name));
     const others: CommunityOption[] = (popular.data?.communities ?? [])
         .filter((c) => !joinedNames.has(c.name) && c.visibility === 'public')
-        .map((c) => ({ name: c.name, label: c.display_name, joined: false }));
+        .map((c) => ({ name: c.name, label: c.display_name, image: c.image_url, joined: false }));
 
     return (
         <div className="mx-auto w-full max-w-content px-4 py-4">
             <h1 className="mb-4 text-2xl font-extrabold">Create a post</h1>
             <PostComposer
-                communities={[...joined, ...others]}
+                joined={joined}
+                popular={others}
                 initialCommunity={community}
                 canPostLinks={me.data?.user.can_post_links ?? true}
                 canPostAnonymously={me.data?.user.can_post_anonymously ?? true}

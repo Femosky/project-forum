@@ -17,6 +17,8 @@ import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from '../_comp
 import { loadAds } from '@/ads/server';
 import { slotsBetween } from '@/ads/config';
 import PostViewBeacon from '@/components/post/PostViewBeacon';
+import ShareButton from '@/components/post/ShareButton';
+import SaveButton from '@/components/post/SaveButton';
 
 type PageProps = {
     params: Promise<{ community: string; short_id: string; slug?: string[] }>;
@@ -123,6 +125,14 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                     <span className="font-medium text-subtle">/</span>
                     <span className="font-medium text-subtle">Post</span>
                 </Link>
+            }
+            actions={
+                post.status !== 'deleted' && (
+                    <>
+                        <ShareButton path={getPostPath(post)} title={post.title} inBar />
+                        <SaveButton postId={post.id} saved={post.viewer?.saved} />
+                    </>
+                )
             }
         />
         <div className="mx-auto flex w-full max-w-[46rem] flex-col sm:px-5">

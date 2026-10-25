@@ -7,7 +7,7 @@ import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import IconButton from '@/components/ui/IconButton';
-import InputField, { fieldStyles } from '@/components/ui/Input';
+import InputField, { selectStyles } from '@/components/ui/Input';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import ActionDialog, { ActionInput } from '@/components/moderation/ActionDialog';
 import { api } from '@/lib/api/client';
@@ -81,7 +81,7 @@ export function AdminUsers({ initialUsers }: { initialUsers: AdminUser[] }) {
                         setFilter(e.target.value);
                         void search('', e.target.value);
                     }}
-                    className={twMerge(fieldStyles(), 'w-auto cursor-pointer appearance-auto')}
+                    className={twMerge(selectStyles, 'w-auto')}
                 >
                     <option value="all">Everyone</option>
                     <option value="new">Joined this week</option>
@@ -193,7 +193,7 @@ function AdsSwitch({ community, onChange }: { community: AdminCommunity; onChang
             aria-label={`Ads in c/${community.name}`}
             value={community.ads_enabled === null ? 'default' : community.ads_enabled ? 'on' : 'off'}
             onChange={(e) => onChange(e.target.value === 'default' ? null : e.target.value === 'on')}
-            className={twMerge(fieldStyles(), 'h-8 w-auto cursor-pointer appearance-auto px-2 text-sm')}
+            className={twMerge(selectStyles, 'h-8 w-auto pl-2.5 pr-8 text-sm')}
         >
             <option value="default">Ads: default ({fallback})</option>
             <option value="on">Ads: on</option>
@@ -332,7 +332,7 @@ export function Blocklist({ initialTerms }: { initialTerms: BlockedTerm[] }) {
                         aria-label="Type"
                         value={kind}
                         onChange={(e) => setKind(e.target.value as 'domain' | 'keyword')}
-                        className={twMerge(fieldStyles(), 'w-auto cursor-pointer appearance-auto')}
+                        className={twMerge(selectStyles, 'w-auto')}
                     >
                         <option value="domain">Domain</option>
                         <option value="keyword">Phrase</option>

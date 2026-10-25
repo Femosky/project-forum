@@ -11,6 +11,11 @@ type UIStore = {
     commentCounts: Record<string, number>;
     setCommentCount: (postId: string, count: number) => void;
 
+    // Saves changed on this page since it rendered, by "posts:<id>" or "comments:<id>", so the post page's Save
+    // button and its "..." menu agree
+    savedChanges: Record<string, boolean>;
+    setSaved: (key: string, saved: boolean) => void;
+
     // The post whose body is open for editing on its own page
     editingPostId: string | null;
     setEditingPost: (postId: string | null) => void;
@@ -31,6 +36,9 @@ export const useUIStore = create<UIStore>()((set) => ({
 
     commentCounts: {},
     setCommentCount: (postId, count) => set((state) => ({ commentCounts: { ...state.commentCounts, [postId]: count } })),
+
+    savedChanges: {},
+    setSaved: (key, saved) => set((state) => ({ savedChanges: { ...state.savedChanges, [key]: saved } })),
 
     editingPostId: null,
     setEditingPost: (postId) => set({ editingPostId: postId }),
