@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, ChevronDown, Ellipsis, Link2, Mail, Send, Share2 } from 'lucide-react';
+import { Check, ChevronDown, Ellipsis, Link2, Mail, Send, Share, Share2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Dropdown, DropdownContent, DropdownItem, DropdownSeparator, DropdownTrigger } from '@/components/ui/Dropdown';
 import { APP_URL } from '@/lib/constants';
@@ -51,7 +51,7 @@ export function ShareButton({ path, title, inBar = false }: { path: string; titl
             <DropdownTrigger asChild>
                 {inBar ? (
                     <Button variant="ghost" size="sm" aria-label="Share" className="h-8 gap-1.5 px-2 font-semibold text-muted hover:text-text sm:px-2.5">
-                        {copied ? <Check className="size-4" /> : <Share2 className="size-4" />}
+                        {copied ? <Check className="size-4" /> : <Share className="size-4" />}
                         <span className="hidden sm:inline">{copied ? 'Copied' : 'Share'}</span>
                     </Button>
                 ) : (
