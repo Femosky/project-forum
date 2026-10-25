@@ -43,7 +43,7 @@ export default async function Home({ searchParams }: PageProps) {
     return (
         <>
             <PageBar title="Home" actions={<SortTabs basePath="/" current={sort} />} />
-            <div className="mx-auto flex w-full max-w-[40rem] flex-col pb-8 sm:px-5">
+            <div className="mx-auto flex w-full max-w-[45rem] flex-col pb-8 sm:px-5">
                 <JsonLd data={websiteJsonLd()} />
                 <ComposePrompt />
                 <PostList

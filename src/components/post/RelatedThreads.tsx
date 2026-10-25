@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { RelatedPost } from '@/types/api';
 import NumberUtility from '@/lib/utils/NumberUtility';
+import { humanizeHandle } from '@/lib/communityName';
 
 type RelatedThreadsProps = {
     community: string;
@@ -22,7 +23,7 @@ function ThreadList({ title, posts, showCommunity }: { title: string; posts: Rel
                         >
                             <span className="line-clamp-2 text-[14.5px] font-medium leading-[21px]">{post.title}</span>
                             <span className="text-[12.5px] text-subtle">
-                                {showCommunity && <>{post.community} · </>}
+                                {showCommunity && <>{humanizeHandle(post.community)} · </>}
                                 <span className="tabular-nums">{NumberUtility.compactFormatter.format(post.score)}</span> points ·{' '}
                                 <span className="tabular-nums">{NumberUtility.compactFormatter.format(post.comment_count)}</span>{' '}
                                 {post.comment_count === 1 ? 'comment' : 'comments'}
@@ -41,7 +42,7 @@ export function RelatedThreads({ community, related, more_from_community }: Rela
     return (
         <div className="flex flex-col gap-6 border-t border-border pb-10 pt-6">
             <ThreadList title="Related threads" posts={related} showCommunity />
-            <ThreadList title={`More from ${community}`} posts={more_from_community} showCommunity={false} />
+            <ThreadList title={`More from ${humanizeHandle(community)}`} posts={more_from_community} showCommunity={false} />
         </div>
     );
 }

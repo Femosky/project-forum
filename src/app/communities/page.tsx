@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import InputField from '@/components/ui/Input';
 import NumberUtility from '@/lib/utils/NumberUtility';
+import { communityLabel } from '@/lib/communityName';
 
 type PageProps = { searchParams: Promise<{ category?: string; q?: string; sort?: string; cursor?: string }> };
 
@@ -130,7 +131,7 @@ export default async function CommunitiesPage({ searchParams }: PageProps) {
                                 >
                                     <Avatar name={community.name} src={community.image_url} size="lg" shape="square" />
                                     <div className="min-w-0 flex-1">
-                                        <p className="truncate font-bold">{community.display_name || community.name}</p>
+                                        <p className="truncate font-bold">{communityLabel(community)}</p>
                                         {community.description && <p className="line-clamp-1 text-sm text-muted">{community.description}</p>}
                                         {!category && categoryLabel(community.category) && (
                                             <p className="text-xs text-muted">{categoryLabel(community.category)}</p>

@@ -10,11 +10,10 @@ import ShareButton from './ShareButton';
 import { CommentCountButton, PostOptions } from './PostActions';
 import PostBody from './PostBody';
 import { stripMarkdown } from '@/components/common/Markdown';
+import { communityLabel } from '@/lib/communityName';
 
-// How a community is named in the interface: its display name, or its name. URLs keep /c/{name}.
-export function communityLabel(community: Pick<Post['community'], 'name' | 'display_name'>): string {
-    return community.display_name || community.name;
-}
+// How a community is named in the interface (see lib/communityName)
+export { communityLabel };
 
 export function getPostPath(post: Pick<Post, 'community' | 'short_id' | 'slug'>): string {
     return `/c/${post.community.name}/${post.short_id}${post.slug ? `/${post.slug}` : ''}`;

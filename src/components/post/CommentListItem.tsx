@@ -3,16 +3,17 @@ import Markdown from '@/components/common/Markdown';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import { ListedComment } from '@/types/api';
 import VoteControl from './VoteControl';
+import { humanizeHandle } from '@/lib/communityName';
 
 // A comment shown outside its thread (on a profile), linking back to where it was said
 export function CommentListItem({ comment }: { comment: ListedComment }) {
-    const postPath = `/c/${comment.post.community}/${comment.post.short_id}${comment.post.slug ? `/${comment.post.slug}` : ''}`;
+    const postPath = `/c/${humanizeHandle(comment.post.community)}/${comment.post.short_id}${comment.post.slug ? `/${comment.post.slug}` : ''}`;
 
     return (
         <article className="flex flex-col gap-1.5 bg-surface px-4 py-3 sm:rounded-xl sm:border sm:border-border">
             <p className="text-xs text-muted">
-                <Link href={`/c/${comment.post.community}`} className="font-bold text-text hover:underline">
-                    {comment.post.community}
+                <Link href={`/c/${humanizeHandle(comment.post.community)}`} className="font-bold text-text hover:underline">
+                    {humanizeHandle(comment.post.community)}
                 </Link>{' '}
                 • on{' '}
                 <Link href={`${postPath}?comment=${comment.short_id}`} className="font-semibold text-link hover:underline">

@@ -12,6 +12,7 @@ import { MyCommunitiesResponse } from '@/types/api';
 import { useAuthStateStore } from '@/lib/stateStore';
 import { useUIStore } from '@/lib/uiStore';
 import { isActiveRoute, NavRoute, PRIMARY_NAV } from '@/data/ui/navigation';
+import { communityLabel } from '@/lib/communityName';
 
 // Flat rows: no pill behind the current page, just full-strength text and a thin red marker at the edge
 const itemClasses =
@@ -80,7 +81,7 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                                                 className="mx-1 size-2 shrink-0 rounded-full"
                                                 style={{ backgroundColor: colourFor(community.name) }}
                                             />
-                                            <span className="truncate">{community.display_name || community.name}</span>
+                                            <span className="truncate">{communityLabel(community)}</span>
                                         </Link>
                                     </li>
                                 );

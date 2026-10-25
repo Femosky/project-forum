@@ -16,6 +16,7 @@ import Avatar from '@/components/ui/Avatar';
 import { breadcrumbJsonLd, communityDescription, noindexMetadata, pageMetadata } from '@/lib/seo';
 import { loadAds } from '@/ads/server';
 import { slotsBetween } from '@/ads/config';
+import { communityLabel } from '@/lib/communityName';
 
 type PageProps = {
     params: Promise<{ community: string }>;
@@ -73,12 +74,12 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
             title={
                 <>
                     <Avatar name={community.data.community.name} src={community.data.community.image_url} shape="square" className="size-[18px] text-[10px]" />
-                    <span className="truncate">{community.data.community.display_name || community.data.community.name}</span>
+                    <span className="truncate">{communityLabel(community.data.community)}</span>
                 </>
             }
             actions={!isPrivateAndClosed && <SortTabs basePath={basePath} current={sort} />}
         />
-        <div className="mx-auto grid w-full max-w-[40rem] grid-cols-1 content-start gap-x-12 sm:px-5 xl:max-w-[62rem] xl:grid-cols-[minmax(0,40rem)_16rem] xl:grid-rows-[auto_1fr]">
+        <div className="mx-auto grid w-full max-w-[45rem] grid-cols-1 content-start gap-x-12 sm:px-5 xl:max-w-[67rem] xl:grid-cols-[minmax(0,45rem)_16rem] xl:grid-rows-[auto_1fr]">
             <JsonLd
                 data={breadcrumbJsonLd([
                     { name: APP_NAME, path: '/' },
@@ -108,7 +109,7 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
                                 <Plus className="size-4" />
                             </span>
                             <span className="flex-1 text-[15px] group-hover:text-muted">
-                                Post in {community.data.community.display_name || community.data.community.name}
+                                Post in {communityLabel(community.data.community)}
                             </span>
                         </Link>
                         <PostList

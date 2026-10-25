@@ -118,7 +118,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                 </Link>
             }
         />
-        <div className="mx-auto flex w-full max-w-[42.5rem] flex-col sm:px-5">
+        <div className="mx-auto flex w-full max-w-[46rem] flex-col sm:px-5">
             <JsonLd
                 data={[
                     discussionJsonLd(post, canonical, showingOneThread ? [] : comments),

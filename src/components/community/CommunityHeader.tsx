@@ -11,6 +11,7 @@ import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useUIStore } from '@/lib/uiStore';
+import { communityLabel } from '@/lib/communityName';
 
 type MembershipState = 'member' | 'requested' | 'none';
 
@@ -86,9 +87,9 @@ export function CommunityHeader({ community, viewer }: { community: Community; v
             <div className="flex items-center gap-4">
                 <Avatar name={community.name} src={community.image_url} size="xl" shape="square" className="size-14" />
                 <div className="min-w-0 flex-1">
-                    <h1 className="truncate text-[22px] font-semibold leading-7 tracking-[-0.015em]">{community.display_name || community.name}</h1>
+                    <h1 className="truncate text-[22px] font-semibold leading-7 tracking-[-0.015em]">{communityLabel(community)}</h1>
                     <p className="mt-0.5 text-[13.5px] text-subtle">
-                        {community.display_name && <span>{community.name} · </span>}
+                        <span>/c/{community.name} · </span>
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(members)}</span>{' '}
                         {members === 1 ? 'member' : 'members'} ·{' '}
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(community.post_count)}</span>{' '}

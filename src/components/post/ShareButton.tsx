@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Link2, Send, Share2 } from 'lucide-react';
+import { Check, ChevronDown, Ellipsis, Link2, Mail, Send, Share2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from '@/components/ui/Dropdown';
+import { Dropdown, DropdownContent, DropdownItem, DropdownSeparator, DropdownTrigger } from '@/components/ui/Dropdown';
 import { APP_URL } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 
@@ -13,28 +13,18 @@ const TARGETS: { label: string; href: (url: string, title: string) => string }[]
     { label: 'X', href: (url, title) => `https://x.com/intent/post?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}` },
     { label: 'Facebook', href: (url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}` },
     { label: 'Telegram', href: (url, title) => `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}` },
+    { label: 'LinkedIn', href: (url) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}` },
+    { label: 'Email', href: (url, title) => `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}` },
 ];
 
-// The phone's own share sheet where there is one; otherwise a menu of common apps and "Copy link"
+// Our own share menu, the same on every device: copy the link, send it to a common app, or hand it to the device's
+// share sheet ("More options", where the browser has one).
 export function ShareButton({ path, title }: { path: string; title: string }) {
     const [copied, setCopied] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [canShareNatively, setCanShareNatively] = useState(false);
 
     // The menu's links are built during render, which also happens on the server (where there's no window)
     const url = () => new URL(path, typeof window === 'undefined' ? APP_URL : window.location.origin).toString();
-
-    async function handleClick() {
-        if (typeof navigator.share === 'function') {
-            try {
-                await navigator.share({ title, url: url() });
-                trackEvent('share', { channel: 'native' });
-            } catch {
-                // The user closed the share sheet
-            }
-            return;
-        }
-        setIsMenuOpen(true);
-    }
 
     async function copyLink() {
         try {
@@ -47,22 +37,29 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
         }
     }
 
+    async function shareNatively() {
+        try {
+            await navigator.share({ title, url: url() });
+            trackEvent('share', { channel: 'native' });
+        } catch {
+            // The user closed the share sheet
+        }
+    }
+
     return (
-        <Dropdown open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+        <Dropdown onOpenChange={(open) => open && setCanShareNatively(typeof navigator.share === 'function')}>
             <DropdownTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    // Radix opens the menu on pointer down; let handleClick decide between the share sheet and the menu
-                    onPointerDown={(e) => e.preventDefault()}
-                    onClick={handleClick}
-                    className="relative z-10 h-7 px-2 font-semibold text-subtle hover:text-text"
-                >
+                <Button variant="ghost" size="sm" className="group relative z-10 h-7 gap-1 px-2 font-semibold text-subtle hover:text-text">
                     {copied ? <Check className="size-4" /> : <Share2 className="size-4" />}
                     {copied ? 'Copied' : 'Share'}
+                    <ChevronDown className="size-3.5 transition-transform group-data-[state=open]:rotate-180" />
                 </Button>
             </DropdownTrigger>
-            <DropdownContent align="start">
+            <DropdownContent align="start" className="w-52">
+                <DropdownItem onSelect={copyLink}>
+                    <Link2 /> Copy link
+                </DropdownItem>
+                <DropdownSeparator />
                 {TARGETS.map((target) => (
                     <DropdownItem key={target.label} asChild>
                         <a
@@ -71,13 +68,18 @@ export function ShareButton({ path, title }: { path: string; title: string }) {
                             rel="noopener noreferrer"
                             onClick={() => trackEvent('share', { channel: target.label.toLowerCase() })}
                         >
-                            <Send /> {target.label}
+                            {target.label === 'Email' ? <Mail /> : <Send />} {target.label}
                         </a>
                     </DropdownItem>
                 ))}
-                <DropdownItem onSelect={copyLink}>
-                    <Link2 /> Copy link
-                </DropdownItem>
+                {canShareNatively && (
+                    <>
+                        <DropdownSeparator />
+                        <DropdownItem onSelect={shareNatively}>
+                            <Ellipsis /> More options…
+                        </DropdownItem>
+                    </>
+                )}
             </DropdownContent>
         </Dropdown>
     );
