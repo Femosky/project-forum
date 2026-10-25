@@ -41,14 +41,17 @@ export function ReplyActions({
 
     return (
         <div {...props} className={twMerge('mt-1 flex items-center gap-1', className)}>
-            <VoteControl
-                target="comments"
-                id={comment.id}
-                upvotes={comment.upvote_count}
-                downvotes={comment.downvote_count}
-                userVote={comment.viewer?.vote ?? 0}
-                disabled={isGone}
-            />
+            {/* An author-deleted comment shows no votes at all */}
+            {comment.status !== 'deleted' && (
+                <VoteControl
+                    target="comments"
+                    id={comment.id}
+                    upvotes={comment.upvote_count}
+                    downvotes={comment.downvote_count}
+                    userVote={comment.viewer?.vote ?? 0}
+                    disabled={isGone}
+                />
+            )}
 
             {canReply && (
                 <Button

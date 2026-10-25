@@ -20,9 +20,12 @@ export function getPostPath(post: Pick<Post, 'community' | 'short_id' | 'slug'>)
     return `/c/${post.community.name}/${post.short_id}${post.slug ? `/${post.slug}` : ''}`;
 }
 
-// The author's name, linking to their profile unless the post is anonymous
-function AuthorLink({ author, className }: { author: Post['author']; className?: string }) {
-    if (!author) return <span className={className}>Anonymous</span>;
+// Who a post shows as written by when the API sends no author: its author deleted it, or it is anonymous
+const hiddenAuthorName = (post: Post) => (post.status === 'deleted' ? '[deleted]' : 'Anonymous');
+
+// The author's name, linking to their profile unless the post is anonymous or deleted
+function AuthorLink({ author, fallback, className }: { author: Post['author']; fallback: string; className?: string }) {
+    if (!author) return <span className={className}>{fallback}</span>;
     return (
         <Link href={`/u/${author.username}`} className={twMerge('relative z-10 hover:underline', className)}>
             {author.username}
@@ -70,7 +73,9 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
     const isCompact = variant === 'compact';
     const postPath = getPostPath(post);
     const isLocked = post.status === 'locked';
-    const authorName = post.author?.username ?? 'Anonymous';
+    // A tombstone: the author deleted it but comments remain. No votes, no menu, "[deleted]" for author and body.
+    const isDeleted = post.status === 'deleted';
+    const authorName = post.author?.username ?? hiddenAuthorName(post);
 
     const badges = (post.flair || post.is_nsfw || isLocked || post.status === 'removed' || post.status === 'pending') && (
         <div className="flex flex-wrap gap-1.5">
@@ -84,13 +89,15 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
 
     const actions = (
         <div className="-ml-0.5 flex flex-wrap items-center gap-1">
-            <VoteControl
-                target="posts"
-                id={post.id}
-                upvotes={post.upvote_count}
-                downvotes={post.downvote_count}
-                userVote={post.viewer?.vote ?? 0}
-            />
+            {!isDeleted && (
+                <VoteControl
+                    target="posts"
+                    id={post.id}
+                    upvotes={post.upvote_count}
+                    downvotes={post.downvote_count}
+                    userVote={post.viewer?.vote ?? 0}
+                />
+            )}
             <CommentCountButton post={post} href={`${postPath}#comments`} />
             <ShareButton path={postPath} title={post.title} />
             <ViewCount views={post.viewer?.views} />
@@ -103,7 +110,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 <header className="flex items-center gap-2">
                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px] text-subtle">
                         <Avatar name={authorName} size="sm" className="size-[22px]" />
-                        <AuthorLink author={post.author} className="font-semibold text-text" />
+                        <AuthorLink author={post.author} fallback={authorName} className="font-semibold text-text" />
                         {showCommunity && (
                             <>
                                 <span>in</span>
@@ -113,13 +120,13 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                         <span aria-hidden>·</span>
                         <PostTime post={post} />
                     </div>
-                    <PostOptions post={post} leaveOnDelete isModerator={isModerator} />
+                    {!isDeleted && <PostOptions post={post} leaveOnDelete isModerator={isModerator} />}
                 </header>
                 <h1 className="text-[22px] font-medium leading-[29px] tracking-[-0.015em] break-words text-pretty">{post.title}</h1>
                 {badges}
                 {post.type === 'link' && post.url && <LinkPreviewCard post={post} />}
                 <div className="text-[15px] leading-6 text-body">
-                    <PostBody post={post} />
+                    {isDeleted ? <p className="italic text-muted">[deleted]</p> : <PostBody post={post} />}
                 </div>
                 <div className="pt-1">{actions}</div>
             </article>
@@ -141,16 +148,17 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
 
             <div className="relative z-[2] flex min-w-0 flex-col pointer-events-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
                 <div className="flex min-w-0 items-center gap-1.5 text-[13px] leading-[18px] text-muted">
-                    <AuthorLink author={post.author} className="shrink-0 font-semibold text-text" />
+                    <AuthorLink author={post.author} fallback={authorName} className="shrink-0 font-semibold text-text" />
                     {showCommunity && <CommunityTag community={post.community} />}
                     <PostTime post={post} className="text-subtle" />
                     <div className="-my-1 -mr-1.5 ml-auto">
-                        <PostOptions post={post} leaveOnDelete={false} isModerator={isModerator} />
+                        {!isDeleted && <PostOptions post={post} leaveOnDelete={false} isModerator={isModerator} />}
                     </div>
                 </div>
 
                 <h2 className="mb-1 mt-2 text-[15.5px] font-medium leading-[22px] tracking-[-0.003em] break-words text-pretty">{post.title}</h2>
                 {badges && <div className="mb-1">{badges}</div>}
+                {isDeleted && <p className="text-[14.5px] italic leading-[22px] text-muted">[deleted]</p>}
                 {post.body && post.type !== 'link' && (
                     <p className="line-clamp-2 break-words text-[14.5px] leading-[22px] text-muted">{stripMarkdown(post.body)}</p>
                 )}
@@ -166,7 +174,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
     );
 }
 
-// The author's picture, linking to their profile; a neutral letter for anonymous posts
+// The author's picture, linking to their profile; a neutral letter for anonymous and deleted posts
 function AuthorAvatar({ author }: { author: Post['author'] }) {
     if (!author) return <Avatar name="?" size="lg" className="size-9" />;
     return (
