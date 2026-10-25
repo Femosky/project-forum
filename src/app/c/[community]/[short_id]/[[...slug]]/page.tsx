@@ -16,6 +16,7 @@ import { CommentsSection } from '../_components/CommentsSection';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from '../_components/commentsApi';
 import { loadAds } from '@/ads/server';
 import { slotsBetween } from '@/ads/config';
+import PostViewBeacon from '@/components/post/PostViewBeacon';
 
 type PageProps = {
     params: Promise<{ community: string; short_id: string; slug?: string[] }>;
@@ -66,6 +67,11 @@ async function loadFocusedThread(commentId: string): Promise<Comment | null> {
     if (!single.data) return null;
     const loaded = replies.data?.comments ?? [];
     return { ...single.data.comment, replies: loaded, more_replies: Math.max(single.data.comment.reply_count - loaded.length, 0) };
+}
+
+// Ids of every comment in the loaded tree, for counting which comments were on screen
+function flattenIds(comments: Comment[]): string[] {
+    return comments.flatMap((comment) => [comment.id, ...flattenIds(comment.replies ?? [])]);
 }
 
 export default async function PostPage({ params, searchParams }: PageProps) {
@@ -129,6 +135,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                     ]),
                 ]}
             />
+            <PostViewBeacon postId={post.id} commentIds={flattenIds(comments)} />
             {post.status === 'pending' && (
                 <p role="status" className="mx-4 mt-4 rounded-[10px] bg-active px-4 py-3 text-sm text-text sm:mx-0">
                     {isModerator

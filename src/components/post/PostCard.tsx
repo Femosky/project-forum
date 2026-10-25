@@ -11,6 +11,7 @@ import { CommentCountButton, PostOptions } from './PostActions';
 import PostBody from './PostBody';
 import { stripMarkdown } from '@/components/common/Markdown';
 import { communityLabel } from '@/lib/communityName';
+import ViewCount from './ViewCount';
 
 // How a community is named in the interface (see lib/communityName)
 export { communityLabel };
@@ -92,6 +93,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
             />
             <CommentCountButton post={post} href={`${postPath}#comments`} />
             <ShareButton path={postPath} title={post.title} />
+            <ViewCount views={post.viewer?.views} />
         </div>
     );
 

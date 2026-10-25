@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { APP_NAME, BRAND_COLORS } from '@/lib/constants';
+import { APP_NAME, BRAND_COLORS, REPUTATION_LABEL } from '@/lib/constants';
 import { publicApi } from '@/lib/api/server';
 import { CommunityResponse, PostResponse, PublicUserResponse } from '@/types/api';
 import NumberUtility from '@/lib/utils/NumberUtility';
@@ -39,7 +39,7 @@ async function cardFor(kind: string, id: string): Promise<Card | null> {
     if (kind === 'u') {
         const { data } = await publicApi<PublicUserResponse>(`/users/${key}`);
         if (!data) return null;
-        return { eyebrow: 'Profile', title: data.user.display_name ?? `u/${data.user.username}`, stats: [plural(data.user.karma, 'karma point')] };
+        return { eyebrow: 'Profile', title: data.user.display_name ?? `u/${data.user.username}`, stats: [plural(data.user.karma, `${REPUTATION_LABEL} point`)] };
     }
     return null;
 }

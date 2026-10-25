@@ -25,6 +25,12 @@ export interface ContentViewer {
     vote: VoteValue;
     saved: boolean;
     is_author: boolean;
+    // How many people opened it; sent to the author only
+    views?: number;
+}
+
+export interface UserStatsResponse {
+    stats: { posts: number; comments: number; upvotes_received: number; downvotes_received: number; views: number };
 }
 
 export interface LinkPreview {

@@ -7,6 +7,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { ComponentProps } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { Comment } from '@/types/api';
+import ViewCount from '@/components/post/ViewCount';
 
 type ReplyActionsProps = ComponentProps<'div'> & {
     comment: Comment;
@@ -79,6 +80,7 @@ export function ReplyActions({
                     }
                 />
             )}
+            <ViewCount views={comment.viewer?.views} />
         </div>
     );
 }
