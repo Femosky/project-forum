@@ -15,6 +15,7 @@ import { api } from '@/lib/api/client';
 import { ApiError, errorMessage } from '@/lib/api/errors';
 import { POST_BODY_MAX, POST_TITLE_MAX, POST_TITLE_MIN } from '@/lib/constants';
 import { Flair, FlairsResponse, LinkPreview, LinkPreviewResponse, Post, PostResponse, PostsResponse } from '@/types/api';
+import { communityLabel, humanizeHandle } from '@/lib/communityName';
 
 export type CommunityOption = { name: string; label: string | null; joined: boolean };
 
@@ -211,14 +212,14 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                     className={twMerge(fieldStyles({ outline: fieldErrors.community ? 'error' : 'default' }), 'cursor-pointer appearance-auto')}
                 >
                     <option value="">Choose a community</option>
-                    {draft.community && !hasSelectedOption && <option value={draft.community}>c/{draft.community}</option>}
+                    {draft.community && !hasSelectedOption && <option value={draft.community}>{humanizeHandle(draft.community)}</option>}
                     {communities.some((c) => c.joined) && (
                         <optgroup label="Your communities">
                             {communities
                                 .filter((c) => c.joined)
                                 .map((c) => (
                                     <option key={c.name} value={c.name}>
-                                        c/{c.name}
+                                        {communityLabel(c)}
                                     </option>
                                 ))}
                         </optgroup>
@@ -229,7 +230,7 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                                 .filter((c) => !c.joined)
                                 .map((c) => (
                                     <option key={c.name} value={c.name}>
-                                        c/{c.name}
+                                        {communityLabel(c)}
                                     </option>
                                 ))}
                         </optgroup>
@@ -332,7 +333,7 @@ export function PostComposer({ communities, initialCommunity, canPostLinks, canP
                                             {post.title}
                                         </Link>{' '}
                                         <span className="text-muted">
-                                            in c/{post.community.name} · {post.comment_count} {post.comment_count === 1 ? 'comment' : 'comments'}
+                                            in {communityLabel(post.community)} · {post.comment_count} {post.comment_count === 1 ? 'comment' : 'comments'}
                                         </span>
                                     </li>
                                 ))}

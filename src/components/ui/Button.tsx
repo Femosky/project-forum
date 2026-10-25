@@ -6,24 +6,24 @@ import { Slot } from 'radix-ui';
 export const buttonStyles = cva(
     [
         'inline-flex items-center justify-center gap-2 shrink-0 whitespace-nowrap',
-        'rounded-full font-semibold transition-colors cursor-pointer select-none',
+        'rounded-[7px] font-semibold transition-colors cursor-pointer select-none',
         'disabled:cursor-not-allowed disabled:opacity-50',
     ],
     {
         variants: {
             variant: {
-                primary: 'bg-accent text-accent-fg hover:bg-accent-hover',
-                secondary: 'bg-surface-muted text-text hover:bg-border',
+                primary: 'bg-accent text-accent-fg shadow-[inset_0_1px_0_rgb(255_255_255/0.14),0_1px_2px_rgb(0_0_0/0.12)] hover:bg-accent-hover',
+                secondary: 'bg-surface text-text ring-1 ring-inset ring-border-strong hover:bg-hover',
                 highlight: 'bg-highlight text-highlight-fg hover:brightness-95',
-                outline: 'border border-border-strong text-text hover:bg-surface-muted',
-                ghost: 'text-text hover:bg-surface-muted',
-                danger: 'bg-danger text-surface hover:brightness-110',
+                outline: 'text-text ring-1 ring-inset ring-border-strong hover:bg-hover',
+                ghost: 'text-muted hover:bg-hover hover:text-text',
+                danger: 'bg-brand text-white hover:brightness-110',
                 link: 'h-auto px-0 text-link underline-offset-4 hover:underline',
             },
             size: {
-                sm: 'h-8 px-3 text-sm',
-                md: 'h-10 px-4 text-sm',
-                lg: 'h-12 px-6 text-base',
+                sm: 'h-8 px-3 text-[13.5px]',
+                md: 'h-9 px-4 text-sm',
+                lg: 'h-11 px-5 text-[15px]',
             },
         },
         defaultVariants: {

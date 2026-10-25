@@ -41,4 +41,4 @@ Suggested PostHog dashboard ("Launch"): Trends of `$pageview`, `signup`, `post_c
 
 ## Renaming
 
-The name and colours live in one block at the top of `src/lib/constants.ts` (plus `public/logo.jpg`). When the site moves to its own domain, change `NEXT_PUBLIC_APP_URL`, add the domain in Vercel, and update the API's `WEB_ORIGIN`, `WEB_URL`, `COOKIE_DOMAIN` and `EMAIL_FROM`.
+The name and colours live in one block at the top of `src/lib/constants.ts` (the logo mark is drawn in `src/app/_components/LogoSection.tsx`, with matching `src/app/favicon.ico`, `icon.png` and `apple-icon.png`). When the site moves to its own domain, change `NEXT_PUBLIC_APP_URL`, add the domain in Vercel, and update the API's `WEB_ORIGIN`, `WEB_URL`, `COOKIE_DOMAIN` and `EMAIL_FROM`.

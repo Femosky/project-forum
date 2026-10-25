@@ -5,20 +5,20 @@ import { Slot } from 'radix-ui';
 
 const iconButtonStyles = cva(
     [
-        'inline-flex items-center justify-center shrink-0 rounded-full transition-colors cursor-pointer',
+        'inline-flex items-center justify-center shrink-0 rounded-md transition-colors cursor-pointer',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        '[&_svg]:size-5',
+        '[&_svg]:size-[18px]',
     ],
     {
         variants: {
             variant: {
-                ghost: 'text-muted hover:bg-surface-muted hover:text-text',
-                secondary: 'bg-surface-muted text-text hover:bg-border',
+                ghost: 'text-muted hover:bg-hover hover:text-text',
+                secondary: 'bg-surface text-text ring-1 ring-inset ring-border-strong hover:bg-hover',
                 primary: 'bg-accent text-accent-fg hover:bg-accent-hover',
             },
             size: {
-                sm: 'size-8 [&_svg]:size-4',
-                md: 'size-10',
+                sm: 'size-7 [&_svg]:size-4',
+                md: 'size-9',
             },
         },
         defaultVariants: {

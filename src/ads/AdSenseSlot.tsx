@@ -70,9 +70,9 @@ export function AdSenseSlot({ unit, placement, className }: { unit: AdSenseUnit;
             role="complementary"
             aria-label="Advertisement"
             style={{ height }}
-            className={twMerge('flex flex-col gap-1 overflow-hidden bg-surface px-4 py-2 sm:rounded-xl sm:border sm:border-border', className)}
+            className={twMerge('flex flex-col gap-2.5 overflow-hidden px-4 py-[18px] sm:px-0', className)}
         >
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">Advertisement</span>
+            <span className="text-[11.5px] font-semibold uppercase tracking-[0.04em] text-subtle">Advertisement</span>
             {canLoad && (
                 <ins
                     className="adsbygoogle min-h-0 flex-1"

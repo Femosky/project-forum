@@ -9,8 +9,8 @@ import { useAdImpression } from './impressions';
 import AdMenu from './AdMenu';
 import type { NativeAdUnit } from './types';
 
-// A native ad between top-level comments. Laid out like a comment (avatar column, name line, text), labelled
-// "Sponsored", with no voting or replies.
+// A native ad between top-level comments, never inside a thread, so it can't read as an answer to someone. Laid out
+// like a comment (logo, name line, text) with a "Sponsored" tag and a link card; no voting or replies.
 export function SponsoredCommentItem({ unit, preview = false }: { unit: NativeAdUnit; preview?: boolean }) {
     const ref = useRef<HTMLElement>(null);
     useAdImpression(ref, unit, !preview);
@@ -18,23 +18,33 @@ export function SponsoredCommentItem({ unit, preview = false }: { unit: NativeAd
     const href = adClickUrl(unit.id);
 
     return (
-        <aside ref={ref} aria-label={`Sponsored: ${creative.title}`} className="flex w-full gap-2.5 rounded-xl bg-surface-muted/50 py-2 pr-2">
-            <Avatar name={creative.advertiser_name} src={creative.advertiser_logo} size="md" />
-            <div className="flex min-w-0 w-full flex-col gap-1">
-                <div className="flex min-h-8 items-center justify-between gap-2">
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-muted">
-                        <span className="truncate font-bold text-text">{creative.advertiser_name}</span>
-                        <span aria-hidden>•</span>
-                        <Badge variant="sponsored">{unit.kind === 'house' ? 'From us' : 'Sponsored'}</Badge>
-                    </div>
-                    {!preview && <AdMenu unit={unit} />}
+        <aside ref={ref} aria-label={`Sponsored: ${creative.title}`} className="grid w-full grid-cols-[28px_minmax(0,1fr)] gap-x-2.5">
+            <Avatar name={creative.advertiser_name} src={creative.advertiser_logo} shape="square" size="md" className="size-7 text-[11px]" />
+            <div className="flex min-w-0 flex-col">
+                <div className="flex min-h-7 items-center gap-1.5 text-[13px]">
+                    <span className="truncate font-semibold text-text">{creative.advertiser_name}</span>
+                    <Badge variant="sponsored">{unit.kind === 'house' ? 'From us' : 'Sponsored'}</Badge>
+                    {!preview && (
+                        <div className="ml-auto">
+                            <AdMenu unit={unit} />
+                        </div>
+                    )}
                 </div>
-                <a href={preview ? undefined : href} target="_blank" rel="sponsored noopener" className="group flex flex-col gap-1">
-                    <span className="font-semibold leading-snug group-hover:underline">{creative.title}</span>
-                    {creative.body && <span className="text-sm text-muted">{creative.body}</span>}
-                    <span className="mt-1 flex items-center gap-1 text-sm font-semibold text-link">
-                        {creative.cta_label} <span className="font-normal text-muted">· {creative.display_url}</span>
-                        <ExternalLink className="size-3 shrink-0" />
+                <p className="text-sm leading-[21px] text-body">
+                    <span className="font-medium text-text">{creative.title}</span>
+                    {creative.body && <> {creative.body}</>}
+                </p>
+                <a
+                    href={preview ? undefined : href}
+                    target="_blank"
+                    rel="sponsored noopener"
+                    className="mt-2 flex items-center justify-between gap-3 rounded-[10px] py-2 pl-3 pr-2 text-[13px] font-medium text-subtle ring-1 ring-inset ring-border transition-colors hover:ring-border-strong"
+                >
+                    <span className="flex min-w-0 items-center gap-1 truncate">
+                        {creative.display_url} <ExternalLink className="size-3 shrink-0" />
+                    </span>
+                    <span className="flex h-7 shrink-0 items-center rounded-[7px] px-3 text-[13px] font-semibold text-text ring-1 ring-inset ring-border-strong">
+                        {creative.cta_label}
                     </span>
                 </a>
             </div>

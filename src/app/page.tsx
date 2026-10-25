@@ -8,6 +8,8 @@ import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
 import { PostList, SortTabs, parsePostSort } from '@/components/post/PostList';
 import JsonLd from '@/components/common/JsonLd';
+import PageBar from '@/components/layout/PageBar';
+import ComposePrompt from '@/components/post/ComposePrompt';
 import { pageMetadata, websiteJsonLd } from '@/lib/seo';
 import { loadAds } from '@/ads/server';
 import { slotsBetween } from '@/ads/config';
@@ -39,26 +41,29 @@ export default async function Home({ searchParams }: PageProps) {
     }
 
     return (
-        <div className="mx-auto flex w-full max-w-content flex-col gap-3 py-3 sm:px-4 sm:py-4">
-            <JsonLd data={websiteJsonLd()} />
-            <SortTabs basePath="/" current={sort} />
-            <PostList
-                posts={data.posts}
-                basePath="/"
-                sort={sort}
-                nextCursor={data.next_cursor}
-                apiPath={`/feed?${listQuery}`}
-                ads={{ units: ads }}
-                empty={{
-                    title: cursor ? "That's everything" : 'No posts yet',
-                    description: cursor ? "You've reached the end of the feed." : 'Be the first to start a conversation.',
-                    action: (
-                        <Button asChild>
-                            <Link href={cursor ? '/' : '/submit'}>{cursor ? 'Back to the top' : 'Create a post'}</Link>
-                        </Button>
-                    ),
-                }}
-            />
-        </div>
+        <>
+            <PageBar title="Home" actions={<SortTabs basePath="/" current={sort} />} />
+            <div className="mx-auto flex w-full max-w-[45rem] flex-col pb-8 sm:px-5">
+                <JsonLd data={websiteJsonLd()} />
+                <ComposePrompt />
+                <PostList
+                    posts={data.posts}
+                    basePath="/"
+                    sort={sort}
+                    nextCursor={data.next_cursor}
+                    apiPath={`/feed?${listQuery}`}
+                    ads={{ units: ads }}
+                    empty={{
+                        title: cursor ? "That's everything" : 'No posts yet',
+                        description: cursor ? "You've reached the end of the feed." : 'Be the first to start a conversation.',
+                        action: (
+                            <Button asChild>
+                                <Link href={cursor ? '/' : '/submit'}>{cursor ? 'Back to the top' : 'Create a post'}</Link>
+                            </Button>
+                        ),
+                    }}
+                />
+            </div>
+        </>
     );
 }

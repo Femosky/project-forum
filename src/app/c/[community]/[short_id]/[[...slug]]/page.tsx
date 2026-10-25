@@ -5,7 +5,9 @@ import { ArrowLeft, CloudOff } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
 import { Comment, CommentsResponse, CommunityResponse, Post, PostResponse, RelatedPostsResponse } from '@/types/api';
-import PostCard, { getPostPath } from '@/components/post/PostCard';
+import PostCard, { communityLabel, getPostPath } from '@/components/post/PostCard';
+import PageBar from '@/components/layout/PageBar';
+import Avatar from '@/components/ui/Avatar';
 import EmptyState from '@/components/ui/EmptyState';
 import JsonLd from '@/components/common/JsonLd';
 import RelatedThreads from '@/components/post/RelatedThreads';
@@ -14,6 +16,7 @@ import { CommentsSection } from '../_components/CommentsSection';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from '../_components/commentsApi';
 import { loadAds } from '@/ads/server';
 import { slotsBetween } from '@/ads/config';
+import PostViewBeacon from '@/components/post/PostViewBeacon';
 
 type PageProps = {
     params: Promise<{ community: string; short_id: string; slug?: string[] }>;
@@ -66,6 +69,11 @@ async function loadFocusedThread(commentId: string): Promise<Comment | null> {
     return { ...single.data.comment, replies: loaded, more_replies: Math.max(single.data.comment.reply_count - loaded.length, 0) };
 }
 
+// Ids of every comment in the loaded tree, for counting which comments were on screen
+function flattenIds(comments: Comment[]): string[] {
+    return comments.flatMap((comment) => [comment.id, ...flattenIds(comment.replies ?? [])]);
+}
+
 export default async function PostPage({ params, searchParams }: PageProps) {
     const { community, short_id, slug } = await params;
     const { comment: focusId } = await searchParams;
@@ -105,7 +113,18 @@ export default async function PostPage({ params, searchParams }: PageProps) {
     const comments = commentsResult?.data?.comments ?? [];
 
     return (
-        <div className="mx-auto flex w-full max-w-content flex-col gap-2 sm:py-4">
+        <>
+        <PageBar
+            title={
+                <Link href={`/c/${post.community.name}`} className="flex min-w-0 items-center gap-2 hover:underline">
+                    <Avatar name={post.community.name} src={post.community.image_url} shape="square" className="size-[18px] text-[10px]" />
+                    <span className="truncate">{communityLabel(post.community)}</span>
+                    <span className="font-medium text-subtle">/</span>
+                    <span className="font-medium text-subtle">Post</span>
+                </Link>
+            }
+        />
+        <div className="mx-auto flex w-full max-w-[46rem] flex-col sm:px-5">
             <JsonLd
                 data={[
                     discussionJsonLd(post, canonical, showingOneThread ? [] : comments),
@@ -116,19 +135,20 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                     ]),
                 ]}
             />
+            <PostViewBeacon postId={post.id} commentIds={flattenIds(comments)} />
             {post.status === 'pending' && (
-                <p role="status" className="mx-4 rounded-xl bg-highlight px-4 py-3 text-sm text-highlight-fg">
+                <p role="status" className="mx-4 mt-4 rounded-[10px] bg-active px-4 py-3 text-sm text-text sm:mx-0">
                     {isModerator
                         ? 'This post is waiting in the mod queue. Approve or remove it from the options menu.'
                         : "Your post is waiting for a moderator to review it. Only you can see it until it's approved."}
                 </p>
             )}
-            <PostCard post={post} variant="full" isModerator={isModerator} className="sm:px-4" />
+            <PostCard post={post} variant="full" isModerator={isModerator} />
 
             {/* Reply box and comments */}
-            <section id="comments" aria-label="Comments" className="scroll-mt-header px-4">
+            <section id="comments" aria-label="Comments" className="scroll-mt-[calc(var(--spacing-header)+3rem)] px-4 sm:px-0">
                 {showingOneThread && (
-                    <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-surface-muted px-4 py-3 text-sm">
+                    <div className="my-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[10px] bg-active px-4 py-3 text-sm">
                         <span className="text-muted">
                             {focusedInPost ? "You're viewing one comment and its replies." : "That comment isn't available."}
                         </span>
@@ -148,6 +168,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                     isLocked={post.status === 'locked'}
                     isModerator={isModerator}
                     commentCount={post.comment_count}
+                    opUsername={post.author?.username ?? null}
                     initialComments={showingOneThread ? (focusedInPost ? [focusedInPost] : []) : comments}
                     initialCursor={showingOneThread ? null : (commentsResult?.data?.next_cursor ?? null)}
                     loadFailed={!showingOneThread && !commentsResult?.data}
@@ -158,5 +179,6 @@ export default async function PostPage({ params, searchParams }: PageProps) {
 
             {related.data && <RelatedThreads community={post.community.name} {...related.data} />}
         </div>
+        </>
     );
 }

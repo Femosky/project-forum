@@ -1,12 +1,13 @@
 import { ReactNode } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-// A small, safe Markdown subset for posts and comments: paragraphs, headings, **bold**, *italic*, ~~strike~~,
-// `code`, fenced code blocks, > quotes, lists, rules, [links](https://...) and bare URLs. It builds React
-// elements directly (never HTML strings), so user text can't inject markup, and it ships no dependency.
+// A small, safe Markdown subset for posts and comments, close to what Reddit supports: paragraphs, # headings,
+// **bold**, *italic*, ~~strike~~, ^superscript or ^(a phrase), ~(subscript), >!spoilers!<, `code`, fenced code
+// blocks, > quotes, bulleted and numbered lists, | tables |, rules, [links](https://...) and bare URLs. It builds
+// React elements directly (never HTML strings), so user text can't inject markup, and it ships no dependency.
 
 const INLINE =
-    /(`+)([^`]+?)\1|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|\*\*(.+?)\*\*|__(.+?)__|~~(.+?)~~|\*(?!\s)([^*\n]+?)\*|(?<![\w])_(?!\s)([^_\n]+?)_(?![\w])|(https?:\/\/[^\s<]*[^\s<.,:;"')\]!?])|\\([\\`*_~[\]()#>-])/g;
+    /(`+)([^`]+?)\1|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|\*\*(.+?)\*\*|__(.+?)__|~~(.+?)~~|\*(?!\s)([^*\n]+?)\*|(?<![\w])_(?!\s)([^_\n]+?)_(?![\w])|(https?:\/\/[^\s<]*[^\s<.,:;"')\]!?])|\\([\\`*_~^[\]()#>!|-])|>!(.+?)!<|\^\(([^)\n]+)\)|\^([^\s^()]+)|~\(([^)\n]+)\)/g;
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
     return (
@@ -25,7 +26,8 @@ function renderInline(text: string, keyPrefix = 'i'): ReactNode[] {
     for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
         if (match.index > last) nodes.push(text.slice(last, match.index));
         const key = `${keyPrefix}-${index++}`;
-        const [, , code, linkText, linkUrl, bold, boldAlt, strike, italic, italicAlt, bareUrl, escaped] = match;
+        const [, , code, linkText, linkUrl, bold, boldAlt, strike, italic, italicAlt, bareUrl, escaped, spoiler, supPhrase, supWord, sub] =
+            match;
 
         if (code !== undefined) nodes.push(<code key={key}>{code}</code>);
         else if (linkText !== undefined) nodes.push(<ExternalLink key={key} href={linkUrl}>{renderInline(linkText, key)}</ExternalLink>);
@@ -34,6 +36,15 @@ function renderInline(text: string, keyPrefix = 'i'): ReactNode[] {
         else if (italic !== undefined || italicAlt !== undefined) nodes.push(<em key={key}>{renderInline(italic ?? italicAlt, key)}</em>);
         else if (bareUrl !== undefined) nodes.push(<ExternalLink key={key} href={bareUrl}>{bareUrl}</ExternalLink>);
         else if (escaped !== undefined) nodes.push(escaped);
+        else if (spoiler !== undefined)
+            // Hidden until tapped or focused (CSS only, see .spoiler in globals.css)
+            nodes.push(
+                <span key={key} className="spoiler" tabIndex={0} role="button" aria-label="Spoiler, select to reveal">
+                    {renderInline(spoiler, key)}
+                </span>
+            );
+        else if (supPhrase !== undefined || supWord !== undefined) nodes.push(<sup key={key}>{renderInline(supPhrase ?? supWord, key)}</sup>);
+        else if (sub !== undefined) nodes.push(<sub key={key}>{renderInline(sub, key)}</sub>);
 
         last = match.index + match[0].length;
     }
@@ -48,10 +59,18 @@ function renderLines(lines: string[], key: string): ReactNode[] {
 
 const FENCE = /^\s*```/;
 const HEADING = /^(#{1,6})\s+(.*)$/;
-const QUOTE = /^\s*>\s?(.*)$/;
+// A line starting with >! is a spoiler, not a quote
+const QUOTE = /^\s*>(?!!)\s?(.*)$/;
 const BULLET = /^\s*[-*+]\s+(.*)$/;
 const NUMBERED = /^\s*(\d+)[.)]\s+(.*)$/;
 const RULE = /^\s*([-*_])(\s*\1){2,}\s*$/;
+// Tables: a | header | row, a | --- | :---: | row that sets alignment, then | body | rows
+const TABLE_ROW = /^\s*\|.*\|\s*$/;
+const TABLE_RULE = /^\s*\|(\s*:?-{3,}:?\s*\|)+\s*$/;
+
+function tableCells(line: string): string[] {
+    return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
+}
 
 function renderBlocks(source: string, keyPrefix = 'b'): ReactNode[] {
     const lines = source.replace(/\r\n?/g, '\n').split('\n');
@@ -79,6 +98,40 @@ function renderBlocks(source: string, keyPrefix = 'b'): ReactNode[] {
             const Tag = hashes.length <= 2 ? 'h3' : 'h4';
             blocks.push(<Tag key={key}>{renderInline(text, key)}</Tag>);
             i++;
+        } else if (TABLE_ROW.test(line) && i + 1 < lines.length && TABLE_RULE.test(lines[i + 1])) {
+            const header = tableCells(line);
+            const align = tableCells(lines[i + 1]).map((rule) =>
+                rule.startsWith(':') && rule.endsWith(':') ? 'center' : rule.endsWith(':') ? 'right' : undefined
+            );
+            i += 2;
+            const rows: string[][] = [];
+            while (i < lines.length && TABLE_ROW.test(lines[i])) rows.push(tableCells(lines[i++]));
+            blocks.push(
+                <div key={key} className="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                {header.map((cell, c) => (
+                                    <th key={c} style={{ textAlign: align[c] }}>
+                                        {renderInline(cell, `${key}-h${c}`)}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows.map((row, r) => (
+                                <tr key={r}>
+                                    {header.map((_, c) => (
+                                        <td key={c} style={{ textAlign: align[c] }}>
+                                            {renderInline(row[c] ?? '', `${key}-${r}-${c}`)}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            );
         } else if (RULE.test(line)) {
             blocks.push(<hr key={key} />);
             i++;
@@ -107,7 +160,8 @@ function renderBlocks(source: string, keyPrefix = 'b'): ReactNode[] {
                 !QUOTE.test(lines[i]) &&
                 !BULLET.test(lines[i]) &&
                 !NUMBERED.test(lines[i]) &&
-                !RULE.test(lines[i])
+                !RULE.test(lines[i]) &&
+                !(TABLE_ROW.test(lines[i]) && i + 1 < lines.length && TABLE_RULE.test(lines[i + 1]))
             ) {
                 paragraph.push(lines[i++]);
             }
@@ -127,7 +181,11 @@ export function stripMarkdown(text: string): string {
         .replace(/```[\s\S]*?```/g, ' ')
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
         .replace(/^\s*(#{1,6}|>|[-*+]|\d+[.)])\s+/gm, '')
-        .replace(/(\*\*|__|~~|`|\*|_)/g, '')
+        .replace(/>!(.+?)!</g, '[spoiler]')
+        .replace(/\^\(([^)]+)\)|~\(([^)]+)\)/g, '$1$2')
+        .replace(/^\s*\|?(\s*:?-{3,}:?\s*\|)+\s*$/gm, ' ')
+        .replace(/\|/g, ' ')
+        .replace(/(\*\*|__|~~|`|\*|_|\^)/g, '')
         .replace(/\s+/g, ' ')
         .trim();
 }

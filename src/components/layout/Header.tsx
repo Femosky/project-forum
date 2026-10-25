@@ -14,7 +14,8 @@ export default function Header({ className, theme, ...props }: HeaderProps) {
     return (
         <header
             className={twMerge(
-                'sticky top-0 z-40 h-header w-full border-b border-border bg-surface/95 backdrop-blur',
+                // Phones and small tablets only; on desktop the sidebar carries the logo, search and account
+                'sticky top-0 z-40 h-header w-full border-b border-border bg-bar backdrop-blur-xl backdrop-saturate-150 md:hidden',
                 className
             )}
             {...props}

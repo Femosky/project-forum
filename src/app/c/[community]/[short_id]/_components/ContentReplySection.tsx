@@ -1,12 +1,12 @@
 'use client';
 
 import Button from '@/components/ui/Button';
-import TextArea from '@/components/ui/TextArea';
+import MarkdownEditor from '@/components/common/MarkdownEditor';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { COMMENT_BODY_MAX } from '@/lib/constants';
 import { errorMessage } from '@/lib/api/errors';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 // Reply composer. handleReply resolves when the comment is saved; the text is kept if it fails.
 export default function ContentReplySection({
@@ -23,6 +23,7 @@ export default function ContentReplySection({
     const [isSending, setIsSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const requireAuth = useRequireAuth();
+    const formRef = useRef<HTMLFormElement>(null);
 
     function toggleOpen() {
         if (!requireAuth('reply')) return;
@@ -60,39 +61,37 @@ export default function ContentReplySection({
             <button
                 type="button"
                 onClick={toggleOpen}
-                className="flex h-11 w-full cursor-text items-center rounded-full border border-border-strong bg-surface px-4 text-left text-muted transition-colors hover:border-text"
+                className="flex w-full cursor-text items-center gap-3 border-y border-border py-3 text-left text-[15px] text-subtle transition-colors hover:text-muted"
             >
-                Add a reply
+                <span className="flex-1">Add a reply…</span>
+                <span className="flex h-8 items-center rounded-[7px] bg-accent px-3 text-[13.5px] font-semibold text-accent-fg">Reply</span>
             </button>
         );
     }
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-2 rounded-2xl border border-border-strong bg-surface px-3 py-2 focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/40"
-        >
-            <TextArea
-                variant="bare"
+        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-2">
+            <MarkdownEditor
                 name="comment"
-                aria-label="Your reply"
+                variant="compact"
                 placeholder="Add a reply"
                 autoFocus
                 maxLength={COMMENT_BODY_MAX}
                 value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
+                onChange={setReplyContent}
+                onSubmitShortcut={() => formRef.current?.requestSubmit()}
+                footer={
+                    <>
+                        <Button size="sm" variant="ghost" onClick={toggleCancel} disabled={isSending}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" size="sm" disabled={replyContent.trim() === '' || isSending}>
+                            {isSending ? 'Replying...' : 'Reply'}
+                        </Button>
+                    </>
+                }
             />
-
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
-
-            <div className="flex justify-end gap-2">
-                <Button size="sm" variant="ghost" onClick={toggleCancel} disabled={isSending}>
-                    Cancel
-                </Button>
-                <Button type="submit" size="sm" disabled={replyContent.trim() === '' || isSending}>
-                    {isSending ? 'Replying...' : 'Reply'}
-                </Button>
-            </div>
         </form>
     );
 }

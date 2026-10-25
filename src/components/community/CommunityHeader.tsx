@@ -11,6 +11,7 @@ import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useUIStore } from '@/lib/uiStore';
+import { communityLabel } from '@/lib/communityName';
 
 type MembershipState = 'member' | 'requested' | 'none';
 
@@ -82,15 +83,15 @@ export function CommunityHeader({ community, viewer }: { community: Community; v
         );
 
     return (
-        <header className="flex flex-col gap-4 border-b border-border bg-surface px-4 py-5 sm:rounded-xl sm:border">
+        <header className="flex flex-col gap-4 border-b border-border px-4 pb-6 pt-7 sm:px-0">
             <div className="flex items-center gap-4">
-                <Avatar name={community.name} src={community.image_url} size="xl" />
+                <Avatar name={community.name} src={community.image_url} size="xl" shape="square" className="size-14" />
                 <div className="min-w-0 flex-1">
-                    <h1 className="truncate text-2xl font-extrabold">{community.display_name ?? `c/${community.name}`}</h1>
-                    <p className="text-sm text-muted">
-                        {community.display_name && <span>c/{community.name} • </span>}
+                    <h1 className="truncate text-[22px] font-semibold leading-7 tracking-[-0.015em]">{communityLabel(community)}</h1>
+                    <p className="mt-0.5 text-[13.5px] text-subtle">
+                        <span>/c/{community.name} · </span>
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(members)}</span>{' '}
-                        {members === 1 ? 'member' : 'members'} •{' '}
+                        {members === 1 ? 'member' : 'members'} ·{' '}
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(community.post_count)}</span>{' '}
                         {community.post_count === 1 ? 'post' : 'posts'}
                     </p>

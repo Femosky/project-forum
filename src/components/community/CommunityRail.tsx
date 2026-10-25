@@ -4,7 +4,7 @@ import { CommunityResponse } from '@/types/api';
 import Avatar from '@/components/ui/Avatar';
 import { categoryLabel } from '@/lib/moderation';
 
-const cardClasses = 'flex flex-col gap-3 border-b border-border bg-surface px-4 py-4 sm:rounded-xl sm:border';
+const cardClasses = 'flex flex-col gap-3 px-4 py-4 sm:px-0';
 
 // About, rules and moderators: the right rail on wide screens, below the header on small ones (moderators are
 // listed in the rail only).
@@ -20,19 +20,19 @@ export function CommunityRail({ data }: { data: CommunityResponse }) {
             {isModerator && (
                 <Link
                     href={`/c/${community.name}/mod`}
-                    className="flex items-center gap-2 border-b border-border bg-highlight px-4 py-3 text-sm font-semibold text-highlight-fg sm:rounded-xl sm:border-0"
+                    className="mx-4 mt-4 flex items-center gap-2 rounded-[7px] px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-border-strong transition-colors hover:bg-hover sm:mx-0"
                 >
                     <ShieldCheck className="size-4" /> Mod tools
                     {viewer?.queue_count ? (
-                        <span className="ml-auto rounded-full bg-danger px-2 text-xs text-surface tabular-nums">{viewer.queue_count} waiting</span>
+                        <span className="ml-auto rounded-full bg-brand px-2 text-xs text-white tabular-nums">{viewer.queue_count} waiting</span>
                     ) : null}
                 </Link>
             )}
 
             <section className={cardClasses}>
-                <h2 className="text-sm font-bold uppercase tracking-wide text-muted">About</h2>
-                {community.description && <p className="text-sm">{community.description}</p>}
-                <ul className="flex flex-col gap-1.5 text-sm text-muted">
+                <h2 className="text-xs font-semibold uppercase tracking-[0.04em] text-subtle">About</h2>
+                {community.description && <p className="text-sm text-body">{community.description}</p>}
+                <ul className="flex flex-col gap-1.5 text-[13px] text-subtle">
                     <li className="flex items-center gap-2">
                         <CalendarDays className="size-4" /> Created {new Date(community.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </li>
@@ -55,8 +55,8 @@ export function CommunityRail({ data }: { data: CommunityResponse }) {
             {rules.length > 0 && (
                 // Collapsed on small screens so the posts stay near the top; always open in the wide-screen rail
                 // (::details-content). Either way the rules are in the HTML for crawlers and no-JS readers.
-                <details className="group/rules border-b border-border bg-surface px-4 py-4 sm:rounded-xl sm:border xl:[&::details-content]:[content-visibility:visible]">
-                    <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-muted xl:pointer-events-none">
+                <details className="group/rules px-4 py-4 sm:px-0 xl:[&::details-content]:[content-visibility:visible]">
+                    <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.04em] text-subtle xl:pointer-events-none">
                         <ScrollText className="size-4" /> Rules <span className="font-normal normal-case xl:hidden">({rules.length})</span>
                         <ChevronDown className="ml-auto size-4 transition-transform group-open/rules:rotate-180 xl:hidden" />
                     </summary>
@@ -88,7 +88,7 @@ export function CommunityRail({ data }: { data: CommunityResponse }) {
                             <li key={moderator.username}>
                                 <Link href={`/u/${moderator.username}`} className="flex items-center gap-2 text-sm hover:underline">
                                     <Avatar name={moderator.username} size="sm" />
-                                    <span className="truncate font-semibold">u/{moderator.username}</span>
+                                    <span className="truncate font-semibold">@{moderator.username}</span>
                                     {moderator.role === 'owner' && <span className="text-xs text-muted">owner</span>}
                                 </Link>
                             </li>

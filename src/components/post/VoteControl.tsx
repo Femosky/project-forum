@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ArrowBigDown, ArrowBigUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Triangle } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import NumberUtility from '@/lib/utils/NumberUtility';
 import { api } from '@/lib/api/client';
@@ -28,7 +28,7 @@ function applyVote(state: VoteState, next: VoteValue): VoteState {
     return { up, down, vote: next };
 }
 
-// Score pill shared by posts and comments. One tap votes, a second tap on the same arrow clears it.
+// Vote pill shared by posts and comments: likes and dislikes, each with its own count. One tap votes, a second tap on the same arrow clears it.
 export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disabled, className }: VoteControlProps) {
     const [state, setState] = useState<VoteState>({ up: upvotes, down: downvotes, vote: userVote });
     const [error, setError] = useState(false);
@@ -57,41 +57,43 @@ export function VoteControl({ target, id, upvotes, downvotes, userVote = 0, disa
         }
     }
 
-    const score = state.up - state.down;
     const { vote: userVoteNow } = state;
+    const side =
+        'flex h-full cursor-pointer items-center gap-1 px-2 tabular-nums transition-colors hover:bg-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-50';
+    // The side you voted for gets a soft tint, a filled arrow and a bolder count: clear without shouting
+    const voted = 'bg-active font-bold text-text';
 
+    // Likes and dislikes are both shown, as separate counts, rather than folded into one score
     return (
         <div
             className={twMerge(
-                'relative z-10 inline-flex h-8 items-center rounded-full bg-surface-muted text-sm font-bold',
-                userVoteNow === 1 && 'text-upvote',
-                userVoteNow === -1 && 'text-downvote',
+                'relative z-10 inline-flex h-7 items-stretch overflow-hidden rounded-[7px] text-[13px] font-semibold text-muted ring-1 ring-inset ring-border-strong',
                 className
             )}
             title={error ? "Your vote didn't go through. Try again." : undefined}
         >
             <button
                 type="button"
-                aria-label="Upvote"
+                aria-label={`Upvote, ${state.up} ${state.up === 1 ? 'upvote' : 'upvotes'}`}
                 aria-pressed={userVoteNow === 1}
                 disabled={disabled}
                 onClick={() => vote(1)}
-                className="flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-border hover:text-upvote disabled:cursor-not-allowed disabled:opacity-50"
+                className={twMerge(side, userVoteNow === 1 && voted)}
             >
-                <ArrowBigUp className={twMerge('size-5', userVoteNow === 1 && 'fill-current text-upvote')} />
+                {userVoteNow === 1 ? <Triangle className="size-3 fill-current" /> : <ChevronUp className="size-4" strokeWidth={2.4} />}
+                <span aria-live="polite">{NumberUtility.compactFormatter.format(state.up)}</span>
             </button>
-            <span className="min-w-6 text-center tabular-nums" aria-live="polite" aria-label={`Score ${score}`}>
-                {NumberUtility.compactFormatter.format(score)}
-            </span>
+            <span aria-hidden className="w-px bg-border-strong" />
             <button
                 type="button"
-                aria-label="Downvote"
+                aria-label={`Downvote, ${state.down} ${state.down === 1 ? 'downvote' : 'downvotes'}`}
                 aria-pressed={userVoteNow === -1}
                 disabled={disabled}
                 onClick={() => vote(-1)}
-                className="flex size-8 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-border hover:text-downvote disabled:cursor-not-allowed disabled:opacity-50"
+                className={twMerge(side, userVoteNow === -1 && voted)}
             >
-                <ArrowBigDown className={twMerge('size-5', userVoteNow === -1 && 'fill-current text-downvote')} />
+                {userVoteNow === -1 ? <Triangle className="size-3 rotate-180 fill-current" /> : <ChevronDown className="size-4" strokeWidth={2.4} />}
+                <span aria-live="polite">{NumberUtility.compactFormatter.format(state.down)}</span>
             </button>
         </div>
     );

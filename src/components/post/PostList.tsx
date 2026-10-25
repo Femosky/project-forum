@@ -11,7 +11,7 @@ import { slotAfter } from '@/ads/config';
 import type { AdUnit } from '@/ads/types';
 
 export const POST_SORTS: { value: PostSort; label: string }[] = [
-    { value: 'hot', label: 'Hot' },
+    { value: 'hot', label: 'Popular' },
     { value: 'new', label: 'New' },
     { value: 'top', label: 'Top' },
 ];
@@ -23,15 +23,15 @@ export function parsePostSort(value: string | string[] | undefined): PostSort {
 // Plain links, so sorting works without JavaScript and crawlers can follow them
 export function SortTabs({ basePath, current }: { basePath: string; current: PostSort }) {
     return (
-        <nav aria-label="Sort posts" className="flex gap-1 px-4 sm:px-0">
+        <nav aria-label="Sort posts" className="flex gap-0.5 rounded-lg p-0.5 ring-1 ring-inset ring-border">
             {POST_SORTS.map((sort) => (
                 <Link
                     key={sort.value}
                     href={sort.value === 'hot' ? basePath : `${basePath}?sort=${sort.value}`}
                     aria-current={current === sort.value ? 'page' : undefined}
                     className={twMerge(
-                        'flex h-8 items-center rounded-full px-3 text-sm font-semibold transition-colors',
-                        current === sort.value ? 'bg-highlight text-highlight-fg' : 'text-muted hover:bg-surface-muted hover:text-text'
+                        'flex h-[26px] items-center rounded-md px-2.5 text-[13px] font-semibold transition-colors',
+                        current === sort.value ? 'bg-active text-text' : 'text-muted hover:text-text'
                     )}
                 >
                     {sort.label}
@@ -69,8 +69,8 @@ export function PostList({ posts, basePath, sort, nextCursor, apiPath, showCommu
     const nextParams = new URLSearchParams({ ...(sort === 'hot' ? {} : { sort }), cursor: nextCursor ?? '' });
 
     return (
-        <div className="flex flex-col gap-3">
-            <div className="flex flex-col divide-y divide-border sm:gap-3 sm:divide-y-0">
+        <div className="flex flex-col">
+            <div className="flex flex-col divide-y divide-border">
                 {posts.map((post, index) => {
                     const slot = ads ? slotAfter(index, 'feed') : null;
                     return (
