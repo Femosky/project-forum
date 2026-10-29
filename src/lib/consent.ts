@@ -17,7 +17,6 @@ const YEAR_SECONDS = 365 * 24 * 60 * 60;
 export type Consent = { analytics: boolean; ads: boolean };
 
 const EVENT = 'consent-change';
-export const OPEN_SETTINGS_EVENT = 'open-cookie-settings';
 
 function cookie(name: string) {
     const row = document.cookie.split('; ').find((item) => item.startsWith(`${name}=`));
@@ -79,5 +78,3 @@ export const useConsent = () => useSyncExternalStore(subscribe, readConsent, () 
 
 // Page counts run unless the reader turned analytics off
 export const analyticsAllowed = () => readConsent()?.analytics !== false;
-
-export const openCookieSettings = () => window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT));

@@ -1,6 +1,6 @@
 'use client';
 
-import { RefObject, useEffect, useMemo, useState } from 'react';
+import { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Avatar from '@/components/ui/Avatar';
 import { API_BASE } from '@/lib/constants';
@@ -14,9 +14,37 @@ type Option = { href: string; label: string; detail: string; kind: 'community' |
 
 // Suggestions under the search box: communities and people whose names start like what's typed. Arrow keys move,
 // Enter opens the highlighted one (or searches when none is), Escape closes. Loaded on demand by SearchBox.
-export default function SearchSuggestions({ query, input, onClose }: { query: string; input: RefObject<HTMLInputElement | null>; onClose: () => void }) {
+// It follows the input itself (the box stays tiny): what's typed, focus and the keys.
+export default function SearchSuggestions({ input }: { input: RefObject<HTMLInputElement | null> }) {
     const router = useRouter();
+    const [query, setQuery] = useState(() => input.current?.value ?? '');
+    const [open, setOpen] = useState(true);
+    const onClose = useCallback(() => setOpen(false), []);
     const q = query.trim();
+
+    // Typing reopens the list; leaving the box closes it (after a click on a suggestion has landed)
+    useEffect(() => {
+        const element = input.current;
+        if (!element) return;
+        const onInput = () => {
+            setQuery(element.value);
+            setOpen(true);
+        };
+        const onFocus = () => setOpen(true);
+        const onBlur = () => setTimeout(() => setOpen(false), 150);
+        element.addEventListener('input', onInput);
+        element.addEventListener('focus', onFocus);
+        element.addEventListener('blur', onBlur);
+        return () => {
+            element.removeEventListener('input', onInput);
+            element.removeEventListener('focus', onFocus);
+            element.removeEventListener('blur', onBlur);
+        };
+    }, [input]);
+
+    useEffect(() => {
+        input.current?.setAttribute('aria-expanded', String(open && Boolean(q)));
+    }, [input, open, q]);
     const [answer, setAnswer] = useState<{ q: string; options: Option[] } | null>(null);
     const [active, setActive] = useState(-1);
     const options = useMemo(() => (answer?.q === q ? answer.options : []), [answer, q]);
@@ -81,7 +109,7 @@ export default function SearchSuggestions({ query, input, onClose }: { query: st
         return () => element.removeEventListener('keydown', onKey);
     }, [input, options, active, onClose, router]);
 
-    if (!q || options.length === 0) return null;
+    if (!open || !q || options.length === 0) return null;
 
     return (
         <ul

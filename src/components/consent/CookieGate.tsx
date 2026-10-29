@@ -1,7 +1,7 @@
 'use client';
 
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { OPEN_SETTINGS_EVENT, saveConsent, useConsent } from '@/lib/consent';
+import { readConsent, saveConsent } from '@/lib/consent';
 import { ANSWERED_CSS, ANSWERED_STYLE_ID } from '@/lib/consentKeys';
 
 // The per-purpose switches only download when someone asks to choose
@@ -25,11 +25,22 @@ function markAnswered() {
 }
 
 // Makes the cookie notice (CookieNotice, in the page HTML) work: Accept all and Reject all answer at once, Choose
-// opens the switches, and "Cookie settings" (footer, policies) reopens them later. When a certified consent
+// opens the switches, and "Cookie settings" (footer, policies: the same data-consent-choice="choose") reopens them.
+// It also starts the Google Ads tag once advertising is allowed; without NEXT_PUBLIC_GOOGLE_ADS_ID the build drops
+// that (and the loader module) entirely. When a certified consent
 // platform (__tcfapi) is on the page, it asks instead and ours steps aside.
+function startAdsTag() {
+    if (process.env.NEXT_PUBLIC_GOOGLE_ADS_ID) void import('@/lib/googleAds').then((tag) => tag.loadGoogleAds());
+}
+
+function answer(analytics: boolean, ads: boolean) {
+    saveConsent({ analytics, ads });
+    markAnswered();
+    if (ads) startAdsTag();
+}
+
 export default function CookieGate() {
     const [choosing, setChoosing] = useState(false);
-    const consent = useConsent();
 
     useEffect(() => {
         const onClick = (event: MouseEvent) => {
@@ -38,27 +49,18 @@ export default function CookieGate() {
                 markAnswered();
                 setChoosing(true);
             } else if (choice) {
-                saveConsent({ analytics: choice === 'accept', ads: choice === 'accept' });
-                markAnswered();
+                answer(choice === 'accept', choice === 'accept');
             }
         };
-        const reopen = () => setChoosing(true);
+        if (readConsent()?.ads) startAdsTag();
         document.addEventListener('click', onClick);
-        window.addEventListener(OPEN_SETTINGS_EVENT, reopen);
         // A consent platform loaded with the page gets a moment to appear
         const timer = setTimeout(() => typeof window.__tcfapi === 'function' && markAnswered(), 1000);
         return () => {
             document.removeEventListener('click', onClick);
-            window.removeEventListener(OPEN_SETTINGS_EVENT, reopen);
             clearTimeout(timer);
         };
     }, []);
-
-    // The Google Ads tag starts once advertising is allowed. Without NEXT_PUBLIC_GOOGLE_ADS_ID the build drops this
-    // (and the loader module) entirely.
-    useEffect(() => {
-        if (process.env.NEXT_PUBLIC_GOOGLE_ADS_ID && consent?.ads) void import('@/lib/googleAds').then((tag) => tag.loadGoogleAds());
-    }, [consent]);
 
     if (!choosing) return null;
     return (
@@ -70,8 +72,7 @@ export default function CookieGate() {
             <Suspense fallback={<div className="h-48" />}>
                 <CookieChoices
                     onSave={(analytics, ads) => {
-                        saveConsent({ analytics, ads });
-                        markAnswered();
+                        answer(analytics, ads);
                         setChoosing(false);
                     }}
                 />

@@ -13,34 +13,30 @@ export default function TopLoader() {
         const element = bar.current;
         if (!element) return;
         let running = false;
-        let safety: ReturnType<typeof setTimeout> | null = null;
-        let hide: ReturnType<typeof setTimeout> | null = null;
-        const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-
+        let safety: ReturnType<typeof setTimeout> | undefined;
         const set = (transition: string, scale: number, opacity: number) => {
-            element.style.transition = transition;
+            element.style.transition = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'none' : transition;
             element.style.transform = `scaleX(${scale})`;
             element.style.opacity = String(opacity);
         };
         // One long eased transition does the trickle: smooth on the compositor, no timers stepping the bar along.
-        // It slows as it nears 90% and never gets there on its own.
+        // It slows as it nears 90% and never gets there on its own. Reduced motion: the bar just appears.
         const start = () => {
             if (running) return;
             running = true;
-            if (hide) clearTimeout(hide);
             // Something may still cancel the navigation (a handler further down, a blocked route), so a bar that is
             // still running after a while finishes on its own
             safety = setTimeout(done, 10_000);
             set('none', 0, 1);
             void element.offsetWidth; // start from zero before animating
-            set(reduced() ? 'none' : 'transform 8s cubic-bezier(0.08, 0.7, 0.2, 1)', reduced() ? 0.5 : 0.9, 1);
+            set('transform 8s cubic-bezier(.08,.7,.2,1)', 0.9, 1);
         };
+        // A quick finish, then a fade
         const done = () => {
             if (!running) return;
             running = false;
-            if (safety) clearTimeout(safety);
-            set(reduced() ? 'opacity 150ms' : 'transform 200ms ease-out, opacity 250ms ease 200ms', 1, 0);
-            hide = setTimeout(() => !running && set('none', 0, 0), 500);
+            clearTimeout(safety);
+            set('transform .2s ease-out,opacity .25s ease .2s', 1, 0);
         };
 
         // Runs in the capture phase: by the time a click bubbles up, Next's <Link> has already called
@@ -72,8 +68,7 @@ export default function TopLoader() {
             document.removeEventListener('click', onClick, true);
             window.removeEventListener('popstate', done);
             window.removeEventListener('pagehide', done);
-            if (safety) clearTimeout(safety);
-            if (hide) clearTimeout(hide);
+            clearTimeout(safety);
         };
     }, []);
 
