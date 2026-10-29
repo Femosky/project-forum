@@ -646,9 +646,12 @@ function Creatives({ campaign, advertiser, creatives, onChanged }: { campaign: C
 
 function Preview({ unit, format }: { unit: NativeAdUnit; format: Creative['format'] }) {
     return format === 'feed_post' ? (
-        <SponsoredPostCard unit={unit} preview className="border border-border sm:rounded-xl" />
+        // The feed column pads cards on wider screens; the preview box does the same so nothing touches its edges
+        <SponsoredPostCard unit={unit} preview className="rounded-xl border border-border sm:px-4" />
     ) : (
-        <SponsoredCommentItem unit={unit} preview />
+        <div className="rounded-xl border border-border p-4">
+            <SponsoredCommentItem unit={unit} preview />
+        </div>
     );
 }
 

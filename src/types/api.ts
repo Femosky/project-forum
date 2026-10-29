@@ -219,6 +219,9 @@ export interface UserCommentsResponse {
 
 // First pages that found little also carry a spelling suggestion and (posts, comments) similar community names
 interface SearchHints {
+    // The words the results are for; differs from what was typed when it was auto-corrected (corrected_from)
+    query?: string;
+    corrected_from?: string | null;
     did_you_mean?: string | null;
     related_communities?: Community[];
 }

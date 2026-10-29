@@ -12,32 +12,35 @@ export default function TopLoader() {
     useEffect(() => {
         const element = bar.current;
         if (!element) return;
-        let timer: ReturnType<typeof setInterval> | null = null;
-        let progress = 0;
+        let running = false;
+        let safety: ReturnType<typeof setTimeout> | null = null;
+        let hide: ReturnType<typeof setTimeout> | null = null;
+        const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        const show = (value: number, opacity = 1) => {
-            element.style.transform = `scaleX(${value})`;
+        const set = (transition: string, scale: number, opacity: number) => {
+            element.style.transition = transition;
+            element.style.transform = `scaleX(${scale})`;
             element.style.opacity = String(opacity);
         };
-        let safety: ReturnType<typeof setTimeout> | null = null;
+        // One long eased transition does the trickle: smooth on the compositor, no timers stepping the bar along.
+        // It slows as it nears 90% and never gets there on its own.
         const start = () => {
-            if (timer) return;
+            if (running) return;
+            running = true;
+            if (hide) clearTimeout(hide);
             // Something may still cancel the navigation (a handler further down, a blocked route), so a bar that is
             // still running after a while finishes on its own
             safety = setTimeout(done, 10_000);
-            progress = 0.08;
-            show(progress);
-            // Crawl towards the end without reaching it
-            timer = setInterval(() => show((progress += (0.95 - progress) * 0.08)), 250);
+            set('none', 0, 1);
+            void element.offsetWidth; // start from zero before animating
+            set(reduced() ? 'none' : 'transform 8s cubic-bezier(0.08, 0.7, 0.2, 1)', reduced() ? 0.5 : 0.9, 1);
         };
         const done = () => {
-            if (!timer) return;
+            if (!running) return;
+            running = false;
             if (safety) clearTimeout(safety);
-            clearInterval(timer);
-            timer = null;
-            show(1);
-            setTimeout(() => show(1, 0), 200);
-            setTimeout(() => !timer && show(0, 0), 450);
+            set(reduced() ? 'opacity 150ms' : 'transform 200ms ease-out, opacity 250ms ease 200ms', 1, 0);
+            hide = setTimeout(() => !running && set('none', 0, 0), 500);
         };
 
         // Runs in the capture phase: by the time a click bubbles up, Next's <Link> has already called
@@ -69,8 +72,8 @@ export default function TopLoader() {
             document.removeEventListener('click', onClick, true);
             window.removeEventListener('popstate', done);
             window.removeEventListener('pagehide', done);
-            if (timer) clearInterval(timer);
             if (safety) clearTimeout(safety);
+            if (hide) clearTimeout(hide);
         };
     }, []);
 
@@ -78,7 +81,7 @@ export default function TopLoader() {
         <div
             ref={bar}
             aria-hidden
-            className="pointer-events-none fixed inset-x-0 top-0 z-[9999] h-0.5 origin-left bg-brand opacity-0 transition-[transform,opacity] duration-200 ease-in-out"
+            className="pointer-events-none fixed inset-x-0 top-0 z-[9999] h-0.5 origin-left bg-brand opacity-0 will-change-transform"
             style={{ transform: 'scaleX(0)' }}
         />
     );

@@ -68,8 +68,13 @@ export default async function Home({ searchParams }: PageProps) {
                     }}
                 />
             </div>
-            {/* Wide screens only: on phones the feed comes first and Trending has its own tab */}
-            {trending && <div className="hidden xl:block">{trending}</div>}
+            {/* Wide screens only: on phones the feed comes first and Trending has its own tab. It stays in view under the
+                page bar while the feed scrolls, with its own scroll if it's ever taller than the window. */}
+            {trending && (
+                <div className="hidden xl:sticky xl:top-[calc(var(--spacing-header)+3rem)] xl:block xl:max-h-[calc(100dvh-var(--spacing-header)-3rem)] xl:self-start xl:overflow-y-auto">
+                    {trending}
+                </div>
+            )}
             </div>
         </>
     );

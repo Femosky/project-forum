@@ -14,7 +14,7 @@ import CommentListItem from '@/components/post/CommentListItem';
 import SearchBox from '@/components/common/SearchBox';
 
 type SearchPageProps = {
-    searchParams: Promise<{ q?: string; type?: string; page?: string; community?: string }>;
+    searchParams: Promise<{ q?: string; type?: string; page?: string; community?: string; exact?: string }>;
 };
 
 const TYPES = ['posts', 'comments', 'communities'] as const;
@@ -25,9 +25,10 @@ export async function generateMetadata({ searchParams }: SearchPageProps) {
     return { title: q ? `${q} - Search | ${APP_NAME}` : `Search | ${APP_NAME}`, robots: { index: false } };
 }
 
-function searchHref(q: string, type: SearchType, options: { page?: number; community?: string | null } = {}) {
+function searchHref(q: string, type: SearchType, options: { page?: number; community?: string | null; exact?: boolean } = {}) {
     return `/search?${new URLSearchParams({
         q,
+        ...(options.exact ? { exact: '1' } : {}),
         ...(type !== 'posts' ? { type } : {}),
         ...(options.community && type !== 'communities' ? { community: options.community } : {}),
         ...(options.page && options.page > 1 ? { page: String(options.page) } : {}),
@@ -58,14 +59,21 @@ function CommunityList({ communities }: { communities: Community[] }) {
 
 // A plain GET form, so search works without JavaScript and results have shareable URLs
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-    const { q: rawQuery, type: rawType, page: rawPage, community: rawCommunity } = await searchParams;
+    const { q: rawQuery, type: rawType, page: rawPage, community: rawCommunity, exact: rawExact } = await searchParams;
+    const exact = rawExact === '1';
     const q = (rawQuery ?? '').trim();
     const type: SearchType = TYPES.includes(rawType as SearchType) ? (rawType as SearchType) : 'posts';
     const page = Math.max(1, Number(rawPage) || 1);
     const community = /^[a-z][a-z0-9_]{2,20}$/i.test(rawCommunity ?? '') ? rawCommunity!.toLowerCase() : null;
     const canSearch = q.length >= 2;
 
-    const query = new URLSearchParams({ q, type, page: String(page), ...(community && type !== 'communities' ? { community } : {}) });
+    const query = new URLSearchParams({
+        q,
+        type,
+        page: String(page),
+        ...(community && type !== 'communities' ? { community } : {}),
+        ...(exact ? { exact: '1' } : {}),
+    });
     const result = canSearch
         ? await serverApi<SearchPostsResponse | SearchCommentsResponse | SearchCommunitiesResponse>(`/search?${query}`)
         : null;
@@ -73,6 +81,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     const items = data ? ('posts' in data ? data.posts : 'comments' in data ? data.comments : data.communities) : [];
     const nextPage = data?.next_page ?? null;
     const suggestion = data?.did_you_mean ?? null;
+    // Auto-corrected: results are for these words, and later pages ask for them directly
+    const correctedFrom = data?.corrected_from ?? null;
+    const shownQuery = correctedFrom && data?.query ? data.query : q;
     const related = data?.related_communities ?? [];
     const scope = community ? ` in ${communityLabel({ name: community })}` : '';
 
@@ -114,6 +125,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 </nav>
             )}
 
+            {correctedFrom && (
+                <p className="px-4 text-sm text-muted sm:px-0">
+                    Showing results for <span className="font-semibold text-text">{shownQuery}</span>. Search instead for{' '}
+                    <Link href={searchHref(correctedFrom, type, { community, exact: true })} className="italic text-link hover:underline">
+                        {correctedFrom}
+                    </Link>
+                </p>
+            )}
+
             {suggestion && (
                 <p className="px-4 text-sm text-muted sm:px-0">
                     Did you mean{' '}
@@ -137,7 +157,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             ) : items.length === 0 ? (
                 <EmptyState
                     icon={<SearchIcon />}
-                    title={page > 1 ? 'No more results' : `No ${type} match "${q}"${scope}`}
+                    title={page > 1 ? 'No more results' : `No ${type} match "${shownQuery}"${scope}`}
                     description={community ? 'Try fewer words, or search everywhere.' : 'Try fewer or different words.'}
                 />
             ) : 'posts' in data ? (
@@ -168,7 +188,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             {nextPage && (
                 <div className="flex justify-center pb-6">
                     <Button asChild variant="secondary">
-                        <Link href={searchHref(q, type, { page: nextPage, community })} rel="next">
+                        <Link href={searchHref(shownQuery, type, { page: nextPage, community, exact })} rel="next">
                             Next page <ChevronRight className="size-4" />
                         </Link>
                     </Button>

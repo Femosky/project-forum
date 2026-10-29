@@ -63,7 +63,10 @@ export default async function TrendingPage() {
                 </div>
 
                 {communityList.length > 0 && (
-                    <aside aria-labelledby="rising" className="flex flex-col gap-3 border-t border-border px-4 py-5 sm:px-0 xl:border-0">
+                    <aside
+                        aria-labelledby="rising"
+                        className="flex flex-col gap-3 border-t border-border px-4 py-5 sm:px-0 xl:sticky xl:top-[calc(var(--spacing-header)+3rem)] xl:max-h-[calc(100dvh-var(--spacing-header)-3rem)] xl:self-start xl:overflow-y-auto xl:border-0"
+                    >
                         <h2 id="rising" className="text-xs font-semibold uppercase tracking-[0.04em] text-subtle">
                             Rising communities
                         </h2>
