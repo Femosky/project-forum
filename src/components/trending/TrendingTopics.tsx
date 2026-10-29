@@ -4,7 +4,7 @@ import { communityLabel } from '@/lib/communityName';
 
 // Where a topic leads: a search for the term, or for a flair inside its community
 export function topicHref(topic: TrendingTopic) {
-    return `/search?${new URLSearchParams({ q: topic.term, ...(topic.kind === 'flair' && topic.community ? { community: topic.community } : {}) })}`;
+    return `/search?${new URLSearchParams({ q: topic.term, ...(topic.kind === 'flair' && topic.community ? { community: topic.community.name } : {}) })}`;
 }
 
 // Topics as a row of quiet chips. Server-rendered: plain links, no JavaScript.
@@ -13,7 +13,7 @@ export function TrendingTopics({ topics, className }: { topics: TrendingTopic[];
     return (
         <ul className={`flex flex-wrap gap-1.5 ${className ?? ''}`}>
             {topics.map((topic) => (
-                <li key={`${topic.kind}:${topic.community ?? ''}:${topic.term}`}>
+                <li key={`${topic.kind}:${topic.community?.name ?? ''}:${topic.term}`}>
                     <Link
                         href={topicHref(topic)}
                         title={`${topic.posts} posts from ${topic.authors} people`}
@@ -22,7 +22,7 @@ export function TrendingTopics({ topics, className }: { topics: TrendingTopic[];
                         {topic.kind === 'term' ? <span className="text-subtle">#</span> : null}
                         <span className="first-letter:uppercase">{topic.term}</span>
                         {topic.kind === 'flair' && topic.community && (
-                            <span className="text-subtle">in {communityLabel({ name: topic.community })}</span>
+                            <span className="text-subtle">in {communityLabel(topic.community)}</span>
                         )}
                     </Link>
                 </li>

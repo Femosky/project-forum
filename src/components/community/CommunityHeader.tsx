@@ -1,5 +1,6 @@
 'use client';
 
+import { communityHandle } from '@/lib/communityName';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Community, CommunityViewer, MembershipResponse } from '@/types/api';
@@ -89,7 +90,7 @@ export function CommunityHeader({ community, viewer }: { community: Community; v
                 <div className="min-w-0 flex-1">
                     <h1 className="truncate text-[22px] font-semibold leading-7 tracking-[-0.015em]">{communityLabel(community)}</h1>
                     <p className="mt-0.5 text-[13.5px] text-subtle">
-                        <span>/c/{community.name} · </span>
+                        <span>c/{communityHandle(community)} · </span>
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(members)}</span>{' '}
                         {members === 1 ? 'member' : 'members'} ·{' '}
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(community.post_count)}</span>{' '}

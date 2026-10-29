@@ -15,7 +15,9 @@ export interface AuthorRef {
 
 export interface CommunityRef {
     id: string;
+    // The URL key, lowercase (premierleague), and the handle as shown (PremierLeague)
     name: string;
+    name_styled: string;
     display_name: string | null;
     image_url: string | null;
 }
@@ -100,7 +102,9 @@ export interface Comment {
 
 export interface Community {
     id: string;
+    // The URL key, lowercase (premierleague), and the handle as shown (PremierLeague)
     name: string;
+    name_styled: string;
     display_name: string | null;
     description: string | null;
     image_url: string | null;
@@ -242,7 +246,7 @@ export interface SearchCommunitiesResponse extends SearchHints {
 }
 
 export interface AutocompleteResponse {
-    communities: { name: string; display_name: string | null; image_url: string | null; member_count: number }[];
+    communities: { name: string; name_styled: string; display_name: string | null; image_url: string | null; member_count: number }[];
     users: { username: string; display_name: string | null; avatar_id: string }[];
 }
 
@@ -264,7 +268,8 @@ export interface TrendingCommunitiesResponse {
 export interface TrendingTopic {
     kind: 'term' | 'flair';
     term: string;
-    community: string | null;
+    // A flair's community
+    community: { name: string; name_styled: string; display_name: string | null } | null;
     posts: number;
     authors: number;
 }

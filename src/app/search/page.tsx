@@ -3,7 +3,7 @@ import { ChevronRight, CloudOff, SearchIcon, X } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
-import { Community, SearchCommentsResponse, SearchCommunitiesResponse, SearchPostsResponse } from '@/types/api';
+import { Community, CommunityResponse, SearchCommentsResponse, SearchCommunitiesResponse, SearchPostsResponse } from '@/types/api';
 import Avatar from '@/components/ui/Avatar';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
@@ -74,9 +74,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         ...(community && type !== 'communities' ? { community } : {}),
         ...(exact ? { exact: '1' } : {}),
     });
-    const result = canSearch
-        ? await serverApi<SearchPostsResponse | SearchCommentsResponse | SearchCommunitiesResponse>(`/search?${query}`)
-        : null;
+    const [result, scoped] = await Promise.all([
+        canSearch ? serverApi<SearchPostsResponse | SearchCommentsResponse | SearchCommunitiesResponse>(`/search?${query}`) : null,
+        // The community being searched in, for its proper name
+        community ? serverApi<CommunityResponse>(`/communities/${encodeURIComponent(community)}`) : null,
+    ]);
+    const scopeLabel = community ? communityLabel(scoped?.data?.community ?? { name: community }) : '';
     const data = result?.data ?? null;
     const items = data ? ('posts' in data ? data.posts : 'comments' in data ? data.comments : data.communities) : [];
     const nextPage = data?.next_page ?? null;
@@ -85,7 +88,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     const correctedFrom = data?.corrected_from ?? null;
     const shownQuery = correctedFrom && data?.query ? data.query : q;
     const related = data?.related_communities ?? [];
-    const scope = community ? ` in ${communityLabel({ name: community })}` : '';
+    const scope = community ? ` in ${scopeLabel}` : '';
 
     return (
         <div className="mx-auto flex w-full max-w-content flex-col gap-3 py-3 sm:px-4 sm:py-4">
@@ -93,7 +96,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 <SearchBox
                     defaultValue={q}
                     autoFocus={!q}
-                    placeholder={community ? `Search in ${communityLabel({ name: community })}` : `Search ${APP_NAME}`}
+                    placeholder={community ? `Search in ${scopeLabel}` : `Search ${APP_NAME}`}
                     hidden={{ ...(type !== 'posts' ? { type } : {}), ...(community && type !== 'communities' ? { community } : {}) }}
                 />
             </div>
@@ -117,9 +120,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                         <Link
                             href={searchHref(q, type)}
                             className="ml-auto flex h-8 items-center gap-1 rounded-full px-3 text-sm text-muted ring-1 ring-inset ring-border-strong hover:bg-hover hover:text-text"
-                            aria-label={`Search everywhere instead of only ${communityLabel({ name: community })}`}
+                            aria-label={`Search everywhere instead of only ${scopeLabel}`}
                         >
-                            In {communityLabel({ name: community })} <X className="size-3.5" />
+                            In {scopeLabel} <X className="size-3.5" />
                         </Link>
                     )}
                 </nav>

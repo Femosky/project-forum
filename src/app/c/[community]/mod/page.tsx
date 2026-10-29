@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { ArrowLeft, CloudOff, ShieldCheck } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
@@ -26,6 +26,7 @@ export default async function ModToolsPage({ params, searchParams }: PageProps) 
 
     const [community, me] = await Promise.all([serverApi<CommunityResponse>(base), serverApi<UserResponse>('/auth/me')]);
     if (community.status === 404) notFound();
+    if (community.data && name !== community.data.community.name) permanentRedirect(`/c/${community.data.community.name}/mod`);
     if (!community.data) return <EmptyState icon={<CloudOff />} title="Couldn't load this community" description="Try again in a moment." />;
 
     const role = community.data.viewer?.role;

@@ -1,6 +1,7 @@
+import { communityHandle } from '@/lib/communityName';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { CloudOff, Lock, Plus } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
@@ -30,7 +31,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     if (!data) return noindexMetadata(`Community not found | ${APP_NAME}`);
 
     const { community } = data;
-    const heading = community.display_name ? `${community.display_name} (c/${community.name})` : `c/${community.name}`;
+    const heading = community.display_name ? `${community.display_name} (c/${communityHandle(community)})` : `c/${communityHandle(community)}`;
     return pageMetadata({
         title: `${heading} | ${APP_NAME}`,
         description: communityDescription(community),
@@ -57,6 +58,11 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
     ]);
 
     if (community.status === 404) notFound();
+    // One URL per community: other casings (/c/NaijaTech) and old names (/c/naija_tech) move to /c/naijatech
+    if (community.data && name !== community.data.community.name) {
+        const query = new URLSearchParams({ ...(sortParam ? { sort: sortParam } : {}), ...(cursor ? { cursor } : {}) }).toString();
+        permanentRedirect(`/c/${community.data.community.name}${query ? `?${query}` : ''}`);
+    }
     if (!community.data) {
         return <EmptyState icon={<CloudOff />} title="Couldn't load this community" description="Try again in a moment." />;
     }
@@ -83,7 +89,7 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
             <JsonLd
                 data={breadcrumbJsonLd([
                     { name: APP_NAME, path: '/' },
-                    { name: `c/${community.data.community.name}`, path: `/c/${community.data.community.name}` },
+                    { name: `c/${communityHandle(community.data.community)}`, path: `/c/${community.data.community.name}` },
                 ])}
             />
             <CommunityHeader community={community.data.community} viewer={community.data.viewer} />

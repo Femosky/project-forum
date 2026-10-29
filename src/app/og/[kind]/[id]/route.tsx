@@ -1,3 +1,4 @@
+import { communityHandle } from '@/lib/communityName';
 import { ImageResponse } from 'next/og';
 import { APP_NAME, BRAND_COLORS, REPUTATION_LABEL } from '@/lib/constants';
 import { publicApi } from '@/lib/api/server';
@@ -21,7 +22,7 @@ async function cardFor(kind: string, id: string): Promise<Card | null> {
         if (!data) return null;
         const { post } = data;
         return {
-            eyebrow: `c/${post.community.name}`,
+            eyebrow: `c/${communityHandle(post.community)}`,
             title: post.title,
             stats: [plural(post.score, 'point'), plural(post.comment_count, 'comment')],
         };
@@ -31,8 +32,8 @@ async function cardFor(kind: string, id: string): Promise<Card | null> {
         if (!data) return null;
         const { community } = data;
         return {
-            eyebrow: `c/${community.name}`,
-            title: community.display_name ?? community.description ?? `c/${community.name}`,
+            eyebrow: `c/${communityHandle(community)}`,
+            title: community.display_name ?? community.description ?? `c/${communityHandle(community)}`,
             stats: [plural(community.member_count, 'member'), plural(community.post_count, 'post')],
         };
     }
