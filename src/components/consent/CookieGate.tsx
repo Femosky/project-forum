@@ -2,6 +2,7 @@
 
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { OPEN_SETTINGS_EVENT, saveConsent, useConsent } from '@/lib/consent';
+import { ANSWERED_CSS, ANSWERED_STYLE_ID } from '@/lib/consentDefaults';
 
 // The per-purpose switches only download when someone asks to choose
 const CookieChoices = lazy(() => import('./CookieChoices'));
@@ -13,8 +14,15 @@ declare global {
     }
 }
 
-// Hides the server-rendered notice once there's an answer (CSS: html[data-consent] .cookie-notice)
-const markAnswered = () => document.documentElement.setAttribute('data-consent', '');
+// Hides the server-rendered notice once there's an answer, the same way the inline consent script does on later
+// visits: a <style> in <head>, which survives React re-rendering the layout
+function markAnswered() {
+    if (document.getElementById(ANSWERED_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = ANSWERED_STYLE_ID;
+    style.textContent = ANSWERED_CSS;
+    document.head.appendChild(style);
+}
 
 // Makes the cookie notice (CookieNotice, in the page HTML) work: Accept all and Reject all answer at once, Choose
 // opens the switches, and "Cookie settings" (footer, policies) reopens them later. When a certified consent

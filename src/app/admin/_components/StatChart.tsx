@@ -9,7 +9,8 @@ const PAD = { top: 8, right: 4, bottom: 18, left: 4 };
 // One metric over time: a thin ink line on a quiet baseline, drawn as inline SVG (no chart library: the site's
 // JS budget). Hovering, or moving along it with a finger, shows that day's value. One series per chart, so the
 // heading names it and no legend is needed; the same numbers are in the table below the charts.
-export function StatChart({ label, points }: { label: string; points: { date: string; value: number }[] }) {
+// summary: 'total' for counts that add up over days (visitors, posts), 'latest' for levels (active this month)
+export function StatChart({ label, points, summary = 'total' }: { label: string; points: { date: string; value: number }[]; summary?: 'total' | 'latest' }) {
     const [hover, setHover] = useState<number | null>(null);
     if (points.length === 0) return null;
 
@@ -34,14 +35,18 @@ export function StatChart({ label, points }: { label: string; points: { date: st
             <figcaption className="flex items-baseline justify-between gap-2">
                 <span className="text-xs font-medium text-muted">{label}</span>
                 <span className="text-sm font-semibold tabular-nums">
-                    {shown ? `${shown.value.toLocaleString()} · ${short(shown.date)}` : `${total.toLocaleString()} total`}
+                    {shown
+                        ? `${shown.value.toLocaleString()} · ${short(shown.date)}`
+                        : summary === 'total'
+                          ? `${total.toLocaleString()} total`
+                          : `${points[points.length - 1].value.toLocaleString()} latest`}
                 </span>
             </figcaption>
             <svg
                 viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
                 className="h-24 w-full touch-none text-text"
                 role="img"
-                aria-label={`${label}: ${points.length} days, ${total.toLocaleString()} in all, highest ${max.toLocaleString()}`}
+                aria-label={`${label}: ${points.length} days, highest ${max.toLocaleString()}, latest ${points[points.length - 1].value.toLocaleString()}`}
                 onPointerMove={(event) => pick(event.clientX, event.currentTarget.getBoundingClientRect())}
                 onPointerLeave={() => setHover(null)}
             >

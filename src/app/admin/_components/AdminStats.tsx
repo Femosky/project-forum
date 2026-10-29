@@ -12,13 +12,13 @@ import StatChart from './StatChart';
 // and tables are the nightly snapshots for the chosen range (Lagos days). Server-rendered: only the charts' hover
 // needs JavaScript.
 
-type Metric = { key: keyof Omit<DailyStats, 'date' | 'countries'>; label: string };
+type Metric = { key: keyof Omit<DailyStats, 'date' | 'countries'>; label: string; level?: boolean };
 
 const CHARTS: Metric[] = [
     { key: 'unique_visitors', label: 'Unique visitors' },
     { key: 'page_views', label: 'Page views' },
-    { key: 'dau', label: 'Daily active accounts' },
-    { key: 'mau', label: 'Monthly active accounts' },
+    { key: 'dau', label: 'Daily active accounts', level: true },
+    { key: 'mau', label: 'Monthly active accounts', level: true },
     { key: 'new_signups', label: 'New sign-ups' },
     { key: 'posts', label: 'Posts' },
     { key: 'comments', label: 'Replies' },
@@ -116,8 +116,8 @@ export function AdminStats({ data, days }: { data: AdminStatsResponse; days: num
             </p>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {CHARTS.map(({ key, label }) => (
-                    <StatChart key={key} label={label} points={data.days.map((day) => ({ date: day.date, value: day[key] }))} />
+                {CHARTS.map(({ key, label, level }) => (
+                    <StatChart key={key} label={label} summary={level ? 'latest' : 'total'} points={data.days.map((day) => ({ date: day.date, value: day[key] }))} />
                 ))}
             </div>
 

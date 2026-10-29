@@ -3,8 +3,7 @@ import { buttonStyles } from '@/components/ui/Button';
 
 // The cookie banner's first view, in the page's own HTML: it paints with the page (so it never becomes a late
 // "largest paint"), it's the same for every guest (so cached pages stay shareable), and it costs no JavaScript.
-// The inline script in the layout marks <html data-consent> before the first paint when the reader has already
-// answered, and CSS then hides this. CookieGate makes the buttons work and opens the "Choose" panel.
+// The inline script in the layout hides it before the first paint when the reader has already answered. CookieGate makes the buttons work and opens the "Choose" panel.
 export default function CookieNotice() {
     return (
         <div
