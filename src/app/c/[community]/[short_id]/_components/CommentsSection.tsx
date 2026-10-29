@@ -6,7 +6,6 @@ import { Lock, MessagesSquare, Plus } from 'lucide-react';
 import { SortByDropdown } from './SortByDropdown';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import Button from '@/components/ui/Button';
-import Avatar from '@/components/ui/Avatar';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { ReplyActions } from './ReplyActions';
 import ContentReplySection from './ContentReplySection';
@@ -22,6 +21,7 @@ import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from './commen
 import ThreadAdSlot from '@/ads/ThreadAdSlot';
 import { slotAfter } from '@/ads/config';
 import type { AdUnit } from '@/ads/types';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 // Replies nest this deep; below that, "Continue this thread" opens the rest on its own
 const MAX_VISIBLE_DEPTH = 8;
@@ -289,7 +289,7 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
                     onClick={() => setIsExpanded(false)}
                 />
             )}
-            <Avatar name={getAuthorName(comment)} size="md" className="size-7 text-[11px]" />
+            <UserAvatar user={comment.author} size={28} className="size-7" />
 
             <div className="flex min-w-0 flex-col">
                 {isEditing ? (

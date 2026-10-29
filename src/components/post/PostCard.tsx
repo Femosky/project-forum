@@ -12,6 +12,7 @@ import PostBody from './PostBody';
 import { stripMarkdown } from '@/components/common/Markdown';
 import { communityLabel } from '@/lib/communityName';
 import ViewCount from './ViewCount';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 // How a community is named in the interface (see lib/communityName)
 export { communityLabel };
@@ -109,7 +110,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
             <article className={twMerge('flex flex-col gap-3 px-4 pb-5 pt-7 sm:px-0', className)}>
                 <header className="flex items-center gap-2">
                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px] text-subtle">
-                        <Avatar name={authorName} size="sm" className="size-[22px]" />
+                        <UserAvatar user={post.author} size={22} className="size-[22px]" />
                         <AuthorLink author={post.author} fallback={authorName} className="font-semibold text-text" />
                         {showCommunity && (
                             <>
@@ -176,10 +177,10 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
 
 // The author's picture, linking to their profile; a neutral letter for anonymous and deleted posts
 function AuthorAvatar({ author }: { author: Post['author'] }) {
-    if (!author) return <Avatar name="?" size="lg" className="size-9" />;
+    if (!author) return <UserAvatar user={null} size={36} className="size-9" />;
     return (
         <Link href={`/u/${author.username}`} className="relative z-10 self-start" aria-label={author.username} tabIndex={-1}>
-            <Avatar name={author.username} size="lg" className="size-9" />
+            <UserAvatar user={author} size={36} className="size-9" />
         </Link>
     );
 }

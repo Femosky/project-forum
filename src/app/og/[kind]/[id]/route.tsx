@@ -1,5 +1,7 @@
 import { communityHandle } from '@/lib/communityName';
 import { ImageResponse } from 'next/og';
+import { avatarUrl, decodeAvatar } from '@/avatars/code';
+import { renderAvatar } from '@/avatars/parts';
 import { APP_NAME, BRAND_COLORS, REPUTATION_LABEL } from '@/lib/constants';
 import { publicApi } from '@/lib/api/server';
 import { CommunityResponse, PostResponse, PublicUserResponse } from '@/types/api';
@@ -11,7 +13,7 @@ import NumberUtility from '@/lib/utils/NumberUtility';
 const SIZE = { width: 1200, height: 630 };
 const CACHE = 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800';
 
-type Card = { eyebrow: string; title: string; stats: string[] };
+type Card = { eyebrow: string; title: string; stats: string[]; avatar?: string };
 
 const plural = (count: number, word: string) => `${NumberUtility.compactFormatter.format(count)} ${word}${count === 1 ? '' : 's'}`;
 
@@ -40,7 +42,13 @@ async function cardFor(kind: string, id: string): Promise<Card | null> {
     if (kind === 'u') {
         const { data } = await publicApi<PublicUserResponse>(`/users/${key}`);
         if (!data) return null;
-        return { eyebrow: 'Profile', title: data.user.display_name ?? `u/${data.user.username}`, stats: [plural(data.user.karma, `${REPUTATION_LABEL} point`)] };
+        return {
+            eyebrow: 'Profile',
+            title: data.user.display_name ?? `u/${data.user.username}`,
+            stats: [plural(data.user.karma, `${REPUTATION_LABEL} point`)],
+            // The drawn avatar as a data URL (the image renderer can't fetch our own SVG route mid-render)
+            avatar: `data:image/svg+xml;base64,${Buffer.from(renderAvatar(decodeAvatar(avatarUrl(data.user).slice(8, -4))!)).toString('base64')}`,
+        };
     }
     return null;
 }
@@ -68,7 +76,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
                     color: BRAND_COLORS.text,
                 }}
             >
-                <div style={{ display: 'flex', fontSize: 34, fontWeight: 700, color: BRAND_COLORS.accent }}>{card.eyebrow}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 34, fontWeight: 700, color: BRAND_COLORS.accent }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {card.avatar && <img src={card.avatar} width={96} height={96} alt="" style={{ borderRadius: 48 }} />}
+                    {card.eyebrow}
+                </div>
                 <div style={{ display: 'flex', fontSize: titleSize, fontWeight: 700, lineHeight: 1.15, letterSpacing: -1 }}>{title}</div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 30 }}>
                     <div style={{ display: 'flex', gap: 32, color: BRAND_COLORS.muted }}>

@@ -8,6 +8,8 @@ export interface ApiErrorBody {
 }
 
 export interface AuthorRef {
+    // Drawn avatar code (avatars/code.ts); null = derived from the username
+    avatar?: string | null;
     username: string;
     display_name: string | null;
     avatar_id: string;
@@ -108,6 +110,8 @@ export interface Community {
     display_name: string | null;
     description: string | null;
     image_url: string | null;
+    // 4:1 header picture
+    banner_url: string | null;
     rules: CommunityRule[] | null;
     category: CommunityCategoryId | null;
     visibility: 'public' | 'private';
@@ -165,6 +169,9 @@ export interface PrivateUser {
     email: string;
     display_name: string | null;
     avatar_id: string;
+    // Drawn avatar: its code (null = derived from the username) and its parts, for the editor
+    avatar: string | null;
+    avatar_config: Record<string, number> | null;
     role: string;
     karma: number;
     is_email_verified: boolean;
@@ -197,6 +204,7 @@ export interface PublicUser {
     username: string;
     display_name: string | null;
     avatar_id: string;
+    avatar: string | null;
     karma: number;
     is_suspended: boolean;
     created_at: string;

@@ -10,6 +10,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import MarkAllRead from './_components/MarkAllRead';
 import { humanizeHandle } from '@/lib/communityName';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 export const metadata = { title: `Notifications | ${APP_NAME}`, robots: { index: false } };
 
@@ -76,8 +77,12 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
                                         isUnread && 'bg-highlight/30'
                                     )}
                                 >
-                                    <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-muted text-muted">
-                                        <Icon className="size-4" />
+                                    {/* Who did it, with what they did as a small badge */}
+                                    <span className="relative mt-0.5 size-8 shrink-0">
+                                        <UserAvatar user={notification.actor} size={32} className="size-8" />
+                                        <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-surface text-muted ring-1 ring-border">
+                                            <Icon className="size-2.5" />
+                                        </span>
                                     </span>
                                     <div className="min-w-0 flex-1">
                                         <p className="text-sm">

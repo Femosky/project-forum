@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { CalendarDays, ChevronDown, ScrollText, Search, ShieldCheck, Tag } from 'lucide-react';
 import { CommunityResponse } from '@/types/api';
-import Avatar from '@/components/ui/Avatar';
 import { categoryLabel } from '@/lib/moderation';
 import { communityLabel } from '@/lib/communityName';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 const cardClasses = 'flex flex-col gap-3 px-4 py-4 sm:px-0';
 
@@ -104,7 +104,7 @@ export function CommunityRail({ data }: { data: CommunityResponse }) {
                         {moderators.map((moderator) => (
                             <li key={moderator.username}>
                                 <Link href={`/u/${moderator.username}`} className="flex items-center gap-2 text-sm hover:underline">
-                                    <Avatar name={moderator.username} size="sm" />
+                                    <UserAvatar user={moderator} size={24} className="size-6" />
                                     <span className="truncate font-semibold">@{moderator.username}</span>
                                     {moderator.role === 'owner' && <span className="text-xs text-muted">owner</span>}
                                 </Link>

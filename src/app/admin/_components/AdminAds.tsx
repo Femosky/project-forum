@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import InputField, { selectStyles } from '@/components/ui/Input';
 import TextArea from '@/components/ui/TextArea';
+import ImageUpload from '@/components/common/ImageUpload';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
@@ -150,8 +151,8 @@ function AdvertiserForm({ onSaved, onCancel }: { onSaved: () => Promise<void>; o
             <Field label="Website">
                 <InputField name="website" type="url" placeholder="https://example.com" value={fields.website} onChange={set('website')} />
             </Field>
-            <Field label="Logo (https link, square)">
-                <InputField name="logo_url" type="url" placeholder="https://example.com/logo.png" value={fields.logo_url} onChange={set('logo_url')} />
+            <Field label="Logo (square)">
+                <ImageUpload endpoint="/admin/images?purpose=ad_logo" aspect="square" label="Logo" value={fields.logo_url || null} onChange={(url) => setFields({ ...fields, logo_url: url ?? '' })} />
             </Field>
             <Field label="Notes (only admins see these)" className="sm:col-span-2">
                 <TextArea name="notes" placeholder="Deal terms, contact person" value={fields.notes} onChange={set('notes')} />
@@ -173,7 +174,7 @@ function AdvertiserForm({ onSaved, onCancel }: { onSaved: () => Promise<void>; o
 // product, a live house campaign with a share of slots, and its first feed ad. Labelled "From us" on the site.
 function PromoteForm({ onCancel }: { onCancel: () => void }) {
     const router = useRouter();
-    const [fields, setFields] = useState({ product: '', headline: '', body: '', click_url: '', share: '20' });
+    const [fields, setFields] = useState({ product: '', headline: '', body: '', click_url: '', share: '20', logo_url: '', image_url: '' });
     const [error, setError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const set = (key: keyof typeof fields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setFields({ ...fields, [key]: e.target.value });
@@ -183,7 +184,10 @@ function PromoteForm({ onCancel }: { onCancel: () => void }) {
         setError(null);
         setIsSaving(true);
         try {
-            const { advertiser } = await api<{ advertiser: Advertiser }>('/admin/ads/advertisers', { method: 'POST', body: { name: fields.product.trim() } });
+            const { advertiser } = await api<{ advertiser: Advertiser }>('/admin/ads/advertisers', {
+                method: 'POST',
+                body: { name: fields.product.trim(), logo_url: fields.logo_url || null },
+            });
             const { campaign } = await api<{ campaign: Campaign }>('/admin/ads/campaigns', {
                 method: 'POST',
                 body: {
@@ -197,7 +201,13 @@ function PromoteForm({ onCancel }: { onCancel: () => void }) {
             });
             await api(`/admin/ads/campaigns/${campaign.id}/creatives`, {
                 method: 'POST',
-                body: { format: 'feed_post', headline: fields.headline.trim(), body: fields.body.trim() || null, click_url: fields.click_url.trim() },
+                body: {
+                    format: 'feed_post',
+                    headline: fields.headline.trim(),
+                    body: fields.body.trim() || null,
+                    image_url: fields.image_url || null,
+                    click_url: fields.click_url.trim(),
+                },
             });
             router.push(`/admin?tab=ads&campaign=${campaign.id}`);
         } catch (error) {
@@ -223,6 +233,12 @@ function PromoteForm({ onCancel }: { onCancel: () => void }) {
             </Field>
             <Field label="Text (optional)" className="sm:col-span-2">
                 <TextArea name="body" placeholder="One or two lines about it" value={fields.body} onChange={set('body')} />
+            </Field>
+            <Field label="Logo (square)">
+                <ImageUpload endpoint="/admin/images?purpose=ad_logo" aspect="square" label="Logo" value={fields.logo_url || null} onChange={(url) => setFields({ ...fields, logo_url: url ?? '' })} />
+            </Field>
+            <Field label="Picture (optional)">
+                <ImageUpload endpoint="/admin/images?purpose=ad_image" aspect="card" label="Picture" value={fields.image_url || null} onChange={(url) => setFields({ ...fields, image_url: url ?? '' })} />
             </Field>
             <Field label="Share of ad slots (%, up to 50)">
                 <InputField name="share" type="number" min={0} max={50} value={fields.share} onChange={set('share')} />
@@ -302,6 +318,24 @@ export function AdminCampaign({ initial }: { initial: CampaignDetail }) {
                 <StatusBadge campaign={campaign} />
                 <span className="text-sm text-muted">for {advertiser.name}</span>
             </header>
+
+            {/* The advertiser's logo shows on every one of its ads */}
+            <div className="flex items-center gap-4 rounded-xl border border-border bg-surface p-4">
+                <ImageUpload
+                    endpoint="/admin/images?purpose=ad_logo"
+                    aspect="square"
+                    label="Logo"
+                    value={advertiser.logo_url}
+                    onChange={async (url) => {
+                        await api(`/admin/ads/advertisers/${advertiser.id}`, { method: 'PATCH', body: { logo_url: url } });
+                        await reload();
+                    }}
+                />
+                <div className="text-sm">
+                    <p className="font-semibold">{advertiser.name} logo</p>
+                    <p className="text-muted">Square, shown next to the name on every ad. Without one, the first letter is shown.</p>
+                </div>
+            </div>
 
             <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                 {[
@@ -703,7 +737,7 @@ function CreativeForm({ campaign, advertiser, onSaved, onCancel }: { campaign: C
                 </Field>
                 {fields.format === 'feed_post' && (
                     <Field label="Image (optional, https, 1.91:1 like 1200×628)">
-                        <InputField name="image_url" type="url" value={fields.image_url} onChange={set('image_url')} />
+                        <ImageUpload endpoint="/admin/images?purpose=ad_image" aspect="card" label="Picture" value={fields.image_url || null} onChange={(url) => setFields({ ...fields, image_url: url ?? '' })} />
                     </Field>
                 )}
                 <div className="grid grid-cols-[1fr_auto] gap-3">

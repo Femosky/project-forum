@@ -6,6 +6,7 @@ import { getTheme } from '@/components/theme/getTheme';
 import { getDataSaver } from '@/lib/dataSaver';
 import { SessionsResponse, UserResponse } from '@/types/api';
 import EmptyState from '@/components/ui/EmptyState';
+import AvatarSection from './_components/AvatarSection';
 import Button from '@/components/ui/Button';
 import {
     DataSaverToggle,
@@ -60,6 +61,12 @@ export default async function SettingsPage() {
             <Section title="Profile">
                 <ProfileForm user={user} />
             </Section>
+
+            <div id="avatar" className="scroll-mt-16">
+                <Section title="Avatar" description="Drawn, never a photo: mix and match until it feels like you.">
+                    <AvatarSection user={user} />
+                </Section>
+            </div>
 
             <Section title="Appearance" description="Follow your device, or pick one.">
                 <ThemePicker initialTheme={theme} />

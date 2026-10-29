@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bookmark, ChevronsUpDown, LogOut, Monitor, Moon, Settings, Sun, User } from 'lucide-react';
-import Avatar from '@/components/ui/Avatar';
 import Button from '@/components/ui/Button';
 import {
     Dropdown,
@@ -20,13 +19,15 @@ import { api } from '@/lib/api/client';
 import { useAuthStateStore } from '@/lib/stateStore';
 import { Theme, THEMES } from '@/lib/constants';
 import { UserResponse } from '@/types/api';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 // Bottom of the desktop sidebar: who you are, with your account, saved items, settings, theme and log out.
 // Guests get Log in and Sign up instead.
 export function SidebarAccount({ initialTheme }: { initialTheme: Theme | null }) {
     const isAuthenticated = useAuthStateStore((state) => state.isAuthenticated);
     const logout = useAuthStateStore((state) => state.logout);
-    const [username, setUsername] = useState<string | null>(null);
+    const [me, setMe] = useState<{ username: string; avatar: string | null } | null>(null);
+    const username = me?.username ?? null;
     const [theme, setTheme] = useState<ThemeChoice>(initialTheme ?? 'system');
     const [isLeaving, setIsLeaving] = useState(false);
 
@@ -34,7 +35,7 @@ export function SidebarAccount({ initialTheme }: { initialTheme: Theme | null })
         if (!isAuthenticated) return;
         let isCurrent = true;
         api<UserResponse>('/auth/me')
-            .then((data) => isCurrent && setUsername(data.user.username))
+            .then((data) => isCurrent && setMe({ username: data.user.username, avatar: data.user.avatar }))
             .catch(() => null);
         return () => {
             isCurrent = false;
@@ -75,7 +76,7 @@ export function SidebarAccount({ initialTheme }: { initialTheme: Theme | null })
                     type="button"
                     className="flex h-9 w-full cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm font-medium transition-colors hover:bg-hover"
                 >
-                    <Avatar name={username ?? '?'} size="sm" className="size-5" />
+                    <UserAvatar user={me} size={20} className="size-5" />
                     <span className="min-w-0 flex-1 truncate">{username ?? 'Account'}</span>
                     <ChevronsUpDown className="size-4 text-subtle" />
                 </button>

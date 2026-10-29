@@ -8,6 +8,7 @@ import IconButton from '@/components/ui/IconButton';
 import InputField, { selectStyles } from '@/components/ui/Input';
 import TextArea from '@/components/ui/TextArea';
 import ErrorMessage from '@/components/ui/ErrorMessage';
+import ImageUpload from '@/components/common/ImageUpload';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { COMMUNITY_CATEGORIES } from '@/lib/moderation';
@@ -20,6 +21,8 @@ export function CommunitySettingsForm({ community }: { community: Community }) {
     const router = useRouter();
     const [nameStyled, setNameStyled] = useState(community.name_styled || community.name);
     const [displayName, setDisplayName] = useState(community.display_name ?? '');
+    const [iconUrl, setIconUrl] = useState(community.image_url);
+    const [bannerUrl, setBannerUrl] = useState(community.banner_url);
     // Only the capitals of the handle can change: c/premierleague can become c/PremierLeague, never another name
     const styleError = nameStyled.trim().toLowerCase() === community.name ? null : `Only capital letters can change: it must spell "${community.name}".`;
     const [description, setDescription] = useState(community.description ?? '');
@@ -49,6 +52,8 @@ export function CommunitySettingsForm({ community }: { community: Community }) {
                 method: 'PATCH',
                 body: {
                     name_styled: nameStyled.trim(),
+                    image_url: iconUrl,
+                    banner_url: bannerUrl,
                     display_name: displayName.trim() || null,
                     description: description.trim() || null,
                     category: category || null,
@@ -67,6 +72,34 @@ export function CommunitySettingsForm({ community }: { community: Community }) {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4">
+            <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-semibold">Icon and banner</span>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <ImageUpload
+                        endpoint={`/images?purpose=community_icon&community=${community.name}`}
+                        aspect="square"
+                        label="Icon"
+                        value={iconUrl}
+                        onChange={(url) => {
+                            setIconUrl(url);
+                            setStatus('idle');
+                        }}
+                    />
+                    <div className="min-w-0 flex-1">
+                        <ImageUpload
+                            endpoint={`/images?purpose=community_banner&community=${community.name}`}
+                            aspect="banner"
+                            label="Banner"
+                            value={bannerUrl}
+                            onChange={(url) => {
+                                setBannerUrl(url);
+                                setStatus('idle');
+                            }}
+                        />
+                    </div>
+                </div>
+                <p className="text-xs text-muted">Square icon; the banner is cut to 4:1. Saved with the button below.</p>
+            </div>
             <div className="flex flex-col gap-1.5">
                 <label htmlFor="name_styled" className="text-sm font-semibold">
                     Name style
