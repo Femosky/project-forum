@@ -41,7 +41,12 @@ const LABELS: Record<Tab, string> = {
 // Staff accounts only, signed in at /admin/login (a forum account gives no access here)
 export default async function AdminPage({ searchParams }: PageProps) {
     const me = await staffApi<{ staff: StaffAccount }>('/admin/auth/me');
-    if (!me.data || me.data.staff.password_change_required) redirect('/admin/login');
+    // Only "not signed in" goes to the sign-in page; any other failure (the API down, a hiccup) says so instead of
+    // looking like a sign-out
+    if (me.status === 401 || me.data?.staff.password_change_required) redirect('/admin/login');
+    if (!me.data) {
+        return <EmptyState icon={<CloudOff />} title="Couldn't reach the admin panel" description="Your session is fine. Try again in a moment." />;
+    }
     const staff = me.data.staff;
     const allowed = ROLE_TABS[staff.role];
 
