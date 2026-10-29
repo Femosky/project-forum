@@ -5,6 +5,7 @@ import { ExternalLink } from 'lucide-react';
 import Avatar from '@/components/ui/Avatar';
 import Badge from '@/components/ui/Badge';
 import { adClickUrl } from './config';
+import { APP_NAME } from '@/lib/constants';
 import { useAdImpression } from './impressions';
 import AdMenu from './AdMenu';
 import type { NativeAdUnit } from './types';
@@ -41,7 +42,7 @@ export function SponsoredCommentItem({ unit, preview = false }: { unit: NativeAd
                     className="mt-2 flex items-center justify-between gap-3 rounded-[10px] py-2 pl-3 pr-2 text-[13px] font-medium text-subtle ring-1 ring-inset ring-border transition-colors hover:ring-border-strong"
                 >
                     <span className="flex min-w-0 items-center gap-1 truncate">
-                        {creative.display_url} <ExternalLink className="size-3 shrink-0" />
+                        {creative.display_url ?? APP_NAME} <ExternalLink className="size-3 shrink-0" />
                     </span>
                     <span className="flex h-7 shrink-0 items-center rounded-[7px] px-3 text-[13px] font-semibold text-text ring-1 ring-inset ring-border-strong">
                         {creative.cta_label}

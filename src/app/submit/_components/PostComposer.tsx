@@ -17,6 +17,7 @@ import { POST_BODY_MAX, POST_TITLE_MAX, POST_TITLE_MIN } from '@/lib/constants';
 import { Flair, FlairsResponse, LinkPreview, LinkPreviewResponse, Post, PostResponse, PostsResponse } from '@/types/api';
 import { communityLabel } from '@/lib/communityName';
 import CommunityPicker, { CommunityOption } from './CommunityPicker';
+import { trackConversion } from '@/lib/googleAds';
 
 export type { CommunityOption };
 
@@ -189,6 +190,7 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
                 },
             });
             writeDraft(null);
+            trackConversion('post_created');
             router.push(getPostPath(post));
         } catch (error) {
             if (error instanceof ApiError && error.fields) setFieldErrors(error.fields);

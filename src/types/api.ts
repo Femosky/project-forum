@@ -217,14 +217,58 @@ export interface UserCommentsResponse {
     next_cursor: string | null;
 }
 
-export interface SearchPostsResponse {
+// First pages that found little also carry a spelling suggestion and (posts, comments) similar community names
+interface SearchHints {
+    did_you_mean?: string | null;
+    related_communities?: Community[];
+}
+
+export interface SearchPostsResponse extends SearchHints {
     posts: Post[];
     next_page: number | null;
 }
 
-export interface SearchCommunitiesResponse {
+export interface SearchCommentsResponse extends SearchHints {
+    comments: ListedComment[];
+    next_page: number | null;
+}
+
+export interface SearchCommunitiesResponse extends SearchHints {
     communities: Community[];
     next_page: number | null;
+}
+
+export interface AutocompleteResponse {
+    communities: { name: string; display_name: string | null; image_url: string | null; member_count: number }[];
+    users: { username: string; display_name: string | null; avatar_id: string }[];
+}
+
+// GET /trending: snapshots recomputed every 10 minutes
+export interface TrendingPostsResponse {
+    posts: Post[];
+    computed_at: string | null;
+}
+
+export interface TrendingCommunity extends Community {
+    trending: { new_members: number; posts: number; comments: number };
+}
+
+export interface TrendingCommunitiesResponse {
+    communities: TrendingCommunity[];
+    computed_at: string | null;
+}
+
+export interface TrendingTopic {
+    kind: 'term' | 'flair';
+    term: string;
+    community: string | null;
+    posts: number;
+    authors: number;
+}
+
+export interface TrendingTopicsResponse {
+    topics: TrendingTopic[];
+    computed_at: string | null;
 }
 
 export interface AppNotification {
@@ -448,4 +492,43 @@ export interface BlockedTerm {
     note: string | null;
     created_at: string;
     creator?: { username: string };
+}
+
+// Admin -> Stats (GET /admin/stats). Days are Lagos dates.
+export interface DailyStats {
+    date: string;
+    total_users: number;
+    new_signups: number;
+    dau: number;
+    wau: number;
+    mau: number;
+    unique_visitors: number;
+    page_views: number;
+    posts: number;
+    comments: number;
+    votes: number;
+    ad_impressions: number;
+    ad_clicks: number;
+    house_impressions: number;
+    house_clicks: number;
+    countries: Record<string, number> | null;
+}
+
+export interface CommunityStats {
+    name: string;
+    display_name: string | null;
+    members: number;
+    new_members: number;
+    posts: number;
+    comments: number;
+    votes: number;
+    visitors: number;
+    page_views: number;
+}
+
+export interface AdminStatsResponse {
+    range: { from: string; to: string };
+    today: DailyStats;
+    days: DailyStats[];
+    top_communities: CommunityStats[];
 }

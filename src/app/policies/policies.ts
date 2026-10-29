@@ -261,27 +261,35 @@ export const POLICIES: Policy[] = [
         slug: 'cookies',
         title: 'Cookies',
         summary: `The small number of cookies ${APP_NAME} sets, and the ones it asks about first.`,
-        updated: UPDATED,
+        updated: '29 October 2026',
         sections: [
             {
-                heading: 'Cookies the site needs',
+                heading: 'Your choice',
+                paragraphs: [
+                    'On your first visit we ask which optional cookies you allow: "Accept all", "Reject all", or "Choose" to pick. You can change your answer any time with "Cookie settings" at the bottom of the menu or on the Policies page. We keep your answer for 12 months and ask again if this policy changes.',
+                ],
+            },
+            {
+                heading: 'Strictly necessary (always on)',
                 items: [
-                    'access_token, refresh_token and is_authenticated keep you signed in.',
-                    'theme and data_saver remember the settings you pick.',
+                    'access_token and refresh_token keep you signed in (HttpOnly, set by our API; 15 minutes and 90 days).',
+                    'theme and data_saver remember the settings you pick (a year).',
+                    'cookie_consent remembers your answer to the cookie banner (12 months).',
                     'ad_seen counts how often you have seen each ad today, so the same ad does not follow you around. It holds no personal details and lasts a day.',
-                    'ad_consent remembers your answer about Google ads.',
+                    'Cloudflare Turnstile, the security check on sign-up and some forms, may set its own cookie to tell people from bots.',
                 ],
             },
             {
-                heading: 'Cookies we ask about',
+                heading: 'Analytics (on unless you turn it off)',
                 paragraphs: [
-                    'Google AdSense sets its own cookies only after you allow personalised ads. If you choose general ads only, Google shows ads without using your browsing history. To change your answer, clear this site\'s cookies and you will be asked again.',
+                    'We count page visits without cookies or anything stored on your device: a visit is identified by a code made from your IP address and browser that changes every day and cannot be traced back to you, and the IP address itself is never stored. Page views also go to PostHog (EU) with a random id that only lives in the open tab. Nothing is counted when you turn analytics off, or when your browser sends a Do Not Track or Global Privacy Control signal (PostHog only).',
                 ],
             },
             {
-                heading: 'No tracking cookies',
+                heading: 'Advertising (off until you allow it)',
                 paragraphs: [
-                    'Usage counts do not use cookies or any other storage on your device, and nothing is counted when your browser sends a Do Not Track or Global Privacy Control signal.',
+                    'With advertising allowed, Google AdSense may set cookies to show ads that match your interests, and the Google Ads tag measures sign-ups and new posts from our own ad campaigns. Without it, you still see ads, but general ones that do not use your browsing history, and the Google Ads tag does not load. We use Google Consent Mode, so Google is told your choice before any of its scripts run.',
+                    'Visitors from the EEA and the UK may be asked by Google\'s own consent message instead; when that message is on the page, ours stays out of the way.',
                 ],
             },
         ],

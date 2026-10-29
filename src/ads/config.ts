@@ -30,4 +30,3 @@ export const adClickUrl = (id: string) => `${API_BASE}/ads/click/${id}`;
 
 // Cookies on the web app's own domain
 export const AD_SEEN_COOKIE = 'ad_seen';
-export const AD_CONSENT_COOKIE = 'ad_consent';

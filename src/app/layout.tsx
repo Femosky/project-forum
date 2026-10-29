@@ -11,7 +11,9 @@ import { AuthHydrator } from '@/lib/authHydrator';
 import TopLoader from '@/components/common/TopLoader';
 import SignInPrompt from '@/components/common/SignInPrompt';
 import { NotificationPoller } from '@/components/notifications/NotificationBadge';
-import AdConsentGate from '@/ads/AdConsentGate';
+import CookieGate from '@/components/consent/CookieGate';
+import CookieNotice from '@/components/consent/CookieNotice';
+import { CONSENT_DEFAULTS_SCRIPT } from '@/lib/consentDefaults';
 import PageViews from '@/components/common/PageViews';
 import ErrorReporter from '@/components/common/ErrorReporter';
 import { getTheme } from '@/components/theme/getTheme';
@@ -73,6 +75,10 @@ export default async function RootLayout({
             className={hanken.variable}
             suppressHydrationWarning
         >
+            <head>
+                {/* Google Consent Mode defaults, before any Google script can load */}
+                <script dangerouslySetInnerHTML={{ __html: CONSENT_DEFAULTS_SCRIPT }} />
+            </head>
             <body>
                 <TopLoader />
                 <AuthHydrator isAuthenticated={hasRefreshToken} />
@@ -90,7 +96,8 @@ export default async function RootLayout({
                 <BottomTabBar />
                 <SignInPrompt />
                 <NotificationPoller />
-                <AdConsentGate />
+                <CookieNotice />
+                <CookieGate />
                 <PageViews />
                 <ErrorReporter />
             </body>

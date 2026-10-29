@@ -10,12 +10,14 @@ import ToolTabs from '@/components/moderation/ToolTabs';
 import { AdminCommunities, AdminUsers, Blocklist } from './_components/AdminPanels';
 import { AdminAds, AdminCampaign } from './_components/AdminAds';
 import type { AdsOverview, CampaignDetail } from '@/ads/types';
+import { AdminStats } from './_components/AdminStats';
+import type { AdminStatsResponse } from '@/types/api';
 
 export const metadata = { title: `Admin | ${APP_NAME}`, robots: { index: false } };
 
-type PageProps = { searchParams: Promise<{ tab?: string; campaign?: string }> };
+type PageProps = { searchParams: Promise<{ tab?: string; campaign?: string; days?: string; from?: string; to?: string }> };
 
-const TABS = ['queue', 'users', 'communities', 'ads', 'blocklist', 'log'] as const;
+const TABS = ['queue', 'stats', 'users', 'communities', 'ads', 'blocklist', 'log'] as const;
 type Tab = (typeof TABS)[number];
 
 // Site admins only. Everyone else gets a plain 404, so the page doesn't advertise itself.
@@ -23,14 +25,19 @@ export default async function AdminPage({ searchParams }: PageProps) {
     const me = await serverApi<UserResponse>('/auth/me');
     if (me.data?.user.role !== 'admin') notFound();
 
-    const { tab: tabParam, campaign } = await searchParams;
+    const { tab: tabParam, campaign, days: daysParam, from, to } = await searchParams;
     const tab: Tab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'queue';
+    // Stats range: ?days=7|30|90 (default 30) or ?from=&to= (YYYY-MM-DD)
+    const isDay = (value?: string) => /^\d{4}-\d{2}-\d{2}$/.test(value ?? '');
+    const days = isDay(from) ? null : [7, 30, 90].includes(Number(daysParam)) ? Number(daysParam) : 30;
+    const statsQuery = new URLSearchParams(days ? { days: String(days) } : { from: from!, ...(isDay(to) ? { to: to! } : {}) });
 
     const [overview, section] = await Promise.all([
         serverApi<AdminOverview>('/admin/overview'),
         serverApi<unknown>(
             {
                 queue: '/admin/queue',
+                stats: `/admin/stats?${statsQuery}`,
                 users: '/admin/users',
                 communities: '/admin/communities',
                 ads: campaign ? `/admin/ads/campaigns/${encodeURIComponent(campaign)}` : '/admin/ads',
@@ -67,6 +74,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 current={tab}
                 tabs={[
                     { id: 'queue', label: 'Queue', count: stats?.queue },
+                    { id: 'stats', label: 'Stats' },
                     { id: 'users', label: 'Users' },
                     { id: 'communities', label: 'Communities' },
                     { id: 'ads', label: 'Ads' },
@@ -79,6 +87,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     <EmptyState icon={<CloudOff />} title="Couldn't load this section" description="Try again in a moment." />
                 ) : tab === 'queue' ? (
                     <QueueList initialItems={(section.data as QueueResponse).items} site />
+                ) : tab === 'stats' ? (
+                    <AdminStats data={section.data as AdminStatsResponse} days={days} />
                 ) : tab === 'users' ? (
                     <AdminUsers initialUsers={(section.data as { users: AdminUser[] }).users} />
                 ) : tab === 'communities' ? (

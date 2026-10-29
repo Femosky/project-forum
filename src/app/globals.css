@@ -9,7 +9,7 @@
  * server), otherwise the system preference decides.
  *
  * Neutrals and ink carry the interface: buttons, votes and links are ink (black in light mode, white in dark).
- * Apple red (--brand) is kept for brand moments only: the logo, the current-page marker, unread counts, live labels,
+ * Apple red (--brand) is kept for brand moments only: the logo, the current-page marker, the page-loading bar, unread counts, live labels,
  * and errors (always with an icon and words). No green accents anywhere (branding rule).
  */
 
@@ -410,4 +410,10 @@
     .markdown .spoiler:focus * {
         color: inherit;
     }
+}
+
+/* The cookie notice is in every page's HTML; once the reader has answered, the inline consent script marks
+   <html data-consent> before the first paint and it never shows (components/consent/CookieNotice.tsx) */
+html[data-consent] .cookie-notice {
+    display: none;
 }

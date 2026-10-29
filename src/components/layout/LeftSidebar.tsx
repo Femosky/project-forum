@@ -1,11 +1,12 @@
 import { ComponentProps } from 'react';
 import Link from 'next/link';
-import { Search, SquarePen } from 'lucide-react';
+import { SquarePen } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import SidebarList from '@/components/common/SidebarList';
 import LogoSection from '@/app/_components/LogoSection';
 import SidebarAccount from './SidebarAccount';
-import { APP_NAME, Theme } from '@/lib/constants';
+import { Theme } from '@/lib/constants';
+import SearchBox from '@/components/common/SearchBox';
 
 type LeftSidebarProps = ComponentProps<'aside'> & { theme: Theme | null };
 
@@ -32,17 +33,8 @@ export default function LeftSidebar({ className, theme, ...props }: LeftSidebarP
                 </Link>
             </div>
 
-            {/* A plain GET form, so search works before scripts load */}
-            <form action="/search" role="search" className="relative">
-                <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-subtle" />
-                <input
-                    type="search"
-                    name="q"
-                    aria-label={`Search ${APP_NAME}`}
-                    placeholder="Search"
-                    className="h-8 w-full rounded-md bg-transparent pl-8 pr-2 text-sm text-text placeholder:text-subtle outline-none transition-colors hover:bg-hover focus:bg-hover"
-                />
-            </form>
+            {/* A plain GET form, so search works before scripts load; suggestions appear as you type */}
+            <SearchBox placeholder="Search" />
 
             <SidebarList />
 

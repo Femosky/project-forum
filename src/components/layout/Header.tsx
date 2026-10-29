@@ -26,7 +26,7 @@ export default function Header({ className, theme, ...props }: HeaderProps) {
                     <LogoSection />
                 </div>
 
-                <div className="flex flex-1 justify-end md:justify-center">
+                <div className="flex flex-1 justify-end">
                     <SearchSection />
                 </div>
 

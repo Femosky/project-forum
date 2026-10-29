@@ -78,7 +78,7 @@ export default function TopLoader() {
         <div
             ref={bar}
             aria-hidden
-            className="pointer-events-none fixed inset-x-0 top-0 z-[9999] h-0.5 origin-left bg-link opacity-0 transition-[transform,opacity] duration-200 ease-in-out"
+            className="pointer-events-none fixed inset-x-0 top-0 z-[9999] h-0.5 origin-left bg-brand opacity-0 transition-[transform,opacity] duration-200 ease-in-out"
             style={{ transform: 'scaleX(0)' }}
         />
     );

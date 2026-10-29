@@ -13,6 +13,7 @@ import ComposePrompt from '@/components/post/ComposePrompt';
 import { pageMetadata, websiteJsonLd } from '@/lib/seo';
 import { loadAds } from '@/ads/server';
 import { slotsBetween } from '@/ads/config';
+import TrendingNow from '@/components/trending/TrendingNow';
 
 type PageProps = { searchParams: Promise<{ sort?: string; cursor?: string }> };
 
@@ -25,9 +26,11 @@ export default async function Home({ searchParams }: PageProps) {
     const { sort: sortParam, cursor } = await searchParams;
     const sort = parsePostSort(sortParam);
     const listQuery = new URLSearchParams({ sort, ...(sort === 'top' ? { t: 'week' } : {}) });
-    const [{ data }, ads] = await Promise.all([
+    const [{ data }, ads, trending] = await Promise.all([
         serverApi<FeedResponse>(`/feed?${listQuery}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`),
         loadAds('feed', {}, slotsBetween(0, 25, 'feed')),
+        // The first page only; rendered with the page, shown in a right rail on wide screens
+        cursor ? null : TrendingNow(),
     ]);
 
     if (!data) {
@@ -43,7 +46,8 @@ export default async function Home({ searchParams }: PageProps) {
     return (
         <>
             <PageBar title="Home" actions={<SortTabs basePath="/" current={sort} />} />
-            <div className="mx-auto flex w-full max-w-[45rem] flex-col pb-8 sm:px-5">
+            <div className="mx-auto grid w-full max-w-[45rem] grid-cols-1 content-start gap-x-12 pb-8 sm:px-5 xl:max-w-[67rem] xl:grid-cols-[minmax(0,45rem)_16rem]">
+            <div className="flex min-w-0 flex-col">
                 <JsonLd data={websiteJsonLd()} />
                 <ComposePrompt />
                 <PostList
@@ -63,6 +67,9 @@ export default async function Home({ searchParams }: PageProps) {
                         ),
                     }}
                 />
+            </div>
+            {/* Wide screens only: on phones the feed comes first and Trending has its own tab */}
+            {trending && <div className="hidden xl:block">{trending}</div>}
             </div>
         </>
     );
