@@ -1,9 +1,11 @@
 'use client';
 
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useState, useSyncExternalStore } from 'react';
 import Button from '@/components/ui/Button';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { PrivateUser } from '@/types/api';
+
+const noSubscription = () => () => undefined;
 
 // The editor (and every drawing it shows) downloads only when someone opens it
 const AvatarEditor = lazy(() => import('./AvatarEditor'));
@@ -12,7 +14,11 @@ const AvatarEditor = lazy(() => import('./AvatarEditor'));
 // profile's "Edit avatar" link (/settings#avatar).
 export default function AvatarSection({ user }: { user: PrivateUser }) {
     const [avatar, setAvatar] = useState(user.avatar);
-    const [editing, setEditing] = useState(() => typeof window !== 'undefined' && location.hash === '#avatar');
+    // null: not chosen yet, so a profile's "Edit avatar" link (/settings#avatar) opens straight into the editor. Read
+    // without a render mismatch: the server always says no.
+    const [choice, setEditing] = useState<boolean | null>(null);
+    const fromLink = useSyncExternalStore(noSubscription, () => location.hash === '#avatar', () => false);
+    const editing = choice ?? fromLink;
 
     if (editing) {
         return (
