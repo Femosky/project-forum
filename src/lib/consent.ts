@@ -1,14 +1,14 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import { CONSENT_COOKIE, CONSENT_VERSION } from './consentDefaults';
+import { CONSENT_COOKIE, CONSENT_VERSION } from './consentKeys';
 
 // The reader's cookie choices, in one first-party cookie kept for a year:
 //   cookie_consent=v1.a1.d0   (version 1, analytics on, advertising off)
 // Strictly necessary cookies (sign-in, security, Turnstile, theme) need no choice. Analytics covers the
 // cookieless page counts (PostHog and the site's own visitor stats): counted until someone says no. Advertising
 // covers personalised AdSense and the Google Ads conversion tag: off until someone says yes. Bumping
-// CONSENT_VERSION (consentDefaults.ts) asks everyone again, after a policy change.
+// CONSENT_VERSION (consentKeys.ts) asks everyone again, after a policy change.
 
 // The ads-only answer from before this banner: 'personalized' or 'limited'
 const OLD_AD_CONSENT_COOKIE = 'ad_consent';

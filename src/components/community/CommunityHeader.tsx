@@ -22,7 +22,8 @@ function initialState(viewer: CommunityViewer | null): MembershipState {
     return 'none';
 }
 
-export function CommunityHeader({ community, viewer }: { community: Community; viewer: CommunityViewer | null }) {
+// `banner` is drawn by the (server) page, so its markup costs no JavaScript here
+export function CommunityHeader({ community, viewer, banner }: { community: Community; viewer: CommunityViewer | null; banner?: React.ReactNode }) {
     const [membership, setMembership] = useState<MembershipState>(initialState(viewer));
     const [members, setMembers] = useState(community.member_count);
     const [isBusy, setIsBusy] = useState(false);
@@ -85,17 +86,7 @@ export function CommunityHeader({ community, viewer }: { community: Community; v
 
     return (
         <header className="flex flex-col gap-4 border-b border-border px-4 pb-6 pt-7 sm:px-0">
-            {community.banner_url && (
-                // 4:1, the shape banners are cut to, so the space is held before the picture arrives
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                    src={community.banner_url}
-                    alt=""
-                    width={1600}
-                    height={400}
-                    className="data-saver-hide -mt-3 aspect-[4/1] w-full rounded-xl bg-surface-muted object-cover"
-                />
-            )}
+            {banner}
             <div className="flex items-center gap-4">
                 <Avatar name={community.name} src={community.image_url} size="xl" shape="square" className="size-14" />
                 <div className="min-w-0 flex-1">

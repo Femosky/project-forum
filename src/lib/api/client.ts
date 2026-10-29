@@ -34,7 +34,8 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     let response: Response;
     try {
         response = await send(path, options);
-        if (response.status === 401 && !path.startsWith('/auth/')) {
+        // The admin panel has its own sign-in (staff accounts): a 401 there says nothing about the forum session
+        if (response.status === 401 && !path.startsWith('/auth/') && !path.startsWith('/admin/')) {
             if (await refreshSession()) {
                 response = await send(path, options);
             } else {

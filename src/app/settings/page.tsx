@@ -50,13 +50,6 @@ export default async function SettingsPage() {
         <div className="mx-auto flex w-full max-w-content flex-col gap-3 py-3 sm:px-4 sm:py-4">
             <h1 className="px-4 text-2xl font-extrabold sm:px-0">Settings</h1>
 
-            {user.role === 'admin' && (
-                <Section title="Site admin" description="Reports and held posts from every community, accounts, takedowns and the blocklist.">
-                    <Button asChild variant="secondary" className="self-start">
-                        <Link href="/admin">Open the admin panel</Link>
-                    </Button>
-                </Section>
-            )}
 
             <Section title="Profile">
                 <ProfileForm user={user} />

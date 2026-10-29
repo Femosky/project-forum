@@ -8,7 +8,7 @@ export interface ApiErrorBody {
 }
 
 export interface AuthorRef {
-    // Drawn avatar code (avatars/code.ts); null = derived from the username
+    // Drawn avatar code: the web app draws it at /avatar/{code}.svg
     avatar?: string | null;
     username: string;
     display_name: string | null;
@@ -169,7 +169,7 @@ export interface PrivateUser {
     email: string;
     display_name: string | null;
     avatar_id: string;
-    // Drawn avatar: its code (null = derived from the username) and its parts, for the editor
+    // Drawn avatar: its code (/avatar/{code}.svg) and the parts chosen (null = derived from the username), for the editor
     avatar: string | null;
     avatar_config: Record<string, number> | null;
     role: string;
@@ -440,7 +440,9 @@ export interface ModLogEntry {
     target_id: string;
     reason: string | null;
     details: Record<string, unknown> | null;
-    actor: { username: string };
+    // A forum moderator, or null for site staff (staff.name in the admin panel's log)
+    actor: { username: string } | null;
+    staff?: { name: string } | null;
     community?: { name: string } | null;
 }
 
@@ -547,4 +549,31 @@ export interface AdminStatsResponse {
     today: DailyStats;
     days: DailyStats[];
     top_communities: CommunityStats[];
+}
+
+// Admin panel staff accounts (separate from forum accounts)
+export type StaffRole = 'owner' | 'admin' | 'ads' | 'moderator';
+
+export interface StaffAccount {
+    id: string;
+    email: string;
+    name: string;
+    role: StaffRole;
+    has_password: boolean;
+    has_2fa: boolean;
+    password_change_required: boolean;
+    disabled_at: string | null;
+    last_login_at: string | null;
+    created_at: string;
+}
+
+export interface StaffAuditEntry {
+    id: string;
+    created_at: string;
+    action: string;
+    target_type: string | null;
+    target_id: string | null;
+    details: Record<string, unknown> | null;
+    ip_address: string | null;
+    staff: { name: string; email: string } | null;
 }

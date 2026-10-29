@@ -2,7 +2,7 @@
 
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { OPEN_SETTINGS_EVENT, saveConsent, useConsent } from '@/lib/consent';
-import { ANSWERED_CSS, ANSWERED_STYLE_ID } from '@/lib/consentDefaults';
+import { ANSWERED_CSS, ANSWERED_STYLE_ID } from '@/lib/consentKeys';
 
 // The per-purpose switches only download when someone asks to choose
 const CookieChoices = lazy(() => import('./CookieChoices'));

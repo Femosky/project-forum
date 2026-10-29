@@ -27,6 +27,24 @@ export async function serverApi<T>(path: string): Promise<ServerResult<T>> {
     return cachedServerFetch(path) as Promise<ServerResult<T>>;
 }
 
+export const STAFF_COOKIE_NAME = 'staff_session';
+
+// Reads from the admin API while rendering /admin pages, with the staff session (its own cookie, separate from forum
+// sign-in; it is only sent to /admin pages and /v1/admin). Never cached.
+export async function staffApi<T>(path: string): Promise<ServerResult<T>> {
+    const token = (await cookies()).get(STAFF_COOKIE_NAME)?.value;
+    try {
+        const response = await fetch(`${API_BASE}${path}`, {
+            cache: 'no-store',
+            headers: token ? { Cookie: `${STAFF_COOKIE_NAME}=${token}` } : undefined,
+        });
+        if (!response.ok) return { data: null, status: response.status };
+        return { data: (await response.json()) as T, status: response.status };
+    } catch {
+        return { data: null, status: 0 };
+    }
+}
+
 // Reads public data as a guest and keeps it in Next's data cache for `revalidate` seconds. For crawler-facing
 // files (sitemaps, llms.txt, share images) that shouldn't hit the API on every request.
 export async function publicApi<T>(path: string, revalidate = 3600): Promise<ServerResult<T>> {

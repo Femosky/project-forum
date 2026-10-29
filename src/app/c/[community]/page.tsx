@@ -92,7 +92,23 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
                     { name: `c/${communityHandle(community.data.community)}`, path: `/c/${community.data.community.name}` },
                 ])}
             />
-            <CommunityHeader community={community.data.community} viewer={community.data.viewer} />
+            <CommunityHeader
+                community={community.data.community}
+                viewer={community.data.viewer}
+                banner={
+                    community.data.community.banner_url && (
+                        // 4:1, the shape banners are cut to, so the space is held before the picture arrives
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={community.data.community.banner_url}
+                            alt=""
+                            width={1600}
+                            height={400}
+                            className="data-saver-hide -mt-3 aspect-[4/1] w-full rounded-xl bg-surface-muted object-cover"
+                        />
+                    )
+                }
+            />
             <div className="border-b border-border xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:border-0 xl:pt-6">
                 <CommunityRail data={community.data} />
             </div>
