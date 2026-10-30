@@ -13,21 +13,13 @@ import { useAuthStateStore } from '@/lib/stateStore';
 import { safeNextPath } from '@/lib/utils/NavigationUtility';
 import { UserResponse } from '@/types/api';
 import { trackConversion } from '@/lib/googleAds';
-
-const USERNAME_PATTERN = /^[a-z][a-z0-9_]*$/;
+import { describedBy, FormField } from '@/components/forms/FormField';
+import { PasswordStrength } from '@/components/forms/PasswordStrength';
+import { emailError, newPasswordError, PASSWORD_MIN, usernameError } from '@/components/forms/rules';
+import { useFieldErrors } from '@/components/forms/useFieldErrors';
+import { useUsernameCheck } from '@/components/forms/useUsernameCheck';
 
 type Fields = { email: string; username: string; password: string };
-
-function validate(fields: Fields, isAdult: boolean): Partial<Record<keyof Fields | 'is_adult', string>> {
-    const errors: Partial<Record<keyof Fields | 'is_adult', string>> = {};
-    if (!/^\S+@\S+\.\S+$/.test(fields.email.trim())) errors.email = 'Enter a valid email address.';
-    const username = fields.username.trim().toLowerCase();
-    if (username.length < 3 || username.length > 20) errors.username = 'Usernames are 3 to 20 characters.';
-    else if (!USERNAME_PATTERN.test(username)) errors.username = 'Use letters, numbers and underscores, starting with a letter.';
-    if (fields.password.length < 8) errors.password = 'Use at least 8 characters.';
-    if (!isAdult) errors.is_adult = 'You must be 18 or older to join.';
-    return errors;
-}
 
 export default function SignupPage() {
     return (
@@ -44,20 +36,29 @@ function SignupForm() {
 
     const [fields, setFields] = useState<Fields>({ email: '', username: '', password: '' });
     const [isAdult, setIsAdult] = useState(false);
-    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const { errors: fieldErrors, setErrors: setFieldErrors, check, recheck, checkAll } = useFieldErrors({
+        email: () => emailError(fields.email),
+        username: () => usernameError(fields.username) ?? (availability.state === 'taken' ? availability.message : undefined),
+        password: () => newPasswordError(fields.password, fields),
+        is_adult: () => (isAdult ? undefined : 'You must be 18 or older to join.'),
+    });
+    const availability = useUsernameCheck(fields.username);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const challenge = useChallenge(true);
 
     function update(name: keyof Fields) {
-        return (e: React.ChangeEvent<HTMLInputElement>) => setFields((current) => ({ ...current, [name]: e.target.value }));
+        return {
+            value: fields[name],
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => setFields((current) => ({ ...current, [name]: e.target.value })),
+            onBlur: () => check(name),
+            onKeyUp: () => recheck(name),
+        };
     }
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        const errors = validate(fields, isAdult);
-        setFieldErrors(errors);
-        if (Object.keys(errors).length > 0) return;
+        if (!checkAll()) return;
         if (challenge.isPending) {
             setError('Complete the check below first.');
             return;
@@ -89,53 +90,71 @@ function SignupForm() {
                 <p className="mt-1 text-sm text-muted">Ask questions, share what you know, and vote on the best answers.</p>
 
                 <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
-                    <Field label="Email" error={fieldErrors.email}>
+                    <FormField name="email" label="Email" error={fieldErrors.email}>
                         <InputField
                             type="email"
-                            name="email"
                             autoComplete="email"
+                            autoCapitalize="none"
                             placeholder="you@example.com"
-                            value={fields.email}
-                            onChange={update('email')}
-                            outline={fieldErrors.email ? 'error' : 'default'}
+                            {...update('email')}
+                            {...describedBy('email', fieldErrors.email)}
                         />
-                    </Field>
+                    </FormField>
 
-                    <Field label="Username" error={fieldErrors.username} hint="Shown on your posts. You can't change it later.">
+                    <FormField
+                        name="username"
+                        label="Username"
+                        error={fieldErrors.username}
+                        hint={
+                            availability.state === 'checking'
+                                ? 'Checking...'
+                                : availability.state === 'available'
+                                  ? <span className="text-success">{availability.message}</span>
+                                  : availability.state === 'taken'
+                                    ? <span className="text-danger">{availability.message}</span>
+                                    : '3 to 20 letters, numbers or underscores. You can\'t change it later.'
+                        }
+                    >
                         <InputField
-                            name="username"
                             autoComplete="username"
                             autoCapitalize="none"
+                            spellCheck={false}
                             placeholder="e.g. ada_l"
-                            value={fields.username}
-                            onChange={update('username')}
-                            outline={fieldErrors.username ? 'error' : 'default'}
+                            {...update('username')}
+                            {...describedBy('username', fieldErrors.username)}
+                            onKeyUp={() => check('username')}
                         />
-                    </Field>
+                    </FormField>
 
-                    <Field label="Password" error={fieldErrors.password}>
+                    <FormField name="password" label="Password" error={fieldErrors.password} hint="Not your username or email.">
                         <InputField
                             type="password"
-                            name="password"
                             autoComplete="new-password"
-                            placeholder="At least 8 characters"
-                            value={fields.password}
-                            onChange={update('password')}
-                            outline={fieldErrors.password ? 'error' : 'default'}
+                            placeholder={`At least ${PASSWORD_MIN} characters`}
+                            {...update('password')}
+                            {...describedBy('password', fieldErrors.password)}
                         />
-                    </Field>
+                        <PasswordStrength password={fields.password} />
+                    </FormField>
 
                     <div className="flex flex-col gap-1.5">
                         <label className="flex cursor-pointer items-start gap-2.5 text-sm">
                             <input
                                 type="checkbox"
                                 checked={isAdult}
-                                onChange={(e) => setIsAdult(e.target.checked)}
+                                id="is_adult"
+                                aria-describedby="is_adult-message"
+                                onChange={(e) => {
+                                    setIsAdult(e.target.checked);
+                                    if (e.target.checked) setFieldErrors((current) => ({ ...current, is_adult: undefined }));
+                                }}
                                 className="mt-0.5 size-4 accent-accent"
                             />
                             I&apos;m 18 or older
                         </label>
-                        {fieldErrors.is_adult && <ErrorMessage errorMessage={fieldErrors.is_adult} />}
+                        <p id="is_adult-message" aria-live="polite" className="min-h-4 text-xs text-danger">
+                            {fieldErrors.is_adult}
+                        </p>
                     </div>
 
                     {challenge.widget}
@@ -166,19 +185,6 @@ function SignupForm() {
                     </Link>
                 </p>
             </div>
-        </div>
-    );
-}
-
-function Field({ label, error, hint, children }: { label: string; error?: string; hint?: string; children: React.ReactNode }) {
-    const id = label.toLowerCase();
-    return (
-        <div className="flex flex-col gap-1.5">
-            <label htmlFor={id} className="text-sm font-semibold">
-                {label}
-            </label>
-            {children}
-            {error ? <ErrorMessage errorMessage={error} /> : hint && <p className="text-xs text-muted">{hint}</p>}
         </div>
     );
 }

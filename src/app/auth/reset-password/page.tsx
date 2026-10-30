@@ -9,6 +9,11 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import AuthCard from '../_components/AuthCard';
+import { describedBy, FormField } from '@/components/forms/FormField';
+import { PasswordStrength } from '@/components/forms/PasswordStrength';
+import { newPasswordError, PASSWORD_MIN } from '@/components/forms/rules';
+import { useFieldErrors } from '@/components/forms/useFieldErrors';
+import { ApiError } from '@/lib/api/errors';
 
 export default function ResetPasswordPage() {
     return (
@@ -26,20 +31,20 @@ function ResetForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [isDone, setIsDone] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { errors, setErrors, check, recheck, checkAll } = useFieldErrors({ password: () => newPasswordError(password) });
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        if (password.length < 8) {
-            setError('Use at least 8 characters.');
-            return;
-        }
+        if (!checkAll()) return;
         setIsLoading(true);
         setError(null);
         try {
             await api('/auth/reset-password', { method: 'POST', body: { token, password } });
             setIsDone(true);
         } catch (error) {
-            setError(errorMessage(error));
+            // A refused password keeps the link usable, so it's shown on the field rather than as a dead link
+            if (error instanceof ApiError && error.fields?.password) setErrors({ password: error.fields.password });
+            else setError(errorMessage(error));
         }
         setIsLoading(false);
     }
@@ -67,19 +72,19 @@ function ResetForm() {
     }
     return (
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
-            <div className="flex flex-col gap-1.5">
-                <label htmlFor="password" className="text-sm font-semibold">
-                    New password
-                </label>
+            <FormField name="password" label="New password" error={errors.password} hint="Not your username or email.">
                 <InputField
                     type="password"
-                    name="password"
                     autoComplete="new-password"
-                    placeholder=" "
+                    placeholder={`At least ${PASSWORD_MIN} characters`}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onBlur={() => check('password')}
+                    onKeyUp={() => recheck('password')}
+                    {...describedBy('password', errors.password)}
                 />
-            </div>
+                <PasswordStrength password={password} />
+            </FormField>
             <Button type="submit" size="lg" disabled={isLoading} className="mt-2 w-full">
                 {isLoading ? 'Saving...' : 'Save new password'}
             </Button>
