@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Eye, EyeOff, Plus, RotateCcw, Search, ShieldX, Trash2, UserCheck, UserX } from 'lucide-react';
+import { Eye, EyeOff, Plus, RotateCcw, Search, ShieldCheck, ShieldX, Trash2, UserCheck, UserX } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -39,7 +39,8 @@ function SearchBar({ placeholder, onSearch, children }: { placeholder: string; o
 
 // --- Users: find an account, suspend it or shadow-ban it ---
 
-export function AdminUsers({ initialUsers }: { initialUsers: AdminUser[] }) {
+// canTrust: owners and admins can mark an account trusted (it skips the new-account limits; every check still applies)
+export function AdminUsers({ initialUsers, canTrust = false }: { initialUsers: AdminUser[]; canTrust?: boolean }) {
     const [users, setUsers] = useState(initialUsers);
     const [filter, setFilter] = useState('all');
     const [pending, setPending] = useState<Pending | null>(null);
@@ -106,6 +107,7 @@ export function AdminUsers({ initialUsers }: { initialUsers: AdminUser[] }) {
                                         <Badge variant="danger">Suspended{user.suspended_until ? ` until ${new Date(user.suspended_until).toLocaleDateString()}` : ''}</Badge>
                                     )}
                                     {user.shadow_banned_at && <Badge variant="danger">Shadow-banned</Badge>}
+                                    {user.is_trusted && <Badge variant="highlight">Trusted</Badge>}
                                     {!user.email_verified_at && <Badge>Email not verified</Badge>}
                                 </p>
                                 <p className="truncate text-xs text-muted">
@@ -116,6 +118,16 @@ export function AdminUsers({ initialUsers }: { initialUsers: AdminUser[] }) {
                             </div>
                             {user.role !== 'admin' && (
                                 <div className="flex flex-wrap gap-2">
+                                    {canTrust && (
+                                        <Button
+                                            size="sm"
+                                            variant={user.is_trusted ? 'secondary' : 'outline'}
+                                            title="Trusted accounts can post links and pictures from day one, without the new-account limits. All content checks still apply."
+                                            onClick={() => quick(`/admin/users/${user.username}/trusted`, { trusted: !user.is_trusted })}
+                                        >
+                                            <ShieldCheck className="size-4" /> {user.is_trusted ? 'Remove trusted' : 'Mark trusted'}
+                                        </Button>
+                                    )}
                                     {user.status === 'suspended' ? (
                                         <Button size="sm" variant="secondary" onClick={() => quick(`/admin/users/${user.username}/unsuspend`)}>
                                             <UserCheck className="size-4" /> Lift suspension

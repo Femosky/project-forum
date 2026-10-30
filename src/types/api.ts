@@ -478,6 +478,8 @@ export interface AdminUser {
     role: string;
     status: string;
     karma: number;
+    // Marked trusted by an owner or admin: skips the new-account limits
+    is_trusted: boolean;
     created_at: string;
     last_login_at: string | null;
     email_verified_at: string | null;
