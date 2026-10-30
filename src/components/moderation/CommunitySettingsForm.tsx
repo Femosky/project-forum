@@ -8,6 +8,7 @@ import IconButton from '@/components/ui/IconButton';
 import InputField, { selectStyles } from '@/components/ui/Input';
 import TextArea from '@/components/ui/TextArea';
 import ErrorMessage from '@/components/ui/ErrorMessage';
+import { twMerge } from 'tailwind-merge';
 import ImageUpload from '@/components/common/ImageUpload';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
@@ -17,6 +18,9 @@ import { Community, CommunityRule } from '@/types/api';
 const MAX_RULES = 15;
 
 // What a community shows in its about panel: display name, description, directory category and rules
+// Twelve drawn icons in public/community-icons, so a community can have one without uploading anything
+const DEFAULT_ICONS = Array.from({ length: 12 }, (_, index) => `/community-icons/${index + 1}.svg`);
+
 export function CommunitySettingsForm({ community }: { community: Community }) {
     const router = useRouter();
     const [nameStyled, setNameStyled] = useState(community.name_styled || community.name);
@@ -99,6 +103,27 @@ export function CommunitySettingsForm({ community }: { community: Community }) {
                     </div>
                 </div>
                 <p className="text-xs text-muted">Square icon; the banner is cut to 4:1. Saved with the button below.</p>
+                <div role="group" aria-label="Or choose a default icon" className="mt-1 flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-muted">Or choose a default icon</span>
+                    <div className="flex flex-wrap gap-2">
+                        {DEFAULT_ICONS.map((icon) => (
+                            <button
+                                key={icon}
+                                type="button"
+                                aria-label={`Default icon ${icon.match(/\d+/)?.[0]}`}
+                                aria-pressed={iconUrl === icon}
+                                onClick={() => {
+                                    setIconUrl(icon);
+                                    setStatus('idle');
+                                }}
+                                className={twMerge('size-10 cursor-pointer overflow-hidden rounded-[28%] ring-offset-2 ring-offset-surface', iconUrl === icon && 'ring-2 ring-text')}
+                            >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={icon} alt="" className="size-full" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
             <div className="flex flex-col gap-1.5">
                 <label htmlFor="name_styled" className="text-sm font-semibold">
