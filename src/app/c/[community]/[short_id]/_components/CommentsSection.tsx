@@ -478,7 +478,7 @@ function EditBox({ initialBody, onSave, onCancel }: { initialBody: string; onSav
     }
 
     return (
-        <form ref={formRef} onSubmit={handleSubmit} className="mt-1 flex flex-col gap-2">
+        <form ref={formRef} onSubmit={handleSubmit} className="mt-1 flex flex-col gap-2" noValidate>
             <MarkdownEditor
                 name="edit-comment"
                 variant="compact"

@@ -313,7 +313,7 @@ function AdvertiserForm({ onSaved, onCancel }: { onSaved: () => Promise<void>; o
     }
 
     return (
-        <form onSubmit={submit} className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2">
+        <form onSubmit={submit} className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2" noValidate>
             <Field label="Name">
                 <InputField name="advertiser-name" placeholder="Company name" required value={fields.name} onChange={set('name')} />
             </Field>
@@ -390,7 +390,7 @@ function PromoteForm({ onCancel }: { onCancel: () => void }) {
     }
 
     return (
-        <form onSubmit={submit} className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2">
+        <form onSubmit={submit} className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2" noValidate>
             <div className="sm:col-span-2">
                 <h3 className="font-bold">Promote your own product</h3>
                 <p className="text-sm text-muted">
@@ -466,7 +466,7 @@ function PaidCampaignForm({ advertisers, onCancel }: { advertisers: Advertiser[]
 
     const ready = name.trim() && (advertiserId !== 'new' || advertiserName.trim());
     return (
-        <form onSubmit={submit} className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2">
+        <form onSubmit={submit} className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2" noValidate>
             <div className="sm:col-span-2">
                 <h3 className="font-bold">New paid campaign</h3>
                 <p className="text-sm text-muted">It starts as a draft, so nothing shows until you set it to Running on the next screen.</p>
@@ -1046,7 +1046,7 @@ function CreativeForm({ campaign, advertiser, initial, onSaved, onCancel, onChan
     const unit = previewUnit({ id: initial?.id ?? 'preview', ...fields, link_image_url: linkImage.url, ...picture }, campaign, advertiser);
 
     return (
-        <form onSubmit={submit} className="grid gap-4 rounded-xl border border-border bg-surface p-4 lg:grid-cols-2">
+        <form onSubmit={submit} className="grid gap-4 rounded-xl border border-border bg-surface p-4 lg:grid-cols-2" noValidate>
             <div className="flex flex-col gap-3">
                 <Field label="Where">
                     <select value={fields.format} onChange={set('format')} className={selectStyles}>

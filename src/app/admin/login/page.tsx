@@ -8,6 +8,9 @@ import Button from '@/components/ui/Button';
 import InputField from '@/components/ui/Input';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { useChallenge } from '@/components/common/Turnstile';
+import { describedBy, FormField } from '@/components/forms/FormField';
+import { emailError, PASSWORD_MIN } from '@/components/forms/rules';
+import { useFieldErrors } from '@/components/forms/useFieldErrors';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { StaffAccount } from '@/types/api';
@@ -32,6 +35,10 @@ export default function AdminLoginPage() {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const challenge = useChallenge(true);
+    const { errors, check, recheck, checkAll } = useFieldErrors({
+        email: () => emailError(email),
+        password: () => (password ? undefined : 'Enter your password.'),
+    });
 
     // Arriving signed in but on a temporary password
     useEffect(() => {
@@ -71,6 +78,7 @@ export default function AdminLoginPage() {
 
     const submitPassword = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!checkAll()) return;
         if (challenge.isPending) return setError('Complete the check below first.');
         void run(async () => {
             const { step: next } = await api<{ step: Step }>('/admin/auth/login', {
@@ -84,6 +92,7 @@ export default function AdminLoginPage() {
 
     const submitSetup = (e: React.FormEvent) => {
         e.preventDefault();
+        if (code.length !== 6) return setError('Enter the 6-digit code from your app.');
         void run(async () => {
             const result = await api<{ recovery_codes: string[]; staff: StaffAccount }>('/admin/auth/2fa/setup', { method: 'POST', body: { code } });
             setRecoveryCodes(result.recovery_codes);
@@ -94,6 +103,7 @@ export default function AdminLoginPage() {
 
     const submitVerify = (e: React.FormEvent) => {
         e.preventDefault();
+        if (useRecovery ? !code.trim() : code.length !== 6) return setError(useRecovery ? 'Enter a recovery code.' : 'Enter the 6-digit code from your app.');
         void run(async () => {
             const result = await api<{ staff: StaffAccount }>('/admin/auth/2fa/verify', {
                 method: 'POST',
@@ -105,6 +115,8 @@ export default function AdminLoginPage() {
 
     const submitNewPassword = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!password) return setError('Enter your temporary password.');
+        if (newPassword.length < PASSWORD_MIN) return setError(`Use at least ${PASSWORD_MIN} characters.`);
         void run(async () => {
             await api('/admin/auth/password', { method: 'POST', body: { current_password: password, new_password: newPassword } });
             router.replace('/admin');
@@ -117,9 +129,32 @@ export default function AdminLoginPage() {
     if (step === 'password') {
         return (
             <AuthCard title="Admin sign-in" subtitle="For staff accounts. Your forum account doesn't work here.">
-                <form onSubmit={submitPassword} className={field}>
-                    <InputField name="email" type="email" autoComplete="username" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <InputField name="password" type="password" autoComplete="current-password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                <form onSubmit={submitPassword} className={field} noValidate>
+                    <FormField name="email" label="Email" error={errors.email}>
+                        <InputField
+                            type="email"
+                            autoComplete="username"
+                            autoCapitalize="none"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            onBlur={() => check('email')}
+                            onKeyUp={() => recheck('email')}
+                            {...describedBy('email', errors.email)}
+                        />
+                    </FormField>
+                    <FormField name="password" label="Password" error={errors.password}>
+                        <InputField
+                            type="password"
+                            autoComplete="current-password"
+                            placeholder=" "
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            onBlur={() => check('password')}
+                            onKeyUp={() => recheck('password')}
+                            {...describedBy('password', errors.password)}
+                        />
+                    </FormField>
                     {challenge.widget}
                     {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
                     <Button type="submit" disabled={busy}>
@@ -133,7 +168,7 @@ export default function AdminLoginPage() {
     if (step === 'setup_2fa') {
         return (
             <AuthCard title="Set up two-factor sign-in" subtitle="Scan this with an authenticator app (Google Authenticator, 1Password, Authy), then type the 6-digit code it shows.">
-                <form onSubmit={submitSetup} className={field}>
+                <form onSubmit={submitSetup} className={field} noValidate>
                     {setup ? (
                         <>
                             {/* Our own API's QR code, an SVG of the otpauth link */}
@@ -146,9 +181,9 @@ export default function AdminLoginPage() {
                     ) : (
                         <div className="mx-auto size-44 rounded-lg bg-surface-muted" />
                     )}
-                    <InputField name="code" inputMode="numeric" autoComplete="one-time-code" placeholder="123456" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
+                    <InputField name="code" inputMode="numeric" autoComplete="one-time-code" placeholder="123456" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
                     {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
-                    <Button type="submit" disabled={busy || code.length !== 6}>
+                    <Button type="submit" disabled={busy}>
                         Turn on two-factor
                     </Button>
                 </form>
@@ -179,19 +214,18 @@ export default function AdminLoginPage() {
     if (step === 'verify_2fa') {
         return (
             <AuthCard title="Two-factor sign-in" subtitle={useRecovery ? 'Enter one of your recovery codes.' : 'Enter the 6-digit code from your authenticator app.'}>
-                <form onSubmit={submitVerify} className={field}>
+                <form onSubmit={submitVerify} className={field} noValidate>
                     <InputField
                         name="code"
                         inputMode={useRecovery ? 'text' : 'numeric'}
                         autoComplete="one-time-code"
                         placeholder={useRecovery ? 'abcd-efgh' : '123456'}
                         maxLength={useRecovery ? 9 : 6}
-                        required
                         value={code}
                         onChange={(e) => setCode(useRecovery ? e.target.value : e.target.value.replace(/\D/g, ''))}
                     />
                     {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
-                    <Button type="submit" disabled={busy || !code}>
+                    <Button type="submit" disabled={busy}>
                         Sign in
                     </Button>
                     <button
@@ -211,13 +245,13 @@ export default function AdminLoginPage() {
 
     return (
         <AuthCard title="Choose a new password" subtitle="You signed in with a temporary password. Pick your own to continue.">
-            <form onSubmit={submitNewPassword} className={field}>
+            <form onSubmit={submitNewPassword} className={field} noValidate>
                 {!password && (
-                    <InputField name="current" type="password" autoComplete="current-password" placeholder="Temporary password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <InputField name="current" type="password" autoComplete="current-password" placeholder="Temporary password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 )}
-                <InputField name="new" type="password" autoComplete="new-password" placeholder="New password (8+ characters)" minLength={8} required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                <InputField name="new" type="password" autoComplete="new-password" placeholder={`New password (${PASSWORD_MIN}+ characters)`} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                 {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
-                <Button type="submit" disabled={busy || newPassword.length < 8}>
+                <Button type="submit" disabled={busy}>
                     Save and continue
                 </Button>
             </form>

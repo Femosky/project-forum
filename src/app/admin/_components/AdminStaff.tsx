@@ -84,7 +84,7 @@ export function AdminStaff({ me, initial }: { me: StaffAccount; initial: StaffAc
             </div>
 
             {inviting && (
-                <form onSubmit={invite} className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-3">
+                <form onSubmit={invite} className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-3" noValidate>
                     <InputField name="email" type="email" placeholder="Email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                     <InputField name="name" placeholder="Name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                     <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })} className={selectStyles}>

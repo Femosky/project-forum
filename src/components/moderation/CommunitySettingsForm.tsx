@@ -71,7 +71,7 @@ export function CommunitySettingsForm({ community }: { community: Community }) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4" noValidate>
             <div className="flex flex-col gap-1.5">
                 <span className="text-sm font-semibold">Icon and banner</span>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
