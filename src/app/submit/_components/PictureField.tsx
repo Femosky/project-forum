@@ -98,7 +98,7 @@ export default function PictureField({ value, onChange, invalid }: { value: Post
                 tabIndex={-1}
                 onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
             />
-            <p className="text-xs text-muted">JPEG, PNG, WebP or GIF. Big photos are shrunk before they're sent. Location and camera details are removed. No sexual content.</p>
+            <p className="text-xs text-muted">JPEG, PNG, WebP or GIF. Big photos are shrunk before they&apos;re sent. Location and camera details are removed. No sexual content.</p>
             {error && <p className="text-xs text-brand-text">{error}</p>}
         </div>
     );

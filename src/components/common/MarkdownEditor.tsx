@@ -16,15 +16,13 @@ import {
     Superscript,
     Table,
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { twMerge } from 'tailwind-merge';
 import TextArea from '@/components/ui/TextArea';
 import type { Table as TableData } from './TableEditor';
+
+type TableModule = typeof import('./TableEditor');
 import Button from '@/components/ui/Button';
 import Markdown from './Markdown';
-
-// The table editor only loads when someone opens it
-const TableEditor = dynamic(() => import('./TableEditor'), { ssr: false });
 
 // Ctrl on Windows and Linux, ⌘ on Apple devices, for the shortcut hints
 const MOD = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+';
@@ -94,6 +92,8 @@ export function MarkdownEditor({
     const [linkDraft, setLinkDraft] = useState<{ text: string; url: string; start: number; end: number } | null>(null);
     // The table being added (at start..end) or edited (start..end is the old table)
     const [tableDraft, setTableDraft] = useState<{ initial: TableData | null; start: number; end: number } | null>(null);
+    // The table editor's code, fetched the first time someone opens it, so pages don't carry it
+    const [tableModule, setTableModule] = useState<TableModule | null>(null);
     const textarea = useRef<HTMLTextAreaElement>(null);
     const isCompact = variant === 'compact';
 
@@ -136,8 +136,9 @@ export function MarkdownEditor({
             setLinkDraft({ text: looksLikeUrl ? '' : selected, url: looksLikeUrl ? selected : '', start, end });
         } else {
             // Inside an existing table: edit that one. Otherwise a new one goes where the cursor is.
-            void import('./TableEditor').then(({ tableAt }) => {
-                const found = tableAt(value, start);
+            void import('./TableEditor').then((loaded) => {
+                setTableModule(loaded);
+                const found = loaded.tableAt(value, start);
                 setTableDraft(found ? { initial: found.table, start: found.start, end: found.end } : { initial: null, start, end });
             });
         }
@@ -318,8 +319,8 @@ export function MarkdownEditor({
                 </div>
             )}
 
-            {tableDraft && (
-                <TableEditor
+            {tableDraft && tableModule && (
+                <tableModule.default
                     initial={tableDraft.initial}
                     onDone={insertTable}
                     onCancel={() => {
