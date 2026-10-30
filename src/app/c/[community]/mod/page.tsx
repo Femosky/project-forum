@@ -87,7 +87,7 @@ export default async function ModToolsPage({ params, searchParams }: PageProps) 
                 ) : tab === 'requests' ? (
                     <JoinRequests community={info.name} initial={requests!.data!.requests} />
                 ) : tab === 'team' ? (
-                    <TeamPanel community={info.name} initial={team!.data!} viewerRole={viewer?.role ?? null} viewerName={me.data?.user.username ?? ''} />
+                    <TeamPanel community={info.name} initial={team!.data!} viewerRole={viewer?.role ?? null} viewerPermission={viewer?.mod_permission ?? null} viewerName={me.data?.user.username ?? ''} />
                 ) : tab === 'people' ? (
                     <RestrictionsPanel community={info.name} initial={restrictions!.data!} />
                 ) : tab === 'log' ? (

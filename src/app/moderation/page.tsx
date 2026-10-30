@@ -42,7 +42,7 @@ export default async function ModerationPage() {
                                 <Link href={`/c/${invite.community.name}`} className="font-bold hover:underline">
                                     {communityLabel(invite.community)}
                                 </Link>
-                                {invite.permission === 'posts' ? ' (posts only)' : ''}
+                                {invite.permission === 'posts' ? ' (posts only)' : invite.permission === 'lead' ? ' as a Lead mod' : ''}
                             </p>
                             <InviteAnswer id={invite.id} />
                         </li>
@@ -63,7 +63,7 @@ export default async function ModerationPage() {
                                         {communityLabel(community)}
                                     </Link>
                                     <span className="rounded-full bg-active px-2 text-xs font-semibold leading-5 text-muted">
-                                        {community.role === 'owner' ? 'Owner' : community.permission === 'posts' ? 'Mod, posts only' : 'Mod'}
+                                        {community.role === 'owner' ? 'Owner' : community.permission === 'lead' ? 'Lead mod' : community.permission === 'posts' ? 'Mod, posts only' : 'Mod'}
                                     </span>
                                     {community.visibility === 'private' && <span className="text-xs text-muted">Private</span>}
                                     <Link href={mod} className="ml-auto text-sm font-semibold text-link hover:underline">
@@ -74,7 +74,7 @@ export default async function ModerationPage() {
                                     <Link href={`${mod}?tab=queue`} className="rounded-[7px] px-3 py-1.5 ring-1 ring-inset ring-border hover:bg-hover">
                                         <span className="font-bold tabular-nums">{community.queue}</span> in the queue
                                     </Link>
-                                    {community.permission === 'all' && (
+                                    {community.permission !== 'posts' && (
                                         <Link href={`${mod}?tab=requests`} className="rounded-[7px] px-3 py-1.5 ring-1 ring-inset ring-border hover:bg-hover">
                                             <span className="font-bold tabular-nums">{community.join_requests}</span> asking to join
                                         </Link>

@@ -172,7 +172,7 @@ export interface CommunityViewer {
     mod_permission: ModPermission | null;
 }
 
-export type ModPermission = 'all' | 'posts';
+export type ModPermission = 'lead' | 'all' | 'posts';
 export type ModEmailFrequency = 'instant' | 'daily' | 'off';
 
 export interface ModerationOverview {
@@ -551,6 +551,7 @@ export interface AdminCommunity {
     member_count: number;
     post_count: number;
     created_at: string;
+    needs_moderator: boolean;
 }
 
 export interface BlockedTerm {

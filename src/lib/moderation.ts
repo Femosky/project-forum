@@ -71,6 +71,8 @@ const ACTION_LABELS: Record<string, string> = {
     remove_mod: 'removed a moderator',
     step_down: 'stepped down as moderator',
     transfer_ownership: 'handed over ownership',
+    auto_transfer_ownership: 'took over from the previous owner',
+    reassign_owner: 'gave the community a new owner',
     accept_join_request: 'accepted a join request',
     reject_join_request: 'declined a join request',
     update_community: 'edited community settings',
