@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Bold, Code, EyeOff, Heading, Italic, Link2, List, ListOrdered, Quote, Strikethrough, Subscript, Superscript, Table } from 'lucide-react';
+import { Bold, Code, EyeOff, Heading, Italic, Link2, List, ListOrdered, Quote, SquareCode, Strikethrough, Subscript, Superscript, Table } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 
@@ -26,6 +26,7 @@ export const TOOLS: Tool[][] = [
         { id: 'bullets', label: 'Bulleted list', icon: List, shortcut: 'Shift+8' },
         { id: 'numbers', label: 'Numbered list', icon: ListOrdered, shortcut: 'Shift+7' },
         { id: 'quote', label: 'Quote', icon: Quote, shortcut: 'Shift+9' },
+        { id: 'codeblock', label: 'Code block', icon: SquareCode, shortcut: 'Alt+C' },
         { id: 'table', label: 'Table', icon: Table },
     ],
 ];

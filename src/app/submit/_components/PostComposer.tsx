@@ -111,14 +111,15 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
     // New accounts are checked for bots on their first day; the API says when
     const challenge = useChallenge(false);
 
-    // Restore an unsent draft once on load (a community in the URL wins), then keep it saved as you type
+    // Restore an unsent draft once on load, then keep it saved as you type. The community is never restored: it comes
+    // from the link that opened this page, or the writer picks it, so nothing lands somewhere by accident
     useEffect(() => {
         const saved = readDraft();
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setDraft((current) => ({
             ...current,
             ...saved,
-            community: initialCommunity || saved.community || current.community,
+            community: initialCommunity ?? '',
             ...(canPostLinks ? {} : { type: 'text' as const }),
             ...(canPostAnonymously ? {} : { isAnonymous: false }),
         }));

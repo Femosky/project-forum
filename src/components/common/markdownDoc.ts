@@ -193,7 +193,7 @@ function inlineMarkdown(nodes: DocNode[], insideBold = false): string {
 }
 
 // A paragraph that starts like a heading, quote, list or rule, but was typed as plain text
-const lineSafe = (value: string) => value.replace(/^(\s*)(#{1,6}\s|>|-\s|-{3,}$)/gm, '$1\\$2');
+const lineSafe = (value: string) => value.replace(/^(\s*)(#{1,6}\s|>(?!!)|-\s|-{3,}$)/gm, '$1\\$2');
 
 function tableMarkdown(table: DocNode): string {
     const rows = table.content ?? [];

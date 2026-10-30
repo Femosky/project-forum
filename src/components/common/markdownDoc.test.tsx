@@ -16,6 +16,7 @@ const SAME = [
     '[**bold link**](https://example.com)',
     'E = mc^(2) and H~(2)O',
     'A >!hidden spoiler!< here',
+    '>!spoiler first!< then text',
     '# Big\n\n## Heading\n\n### Smaller',
     '- one\n- two\n- **three**',
     '1. one\n2. two',

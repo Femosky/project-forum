@@ -138,6 +138,12 @@ export function MarkdownEditor({
         } else if (tool.id === 'link') {
             const looksLikeUrl = /^https?:\/\//.test(selected);
             setLinkDraft({ text: looksLikeUrl ? '' : selected, url: looksLikeUrl ? selected : '', showText: true, start, end });
+        } else if (tool.id === 'codeblock') {
+            const head = value.slice(0, start);
+            const before = !head || head.endsWith('\n') ? '' : '\n';
+            const text = selected || 'code';
+            const open = `${before}\`\`\`\n`;
+            replace(start, end, `${open}${text}\n\`\`\`\n`, start + open.length, start + open.length + text.length);
         } else if (tool.id === 'table') {
             // A table needs a blank line before it and after it
             const head = value.slice(0, start);
@@ -188,6 +194,11 @@ export function MarkdownEditor({
         }
         if (event.key === 'Enter' && !event.shiftKey && !event.altKey && !mod) {
             continueList(event);
+            return;
+        }
+        if (mod && event.altKey && event.code === 'KeyC') {
+            event.preventDefault();
+            apply(ALL_TOOLS.find((candidate) => candidate.id === 'codeblock')!);
             return;
         }
         if (!mod || event.altKey) return;

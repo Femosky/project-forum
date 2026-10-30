@@ -108,7 +108,7 @@ export default function RichEditor({ value, onChange, placeholder, label, maxLen
             StarterKit.configure({
                 underline: false,
                 listItem: false,
-                link: { openOnClick: false, autolink: true, protocols: ['http', 'https'], HTMLAttributes: { rel: 'nofollow ugc noopener noreferrer', target: null } },
+                link: { openOnClick: false, autolink: true, defaultProtocol: 'https', HTMLAttributes: { rel: 'nofollow ugc noopener noreferrer', target: null } },
             }),
             FlatListItem,
             Spoiler,
@@ -182,6 +182,7 @@ export default function RichEditor({ value, onChange, placeholder, label, maxLen
                       sup: current.isActive('superscript'),
                       sub: current.isActive('subscript'),
                       code: current.isActive('code'),
+                      codeblock: current.isActive('codeBlock'),
                       spoiler: current.isActive('spoiler'),
                       link: current.isActive('link'),
                       heading: current.isActive('heading'),
@@ -203,6 +204,7 @@ export default function RichEditor({ value, onChange, placeholder, label, maxLen
         else if (tool.id === 'sub') chain.toggleSubscript().run();
         else if (tool.id === 'code') chain.toggleCode().run();
         else if (tool.id === 'spoiler') chain.toggleMark('spoiler').run();
+        else if (tool.id === 'codeblock') chain.toggleCodeBlock().run();
         else if (tool.id === 'heading') chain.toggleHeading({ level: 2 }).run();
         else if (tool.id === 'bullets') chain.toggleBulletList().run();
         else if (tool.id === 'numbers') chain.toggleOrderedList().run();
