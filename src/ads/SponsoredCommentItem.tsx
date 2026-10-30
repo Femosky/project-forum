@@ -8,10 +8,12 @@ import { adClickUrl } from './config';
 import { APP_NAME } from '@/lib/constants';
 import { useAdImpression } from './impressions';
 import AdMenu from './AdMenu';
+import AdPicture from './AdPicture';
 import type { NativeAdUnit } from './types';
 
 // A native ad between top-level comments, never inside a thread, so it can't read as an answer to someone. Laid out
-// like a comment (logo, name line, text) with a "Sponsored" tag and a link card; no voting or replies.
+// like a comment (logo, name line, text) with a "Sponsored" tag, a small thumbnail when it has a picture, and a link
+// card; no voting or replies.
 export function SponsoredCommentItem({ unit, preview = false }: { unit: NativeAdUnit; preview?: boolean }) {
     const ref = useRef<HTMLElement>(null);
     useAdImpression(ref, unit, !preview);
@@ -31,10 +33,24 @@ export function SponsoredCommentItem({ unit, preview = false }: { unit: NativeAd
                         </div>
                     )}
                 </div>
-                <p className="text-sm leading-[21px] text-body">
-                    <span className="font-medium text-text">{creative.title}</span>
-                    {creative.body && <> {creative.body}</>}
-                </p>
+                {/* Compact, like Reddit's: the text, and the picture as a small thumbnail at the side, never the feed's
+                    big card. The thumbnail's box is fixed, so nothing moves when it loads. */}
+                <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1 text-sm leading-[21px]">
+                        <p className="font-medium text-text">{creative.title}</p>
+                        {creative.body && <p className="line-clamp-1 text-body">{creative.body}</p>}
+                    </div>
+                    {creative.image_url && (
+                        <a href={preview ? undefined : href} target="_blank" rel="sponsored noopener" tabIndex={-1} aria-hidden className="shrink-0">
+                            <AdPicture
+                                src={creative.image_url}
+                                focus={creative.image_focus}
+                                fit={creative.image_fit}
+                                className="aspect-[4/3] w-24 rounded-lg ring-1 ring-border"
+                            />
+                        </a>
+                    )}
+                </div>
                 <a
                     href={preview ? undefined : href}
                     target="_blank"

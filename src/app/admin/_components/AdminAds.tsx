@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Copy, Megaphone, Pause, Play, Plus } from 'lucide-react';
+import { ArrowLeft, Copy, Megaphone, Pause, Pencil, Play, Plus } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -18,6 +18,7 @@ import { COMMUNITY_CATEGORIES } from '@/lib/moderation';
 import SponsoredPostCard from '@/ads/SponsoredPostCard';
 import SponsoredCommentItem from '@/ads/SponsoredCommentItem';
 import type { AdsOverview, Advertiser, Campaign, CampaignDetail, Creative, NativeAdUnit } from '@/ads/types';
+import AdPictureField, { type PictureFields } from './AdPictureField';
 
 // Ad campaign management (Phase 6). Direct deals are set up by hand: advertiser, then campaign (dates, targeting,
 // price), then creatives. Money is typed in major units (naira) and stored in minor units (kobo).
@@ -202,7 +203,7 @@ function PromoteForm({ onCancel }: { onCancel: () => void }) {
             await api(`/admin/ads/campaigns/${campaign.id}/creatives`, {
                 method: 'POST',
                 body: {
-                    format: 'feed_post',
+                    format: 'any',
                     headline: fields.headline.trim(),
                     body: fields.body.trim() || null,
                     image_url: fields.image_url || null,
@@ -220,7 +221,7 @@ function PromoteForm({ onCancel }: { onCancel: () => void }) {
         <form onSubmit={submit} className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
                 <h3 className="font-bold">Promote your own product</h3>
-                <p className="text-sm text-muted">Shows as &quot;From us&quot; in the feed, even when paid campaigns are running. You can add a reply-style ad and pictures on the next screen.</p>
+                <p className="text-sm text-muted">Shows as &quot;From us&quot; in feeds and between comments, even when paid campaigns are running. You can adjust the picture and see every placement on the next screen.</p>
             </div>
             <Field label="Product">
                 <InputField name="product" placeholder="Cardernir" required value={fields.product} onChange={set('product')} />
@@ -234,11 +235,13 @@ function PromoteForm({ onCancel }: { onCancel: () => void }) {
             <Field label="Text (optional)" className="sm:col-span-2">
                 <TextArea name="body" placeholder="One or two lines about it" value={fields.body} onChange={set('body')} />
             </Field>
-            <Field label="Logo (square)">
+            <Field label="Logo (the ad's profile picture)">
                 <ImageUpload endpoint="/admin/images?purpose=ad_logo" aspect="square" label="Logo" value={fields.logo_url || null} onChange={(url) => setFields({ ...fields, logo_url: url ?? '' })} />
+                <span className="text-xs text-muted">Square, 256 × 256 or bigger. Without one, the first letter shows.</span>
             </Field>
             <Field label="Picture (optional)">
                 <ImageUpload endpoint="/admin/images?purpose=ad_image" aspect="card" label="Picture" value={fields.image_url || null} onChange={(url) => setFields({ ...fields, image_url: url ?? '' })} />
+                <span className="text-xs text-muted">Best at 1200 × 628. Without one, the link&apos;s preview image is used. Crop and fit on the next screen.</span>
             </Field>
             <Field label="Share of ad slots (%, up to 50)">
                 <InputField name="share" type="number" min={0} max={50} value={fields.share} onChange={set('share')} />
@@ -332,8 +335,11 @@ export function AdminCampaign({ initial }: { initial: CampaignDetail }) {
                     }}
                 />
                 <div className="text-sm">
-                    <p className="font-semibold">{advertiser.name} logo</p>
-                    <p className="text-muted">Square, shown next to the name on every ad. Without one, the first letter is shown.</p>
+                    <p className="font-semibold">{advertiser.name} logo (the ads&apos; profile picture)</p>
+                    <p className="text-muted">
+                        Square, 256 × 256 or bigger. Shown next to the name on every one of {advertiser.name}&apos;s ads.{' '}
+                        {advertiser.logo_url ? 'Click it to replace it.' : 'Without one, the first letter shows: click the box to upload.'}
+                    </p>
                 </div>
             </div>
 
@@ -597,7 +603,9 @@ function CampaignForm({ campaign, onSaved }: { campaign: Campaign; onSaved: () =
     );
 }
 
-const previewUnit = (creative: Pick<Creative, 'id' | 'headline' | 'body' | 'image_url' | 'cta_label' | 'click_url'>, campaign: Campaign, advertiser: Advertiser): NativeAdUnit => {
+type PreviewSource = Pick<Creative, 'id' | 'headline' | 'body' | 'cta_label' | 'click_url' | 'link_image_url'> & PictureFields;
+
+const previewUnit = (creative: PreviewSource, campaign: Campaign, advertiser: Advertiser): NativeAdUnit => {
     // Same rule as the API: a page on this site (a /path, this site's address or a local test link) shows the site's name
     let host: string | null = null;
     try {
@@ -615,15 +623,21 @@ const previewUnit = (creative: Pick<Creative, 'id' | 'headline' | 'body' | 'imag
             advertiser_logo: advertiser.logo_url,
             title: creative.headline || 'Headline',
             body: creative.body || null,
-            image_url: creative.image_url || null,
+            // Same rule as the API: its own picture, else the link's preview image when switched on
+            image_url: creative.image_url || (creative.use_link_image ? creative.link_image_url : null) || null,
+            image_focus: { x: creative.image_focus_x, y: creative.image_focus_y },
+            image_fit: creative.image_fit,
             cta_label: creative.cta_label || 'Learn more',
             display_url: host,
         },
     };
 };
 
+const FORMAT_LABELS: Record<Creative['format'], string> = { any: 'Feed and between comments', feed_post: 'Feed', thread_comment: 'Between comments' };
+
 function Creatives({ campaign, advertiser, creatives, onChanged }: { campaign: Campaign; advertiser: Advertiser; creatives: Creative[]; onChanged: () => Promise<void> }) {
     const [isAdding, setIsAdding] = useState(creatives.length === 0);
+    const [editing, setEditing] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     async function toggle(creative: Creative) {
@@ -658,60 +672,150 @@ function Creatives({ campaign, advertiser, creatives, onChanged }: { campaign: C
                 />
             )}
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
-            {creatives.map((creative) => (
-                <div key={creative.id} className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-3">
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <Badge>{creative.format === 'feed_post' ? 'Feed' : 'Between comments'}</Badge>
-                        {!creative.is_active && <Badge variant="danger">Paused</Badge>}
-                        <span className="flex-1 text-xs text-muted">
-                            {creative.impressions.toLocaleString()} views · {creative.clicks.toLocaleString()} clicks ({ctr(creative.impressions, creative.clicks)}) · goes to{' '}
-                            <span className="break-all">{creative.click_url}</span>
-                        </span>
-                        <Button size="sm" variant="outline" onClick={() => toggle(creative)}>
-                            {creative.is_active ? <Pause className="size-4" /> : <Play className="size-4" />} {creative.is_active ? 'Pause' : 'Resume'}
-                        </Button>
+            {creatives.map((creative) =>
+                editing === creative.id ? (
+                    <CreativeForm
+                        key={creative.id}
+                        campaign={campaign}
+                        advertiser={advertiser}
+                        initial={creative}
+                        onCancel={() => setEditing(null)}
+                        onSaved={async () => {
+                            await onChanged();
+                            setEditing(null);
+                        }}
+                        onChanged={onChanged}
+                    />
+                ) : (
+                    <div key={creative.id} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-3">
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                            <Badge>{FORMAT_LABELS[creative.format]}</Badge>
+                            {!creative.is_active && <Badge variant="danger">Paused</Badge>}
+                            <span className="flex-1 text-xs text-muted">
+                                {creative.impressions.toLocaleString()} views · {creative.clicks.toLocaleString()} clicks ({ctr(creative.impressions, creative.clicks)}) · goes to{' '}
+                                <span className="break-all">{creative.click_url}</span>
+                            </span>
+                            <Button size="sm" variant="outline" onClick={() => setEditing(creative.id)}>
+                                <Pencil className="size-4" /> Edit
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => toggle(creative)}>
+                                {creative.is_active ? <Pause className="size-4" /> : <Play className="size-4" />} {creative.is_active ? 'Pause' : 'Resume'}
+                            </Button>
+                        </div>
+                        <Previews unit={previewUnit({ ...creative, image_url: creative.image_url ?? '' }, campaign, advertiser)} format={creative.format} />
                     </div>
-                    <Preview unit={previewUnit(creative, campaign, advertiser)} format={creative.format} />
-                </div>
-            ))}
+                )
+            )}
         </section>
     );
 }
 
-function Preview({ unit, format }: { unit: NativeAdUnit; format: Creative['format'] }) {
-    return format === 'feed_post' ? (
-        // The feed column pads cards on wider screens; the preview box does the same so nothing touches its edges
-        <SponsoredPostCard unit={unit} preview className="rounded-xl border border-border sm:px-4" />
-    ) : (
-        <div className="rounded-xl border border-border p-4">
-            <SponsoredCommentItem unit={unit} preview />
+// Every place the ad can appear, drawn with the same components the site uses. Phone width is drawn at 375px.
+function Previews({ unit, format }: { unit: NativeAdUnit; format: Creative['format'] }) {
+    const feed = format !== 'thread_comment';
+    const comments = format !== 'feed_post';
+    return (
+        <div className="flex flex-col gap-4">
+            {feed && (
+                <PreviewPlace label="Feed, computer">
+                    {/* The feed column pads cards on wider screens; the preview box does the same so nothing touches its edges */}
+                    <SponsoredPostCard unit={unit} preview className="max-w-[45rem] rounded-xl border border-border sm:px-4" />
+                </PreviewPlace>
+            )}
+            {feed && (
+                <PreviewPlace label="Feed, phone (375 px)">
+                    <SponsoredPostCard unit={unit} preview className="w-[375px] max-w-full rounded-xl border border-border sm:px-4" />
+                </PreviewPlace>
+            )}
+            {comments && (
+                <PreviewPlace label="Between comments">
+                    <div className="max-w-[45rem] rounded-xl border border-border p-4">
+                        <SponsoredCommentItem unit={unit} preview />
+                    </div>
+                </PreviewPlace>
+            )}
         </div>
     );
 }
 
-function CreativeForm({ campaign, advertiser, onSaved, onCancel }: { campaign: Campaign; advertiser: Advertiser; onSaved: () => Promise<void>; onCancel?: () => void }) {
-    const [fields, setFields] = useState({ format: 'feed_post' as Creative['format'], headline: '', body: '', image_url: '', click_url: '', cta_label: 'Learn more' });
+function PreviewPlace({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-semibold uppercase tracking-wide text-subtle">{label}</span>
+            {children}
+        </div>
+    );
+}
+
+type CreativeFormProps = {
+    campaign: Campaign;
+    advertiser: Advertiser;
+    // Editing this ad; otherwise a new one
+    initial?: Creative;
+    onSaved: () => Promise<void>;
+    onCancel?: () => void;
+    // Reloads the campaign without closing the form (after fetching the link's preview image again)
+    onChanged?: () => Promise<void>;
+};
+
+function CreativeForm({ campaign, advertiser, initial, onSaved, onCancel, onChanged }: CreativeFormProps) {
+    const [fields, setFields] = useState({
+        format: initial?.format ?? ('any' as Creative['format']),
+        headline: initial?.headline ?? '',
+        body: initial?.body ?? '',
+        click_url: initial?.click_url ?? '',
+        cta_label: initial?.cta_label ?? 'Learn more',
+    });
+    const [picture, setPicture] = useState<PictureFields>({
+        image_url: initial?.image_url ?? '',
+        image_focus_x: initial?.image_focus_x ?? 50,
+        image_focus_y: initial?.image_focus_y ?? 50,
+        image_fit: initial?.image_fit ?? 'cover',
+        use_link_image: initial?.use_link_image ?? true,
+    });
     const [error, setError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const set = (key: keyof typeof fields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
         setFields({ ...fields, [key]: e.target.value });
+
+    // The stored preview image belongs to the saved link; a changed link gets a new one on save
+    const linkChanged = initial !== undefined && fields.click_url.trim() !== initial.click_url;
+    const linkImage = {
+        url: linkChanged ? null : (initial?.link_image_url ?? null),
+        checkedAt: linkChanged ? null : (initial?.link_image_checked_at ?? null),
+        onRefresh:
+            initial && !linkChanged && onChanged
+                ? async () => {
+                      setError(null);
+                      try {
+                          await api(`/admin/ads/creatives/${initial.id}/link-image`, { method: 'POST' });
+                          await onChanged();
+                      } catch (error) {
+                          setError(errorMessage(error));
+                      }
+                  }
+                : undefined,
+    };
 
     async function submit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setIsSaving(true);
         setError(null);
         try {
-            await api(`/admin/ads/campaigns/${campaign.id}/creatives`, {
-                method: 'POST',
-                body: {
-                    format: fields.format,
-                    headline: fields.headline.trim(),
-                    body: fields.body.trim() || null,
-                    image_url: fields.image_url.trim() || null,
-                    click_url: fields.click_url.trim(),
-                    cta_label: fields.cta_label.trim() || 'Learn more',
-                },
-            });
+            const body = {
+                format: fields.format,
+                headline: fields.headline.trim(),
+                body: fields.body.trim() || null,
+                image_url: picture.image_url.trim() || null,
+                image_focus_x: picture.image_focus_x,
+                image_focus_y: picture.image_focus_y,
+                image_fit: picture.image_fit,
+                use_link_image: picture.use_link_image,
+                click_url: fields.click_url.trim(),
+                cta_label: fields.cta_label.trim() || 'Learn more',
+            };
+            if (initial) await api(`/admin/ads/creatives/${initial.id}`, { method: 'PATCH', body });
+            else await api(`/admin/ads/campaigns/${campaign.id}/creatives`, { method: 'POST', body });
             await onSaved();
         } catch (error) {
             setError(errorMessage(error));
@@ -720,13 +824,16 @@ function CreativeForm({ campaign, advertiser, onSaved, onCancel }: { campaign: C
         }
     }
 
+    const unit = previewUnit({ id: initial?.id ?? 'preview', ...fields, link_image_url: linkImage.url, ...picture }, campaign, advertiser);
+
     return (
-        <form onSubmit={submit} className="grid gap-3 rounded-xl border border-border bg-surface p-4 lg:grid-cols-2">
+        <form onSubmit={submit} className="grid gap-4 rounded-xl border border-border bg-surface p-4 lg:grid-cols-2">
             <div className="flex flex-col gap-3">
                 <Field label="Where">
                     <select value={fields.format} onChange={set('format')} className={selectStyles}>
-                        <option value="feed_post">In the feed (looks like a post)</option>
-                        <option value="thread_comment">Between comments (looks like a comment)</option>
+                        <option value="any">Feed and between comments</option>
+                        <option value="feed_post">Feed only (looks like a post)</option>
+                        <option value="thread_comment">Between comments only (looks like a comment)</option>
                     </select>
                 </Field>
                 <Field label="Headline">
@@ -735,11 +842,6 @@ function CreativeForm({ campaign, advertiser, onSaved, onCancel }: { campaign: C
                 <Field label="Text (optional)">
                     <TextArea name="ad-body" maxLength={500} value={fields.body} onChange={set('body')} />
                 </Field>
-                {fields.format === 'feed_post' && (
-                    <Field label="Image (optional, https, 1.91:1 like 1200×628)">
-                        <ImageUpload endpoint="/admin/images?purpose=ad_image" aspect="card" label="Picture" value={fields.image_url || null} onChange={(url) => setFields({ ...fields, image_url: url ?? '' })} />
-                    </Field>
-                )}
                 <div className="grid grid-cols-[1fr_auto] gap-3">
                     <Field label="Link">
                         <InputField name="click_url" required placeholder="https://example.com/offer, or /communities for a page here" value={fields.click_url} onChange={set('click_url')} />
@@ -748,10 +850,11 @@ function CreativeForm({ campaign, advertiser, onSaved, onCancel }: { campaign: C
                         <InputField name="cta_label" maxLength={24} className="w-36" value={fields.cta_label} onChange={set('cta_label')} />
                     </Field>
                 </div>
+                <AdPictureField value={picture} onChange={setPicture} linkImage={linkImage} />
             </div>
-            <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold">Preview</span>
-                <Preview unit={previewUnit({ id: 'preview', ...fields }, campaign, advertiser)} format={fields.format} />
+            <div className="flex min-w-0 flex-col gap-2">
+                <span className="text-sm font-semibold">Preview, everywhere it can show</span>
+                <Previews unit={unit} format={fields.format} />
             </div>
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" className="lg:col-span-2" />}
             <div className="flex justify-end gap-2 lg:col-span-2">
@@ -761,7 +864,7 @@ function CreativeForm({ campaign, advertiser, onSaved, onCancel }: { campaign: C
                     </Button>
                 )}
                 <Button type="submit" disabled={isSaving || fields.headline.trim().length < 3 || !fields.click_url.trim()}>
-                    {isSaving ? 'Saving...' : 'Add ad'}
+                    {isSaving ? 'Saving...' : initial ? 'Save ad' : 'Add ad'}
                 </Button>
             </div>
         </form>

@@ -135,6 +135,8 @@ function ads(query) {
             title: placement === 'feed' ? 'Track every naira you spend this month' : 'Set a monthly budget in two minutes',
             body: 'Free budgeting tools with your current account.',
             image_url: null,
+            image_focus: { x: 50, y: 50 },
+            image_fit: 'cover',
             cta_label: 'Learn more',
             display_url: 'budget.example',
         },

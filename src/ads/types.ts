@@ -9,6 +9,9 @@ export type NativeCreative = {
     title: string;
     body: string | null;
     image_url: string | null;
+    // How the picture sits in its frame: crop around this point (percent across and down), or show it whole
+    image_focus: { x: number; y: number };
+    image_fit: 'cover' | 'contain';
     cta_label: string;
     // The advertiser's domain, or null when the ad leads to a page on this site (cards then show the site's name)
     display_url: string | null;
@@ -83,10 +86,18 @@ export type AdsOverview = {
 export type Creative = {
     id: string;
     campaign_id: string;
-    format: 'feed_post' | 'thread_comment';
+    // 'any' runs in both: the big card in feeds, the compact one between comments
+    format: 'feed_post' | 'thread_comment' | 'any';
     headline: string;
     body: string | null;
     image_url: string | null;
+    image_focus_x: number;
+    image_focus_y: number;
+    image_fit: 'cover' | 'contain';
+    // With no picture: the destination's preview image (stored by the API) when switched on
+    use_link_image: boolean;
+    link_image_url: string | null;
+    link_image_checked_at: string | null;
     click_url: string;
     cta_label: string;
     is_active: boolean;
