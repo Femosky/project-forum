@@ -14,7 +14,7 @@ import {
     DropdownSeparator,
     DropdownTrigger,
 } from '@/components/ui/Dropdown';
-import { applyTheme, ThemeChoice } from '@/components/theme/ThemeMenu';
+import ThemeMenu, { applyTheme, useThemeChoice } from '@/components/theme/ThemeMenu';
 import { api } from '@/lib/api/client';
 import { useAuthStateStore } from '@/lib/stateStore';
 import { Theme, THEMES } from '@/lib/constants';
@@ -28,7 +28,7 @@ export function SidebarAccount({ initialTheme }: { initialTheme: Theme | null })
     const logout = useAuthStateStore((state) => state.logout);
     const [me, setMe] = useState<{ username: string; avatar: string | null } | null>(null);
     const username = me?.username ?? null;
-    const [theme, setTheme] = useState<ThemeChoice>(initialTheme ?? 'system');
+    const [theme, setTheme] = useThemeChoice(initialTheme);
     const [isLeaving, setIsLeaving] = useState(false);
 
     useEffect(() => {
@@ -59,6 +59,10 @@ export function SidebarAccount({ initialTheme }: { initialTheme: Theme | null })
     if (!isAuthenticated) {
         return (
             <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-2 text-xs text-muted">
+                    Theme
+                    <ThemeMenu initialTheme={initialTheme} />
+                </div>
                 <Button asChild size="sm">
                     <Link href="/auth/login">Log in</Link>
                 </Button>

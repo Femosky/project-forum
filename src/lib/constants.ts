@@ -21,6 +21,10 @@ export const REPUTATION_LABEL = 'reputation';
 // Where legal requests, takedown notices and appeals go (shown on the policy pages)
 export const LEGAL_EMAIL = process.env.NEXT_PUBLIC_LEGAL_EMAIL || 'legal@forum.oskeylabs.com';
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:3001';
+export const THEME_STORAGE_KEY = 'theme';
+// Runs before paint: a guest's stored theme, unless the server already set one from a cookie
+export const THEME_SCRIPT = `try{var d=document.documentElement,t=localStorage.getItem('theme');if(!d.dataset.theme&&(t==='light'||t==='dark'))d.dataset.theme=t}catch(e){}`;
+
 export const API_BASE = `${BACKEND_URL}/v1`;
 
 export const PASSWORD_SPECIAL_CHARACTERS = '!@#$%^&*';

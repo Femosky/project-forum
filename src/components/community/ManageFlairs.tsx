@@ -67,7 +67,7 @@ export function ManageFlairs({ community, initialFlairs }: { community: string; 
                         ))}
                     </ul>
                 )}
-                <form onSubmit={add} className="flex gap-2">
+                <form onSubmit={add} className="flex gap-2" noValidate>
                     <InputField name="flair" aria-label="New flair" placeholder="New flair" maxLength={32} value={name} onChange={(e) => setName(e.target.value)} />
                     <Button type="submit" variant="secondary" disabled={isBusy || !name.trim()}>
                         Add

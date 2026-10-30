@@ -7,6 +7,7 @@ import AuthCard from '@/app/auth/_components/AuthCard';
 import Button from '@/components/ui/Button';
 import InputField from '@/components/ui/Input';
 import ErrorMessage from '@/components/ui/ErrorMessage';
+import { PASSWORD_MIN } from '@/components/forms/rules';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 
@@ -26,6 +27,7 @@ function InviteForm() {
 
     async function submit(e: React.FormEvent) {
         e.preventDefault();
+        if (password.length < PASSWORD_MIN) return setError(`Use at least ${PASSWORD_MIN} characters.`);
         setError(null);
         try {
             await api(`/admin/auth/invite/${encodeURIComponent(token)}`, { method: 'POST', body: { password } });
@@ -46,10 +48,10 @@ function InviteForm() {
     }
     return (
         <AuthCard title="Join the admin team" subtitle={invite ? `${invite.name} (${invite.email}), role: ${invite.role}` : undefined}>
-            <form onSubmit={submit} className="mt-5 flex flex-col gap-3">
-                <InputField name="password" type="password" autoComplete="new-password" placeholder="Choose a password (8+ characters)" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <form onSubmit={submit} className="mt-5 flex flex-col gap-3" noValidate>
+                <InputField name="password" type="password" autoComplete="new-password" placeholder={`Choose a password (${PASSWORD_MIN}+ characters)`} value={password} onChange={(e) => setPassword(e.target.value)} />
                 {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
-                <Button type="submit" disabled={!invite || password.length < 8}>
+                <Button type="submit" disabled={!invite}>
                     Set password
                 </Button>
             </form>

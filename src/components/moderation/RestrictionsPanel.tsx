@@ -40,7 +40,7 @@ export function RestrictionsPanel({ community, initial }: { community: string; i
 
     return (
         <div className="flex flex-col gap-4">
-            <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+            <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4" noValidate>
                 <label htmlFor="restrict-username" className="text-sm font-semibold">
                     Ban or mute someone
                 </label>

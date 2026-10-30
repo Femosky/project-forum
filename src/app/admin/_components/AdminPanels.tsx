@@ -21,6 +21,7 @@ function SearchBar({ placeholder, onSearch, children }: { placeholder: string; o
     const [q, setQ] = useState('');
     return (
         <form
+            noValidate
             role="search"
             onSubmit={(e) => {
                 e.preventDefault();
@@ -337,7 +338,7 @@ export function Blocklist({ initialTerms }: { initialTerms: BlockedTerm[] }) {
 
     return (
         <div className="flex flex-col gap-4">
-            <form onSubmit={add} className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+            <form onSubmit={add} className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4" noValidate>
                 <p className="text-sm text-muted">Posts and comments that link to a blocked domain (or its subdomains) or contain a blocked phrase are held for review, not deleted.</p>
                 <div className="flex flex-wrap gap-2">
                     <select

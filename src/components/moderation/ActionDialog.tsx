@@ -68,7 +68,7 @@ export function ActionDialog({
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent title={title} description={description}>
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
                     {withDuration && (
                         <fieldset className="flex flex-wrap gap-2">
                             <legend className="mb-2 text-sm font-semibold">How long</legend>

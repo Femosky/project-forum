@@ -69,7 +69,7 @@ export function ReportDialog({ targetType, targetId, open, onOpenChange }: Repor
                         Done
                     </Button>
                 ) : (
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
                         <fieldset className="flex flex-wrap gap-2">
                             <legend className="sr-only">Reason</legend>
                             {REPORT_REASONS.map((option) => (

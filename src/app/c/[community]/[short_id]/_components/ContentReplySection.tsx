@@ -70,7 +70,7 @@ export default function ContentReplySection({
     }
 
     return (
-        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-2">
+        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
             <MarkdownEditor
                 name="comment"
                 variant="compact"

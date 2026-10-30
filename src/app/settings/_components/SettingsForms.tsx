@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import InputField from '@/components/ui/Input';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
-import { applyTheme, ThemeChoice } from '@/components/theme/ThemeMenu';
+import { applyTheme, ThemeChoice, useThemeChoice } from '@/components/theme/ThemeMenu';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { API_BASE, DATA_SAVER_COOKIE_NAME, Theme } from '@/lib/constants';
@@ -86,7 +86,7 @@ export function ProfileForm({ user }: { user: PrivateUser }) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
             <Field label="Display name" name="display_name">
                 <InputField
                     name="display_name"
@@ -112,7 +112,7 @@ const THEME_OPTIONS: { value: ThemeChoice; label: string; icon: typeof Sun }[] =
 ];
 
 export function ThemePicker({ initialTheme }: { initialTheme: Theme | null }) {
-    const [choice, setChoice] = useState<ThemeChoice>(initialTheme ?? 'system');
+    const [choice, setChoice] = useThemeChoice(initialTheme);
 
     return (
         <div role="radiogroup" aria-label="Theme" className="flex gap-2">
@@ -418,7 +418,7 @@ export function DeleteAccount({ user }: { user: PrivateUser }) {
                     title="Delete your account?"
                     description="You'll be signed out everywhere and your username freed. Your posts and comments stay, without your name on them. This can't be undone."
                 >
-                    <form onSubmit={handleDelete} className="flex flex-col gap-3">
+                    <form onSubmit={handleDelete} className="flex flex-col gap-3" noValidate>
                         {user.has_password && (
                             <Field label="Your password" name="delete_password">
                                 <InputField

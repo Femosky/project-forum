@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Hanken_Grotesk } from 'next/font/google';
 import './globals.css';
-import { APP_NAME, APP_DESCRIPTION, APP_URL, REFRESH_TOKEN_COOKIE_NAME, SITE_LANG } from '@/lib/constants';
+import { APP_NAME, APP_DESCRIPTION, APP_URL, REFRESH_TOKEN_COOKIE_NAME, SITE_LANG, THEME_SCRIPT } from '@/lib/constants';
 import { pageMetadata } from '@/lib/seo';
 import Header from '@/components/layout/Header';
 import LeftSidebar from '@/components/layout/LeftSidebar';
@@ -78,6 +78,7 @@ export default async function RootLayout({
             <head>
                 {/* Google Consent Mode defaults, before any Google script can load */}
                 <script dangerouslySetInnerHTML={{ __html: CONSENT_DEFAULTS_SCRIPT }} />
+                <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
             </head>
             <body>
                 <TopLoader />
