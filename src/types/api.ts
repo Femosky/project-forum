@@ -4,7 +4,7 @@
 export type VoteValue = 1 | 0 | -1;
 
 export interface ApiErrorBody {
-    error: { code: string; message: string; fields?: Record<string, string> };
+    error: { code: string; message: string; fields?: Record<string, string>; details?: Record<string, unknown> };
 }
 
 export interface AuthorRef {
