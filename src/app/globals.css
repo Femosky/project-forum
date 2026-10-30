@@ -284,8 +284,9 @@
 /*
  * Reply connectors (Reddit-style, design brief v11). A comment's avatar is 28px wide with a 10px gap, so its replies'
  * column starts at 38px; .replies pulls back 24px so each .reply starts exactly under the avatar's centre (14px).
- * - .thread-line: a 17px-wide button whose 1px line drops from under the avatar; hovering darkens it and every curve
- *   hanging off it, clicking collapses the replies.
+ * - .thread-line: a 24px-wide button (easy to hit) whose 1px line drops from under the avatar; hovering darkens it and
+ *   every curve hanging off it, clicking folds the whole comment (Reddit-style).
+ * - .thread-elbow: an invisible button over each curve, so the curve is as clickable as the line; same hover, same fold.
  * - .reply::after: the curve from that line into the reply's avatar. Same 1px border, same colour, same pixel column,
  *   so line and curve join without a seam.
  * - .reply:last-child::before: masks the parent's line below the last curve. The curve (z-index 3) draws over it.
@@ -293,26 +294,37 @@
 @layer components {
     .thread-line {
         position: absolute;
-        left: 6px;
-        top: 34px;
+        left: 2px;
+        top: 32px;
         bottom: 0;
         z-index: 1;
-        width: 17px;
+        width: 24px;
         cursor: pointer;
     }
     .thread-line::before {
         content: '';
         position: absolute;
-        left: 8px;
+        left: 12px;
         top: 0;
         bottom: 0;
         border-left: 1px solid var(--line);
         transition: border-color 0.12s;
     }
+    .thread-elbow {
+        position: absolute;
+        z-index: 4;
+        left: -12px;
+        top: 0;
+        width: 34px;
+        height: 34px;
+        cursor: pointer;
+    }
     .thread-line:hover::before,
     .thread-line:focus-visible::before,
+    .comment:has(> div > .replies > .reply > .thread-elbow:hover) > .thread-line::before,
     .comment:has(> .thread-line:hover) > div > .replies > .reply::after,
-    .comment:has(> .thread-line:focus-visible) > div > .replies > .reply::after {
+    .comment:has(> .thread-line:focus-visible) > div > .replies > .reply::after,
+    .comment:has(> div > .replies > .reply > .thread-elbow:hover) > div > .replies > .reply::after {
         border-color: var(--text-muted);
     }
     .replies {
