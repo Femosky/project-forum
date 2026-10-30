@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import { useChallenge } from '@/components/common/Turnstile';
 import InputField from '@/components/ui/Input';
@@ -15,6 +15,8 @@ import { UserResponse } from '@/types/api';
 import { describedBy, FormField } from '@/components/forms/FormField';
 import { emailError } from '@/components/forms/rules';
 import { useFieldErrors } from '@/components/forms/useFieldErrors';
+import { LazyGoogleSignIn } from '@/components/auth/LazyGoogleSignIn';
+import { connectPendingGoogle, readPendingGoogle } from '@/components/auth/googlePending';
 
 export default function LoginPage() {
     return (
@@ -34,6 +36,19 @@ function LoginForm() {
     const [isLoading, setIsLoading] = useState(false);
     const challenge = useChallenge(false);
     const [error, setError] = useState<string | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
+
+    // Sent here to connect Google to an existing account: say so, and fill in the email
+    function askToLinkGoogle(email: string) {
+        if (email) setIdentifier(email);
+        setNotice('You already have an account with this email. Log in with your password once to connect Google.');
+    }
+    useEffect(() => {
+        const pending = readPendingGoogle();
+        // Reading this tab's session storage after the first render, so server and browser render the same
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (pending) askToLinkGoogle(pending.email);
+    }, []);
     const { errors, check, recheck, checkAll } = useFieldErrors({
         // An email is checked as one; anything else is taken as a username
         identifier: () => (!identifier.trim() ? 'Enter your email or username.' : identifier.includes('@') ? emailError(identifier) : undefined),
@@ -52,6 +67,7 @@ function LoginForm() {
         setError(null);
         try {
             await api<UserResponse>('/auth/login', { method: 'POST', body: { identifier: identifier.trim(), password, turnstile_token: challenge.token } });
+            await connectPendingGoogle();
             login();
             router.replace(next);
             router.refresh();
@@ -68,6 +84,11 @@ function LoginForm() {
                 <h1 className="text-2xl font-extrabold">Log in</h1>
                 <p className="mt-1 text-sm text-muted">Welcome back.</p>
 
+                {notice && (
+                    <p className="mt-4 rounded-lg bg-hover px-3 py-2 text-sm" role="status">
+                        {notice}
+                    </p>
+                )}
                 <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
                     <FormField name="identifier" label="Email or username" error={errors.identifier}>
                         <InputField
@@ -111,6 +132,9 @@ function LoginForm() {
                     </Button>
                     {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
                 </form>
+                <div className="mt-4">
+                    <LazyGoogleSignIn next={next} onLinkRequired={askToLinkGoogle} />
+                </div>
 
                 <p className="mt-6 text-center text-sm text-muted">
                     New here?{' '}

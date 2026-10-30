@@ -307,6 +307,7 @@ export const POLICIES: Policy[] = [
                     'cookie_consent remembers your answer to the cookie banner (12 months).',
                     'ad_seen counts how often you have seen each ad today, so the same ad does not follow you around. It holds no personal details and lasts a day.',
                     'Cloudflare Turnstile, the security check on sign-up and some forms, may set its own cookie to tell people from bots.',
+                    'Google sign-in: on the log-in and sign-up pages only, Google\'s sign-in script loads to show the "Continue with Google" button, and Google may set its own cookies when you use it. It does not load anywhere else on the site.',
                 ],
             },
             {

@@ -18,6 +18,7 @@ import { PasswordStrength } from '@/components/forms/PasswordStrength';
 import { emailError, newPasswordError, PASSWORD_MIN, usernameError } from '@/components/forms/rules';
 import { useFieldErrors } from '@/components/forms/useFieldErrors';
 import { useUsernameCheck } from '@/components/forms/useUsernameCheck';
+import { LazyGoogleSignIn } from '@/components/auth/LazyGoogleSignIn';
 
 type Fields = { email: string; username: string; password: string };
 
@@ -174,6 +175,12 @@ function SignupForm() {
                         .
                     </p>
                 </form>
+                <div className="mt-4">
+                    <LazyGoogleSignIn
+                        next={next}
+                        onLinkRequired={() => router.push(`/auth/login${next === '/' ? '' : `?next=${encodeURIComponent(next)}`}`)}
+                    />
+                </div>
 
                 <p className="mt-6 text-center text-sm text-muted">
                     Already have an account?{' '}
