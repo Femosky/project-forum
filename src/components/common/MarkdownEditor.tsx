@@ -1,57 +1,33 @@
 'use client';
 
-import { KeyboardEvent, ReactNode, useRef, useState } from 'react';
-import {
-    Bold,
-    Code,
-    EyeOff,
-    Heading,
-    Italic,
-    Link2,
-    List,
-    ListOrdered,
-    Quote,
-    Strikethrough,
-    Subscript,
-    Superscript,
-    Table,
-} from 'lucide-react';
+import { ComponentType, ComponentProps, KeyboardEvent, ReactNode, useEffect, useRef, useState } from 'react';
+import { Ellipsis } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import TextArea from '@/components/ui/TextArea';
-import type { Table as TableData } from './TableEditor';
+import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from '@/components/ui/Dropdown';
+import { LinkDraft, LinkPopover, Tool, TOOLS, ToolGroups } from './editorTools';
 
-type TableModule = typeof import('./TableEditor');
-import Button from '@/components/ui/Button';
-import Markdown from './Markdown';
+type RichEditorComponent = ComponentType<ComponentProps<typeof import('./RichEditor').default>>;
 
-// Ctrl on Windows and Linux, ⌘ on Apple devices, for the shortcut hints
-const MOD = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+';
-
-type Wrap = { kind: 'wrap'; before: string; after: string; placeholder: string };
-type Line = { kind: 'line'; prefix: string | ((index: number) => string) };
-type Tool = { id: string; label: string; icon: typeof Bold; shortcut?: string } & (Wrap | Line | { kind: 'link' } | { kind: 'table' });
-
-// The toolbar only inserts Markdown, so typing the symbols by hand works the same (see Markdown.tsx for the syntax)
-const TOOLS: Tool[][] = [
-    [
-        { id: 'bold', label: 'Bold', icon: Bold, shortcut: 'B', kind: 'wrap', before: '**', after: '**', placeholder: 'bold text' },
-        { id: 'italic', label: 'Italic', icon: Italic, shortcut: 'I', kind: 'wrap', before: '*', after: '*', placeholder: 'italic text' },
-        { id: 'strike', label: 'Strikethrough', icon: Strikethrough, shortcut: 'Shift+X', kind: 'wrap', before: '~~', after: '~~', placeholder: 'struck text' },
-        { id: 'sup', label: 'Superscript', icon: Superscript, kind: 'wrap', before: '^(', after: ')', placeholder: 'superscript' },
-        { id: 'sub', label: 'Subscript', icon: Subscript, kind: 'wrap', before: '~(', after: ')', placeholder: 'subscript' },
-        { id: 'code', label: 'Inline code', icon: Code, shortcut: 'E', kind: 'wrap', before: '`', after: '`', placeholder: 'code' },
-        { id: 'spoiler', label: 'Spoiler', icon: EyeOff, kind: 'wrap', before: '>!', after: '!<', placeholder: 'hidden text' },
-    ],
-    [
-        { id: 'link', label: 'Link', icon: Link2, shortcut: 'K', kind: 'link' },
-        { id: 'heading', label: 'Heading', icon: Heading, kind: 'line', prefix: '## ' },
-        { id: 'bullets', label: 'Bulleted list', icon: List, shortcut: 'Shift+8', kind: 'line', prefix: '- ' },
-        { id: 'numbers', label: 'Numbered list', icon: ListOrdered, shortcut: 'Shift+7', kind: 'line', prefix: (index) => `${index + 1}. ` },
-        { id: 'quote', label: 'Quote', icon: Quote, shortcut: 'Shift+9', kind: 'line', prefix: '> ' },
-        { id: 'table', label: 'Table', icon: Table, kind: 'table' },
-    ],
-];
+const MODE_KEY = 'editor_mode';
 const ALL_TOOLS = TOOLS.flat();
+// The Markdown each toolbar button types in the Markdown box (see Markdown.tsx for the syntax)
+const WRAPS: Record<string, { before: string; after: string; placeholder: string }> = {
+    bold: { before: '**', after: '**', placeholder: 'bold text' },
+    italic: { before: '*', after: '*', placeholder: 'italic text' },
+    strike: { before: '~~', after: '~~', placeholder: 'struck text' },
+    sup: { before: '^(', after: ')', placeholder: 'superscript' },
+    sub: { before: '~(', after: ')', placeholder: 'subscript' },
+    code: { before: '`', after: '`', placeholder: 'code' },
+    spoiler: { before: '>!', after: '!<', placeholder: 'hidden text' },
+};
+const LINES: Record<string, string | ((index: number) => string)> = {
+    heading: '## ',
+    bullets: '- ',
+    numbers: (index) => `${index + 1}. `,
+    quote: '> ',
+};
+const NEW_TABLE = '|  |  |  |\n| --- | --- | --- |\n|  |  |  |\n|  |  |  |';
 
 // A list or quote line: indentation, the marker, and what follows it
 const CONTINUED_LINE = /^(\s*)([-*+]|\d+[.)]|>)(\s+)(.*)$/;
@@ -64,7 +40,7 @@ type MarkdownEditorProps = {
     maxLength?: number;
     invalid?: boolean;
     autoFocus?: boolean;
-    // compact: replies (shorter box, no Write/Preview switch)
+    // compact: replies (shorter box)
     variant?: 'full' | 'compact';
     // ⌘/Ctrl+Enter, e.g. send a reply
     onSubmitShortcut?: () => void;
@@ -73,8 +49,9 @@ type MarkdownEditorProps = {
     className?: string;
 };
 
-// Textarea with a formatting toolbar, keyboard shortcuts (⌘B, ⌘I, ⌘K...), lists that continue on Enter, a small
-// link dialog, a table editor, and a Write/Preview switch.
+// The post and reply box. Rich text by default: what you type looks as it will be posted (RichEditor, loaded when the
+// box opens). The ••• menu switches to a plain Markdown box with the same toolbar and shortcuts, and that choice is
+// remembered. Either way the value is Markdown.
 export function MarkdownEditor({
     name,
     value,
@@ -88,14 +65,39 @@ export function MarkdownEditor({
     footer,
     className,
 }: MarkdownEditorProps) {
-    const [isPreview, setIsPreview] = useState(false);
-    const [linkDraft, setLinkDraft] = useState<{ text: string; url: string; start: number; end: number } | null>(null);
-    // The table being added (at start..end) or edited (start..end is the old table)
-    const [tableDraft, setTableDraft] = useState<{ initial: TableData | null; start: number; end: number } | null>(null);
-    // The table editor's code, fetched the first time someone opens it, so pages don't carry it
-    const [tableModule, setTableModule] = useState<TableModule | null>(null);
+    const [mode, setMode] = useState<'rich' | 'markdown'>('rich');
+    const [RichEditor, setRichEditor] = useState<RichEditorComponent | null>(null);
+    const [linkDraft, setLinkDraft] = useState<(LinkDraft & { start: number; end: number }) | null>(null);
     const textarea = useRef<HTMLTextAreaElement>(null);
     const isCompact = variant === 'compact';
+    const minHeight = isCompact ? 'min-h-24' : 'min-h-40';
+
+    useEffect(() => {
+        let isCurrent = true;
+        void import('./RichEditor')
+            .then((loaded) => isCurrent && setRichEditor(() => loaded.default))
+            // Can't load it (offline, say): the Markdown box still works
+            .catch(() => isCurrent && setMode('markdown'));
+        try {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- only known in the browser, after hydration
+            if (localStorage.getItem(MODE_KEY) === 'markdown') setMode('markdown');
+        } catch {
+            // Storage blocked: rich text
+        }
+        return () => {
+            isCurrent = false;
+        };
+    }, []);
+
+    function switchMode() {
+        const next = mode === 'rich' ? 'markdown' : 'rich';
+        setMode(next);
+        try {
+            localStorage.setItem(MODE_KEY, next);
+        } catch {
+            // Lasts until the next visit
+        }
+    }
 
     // Replace value[start..end] with text, then select [selStart, selEnd] (relative to the whole new value)
     function replace(start: number, end: number, text: string, selStart: number, selEnd = selStart) {
@@ -111,58 +113,49 @@ export function MarkdownEditor({
         if (!element) return;
         const { selectionStart: start, selectionEnd: end } = element;
         const selected = value.slice(start, end);
+        const wrapped = WRAPS[tool.id];
+        const line = LINES[tool.id];
 
-        if (tool.kind === 'wrap') {
+        if (wrapped) {
             // Pressing it again on already-formatted text removes the formatting
-            const before = value.slice(start - tool.before.length, start);
-            const after = value.slice(end, end + tool.after.length);
-            if (selected && before === tool.before && after === tool.after) {
-                replace(start - tool.before.length, end + tool.after.length, selected, start - tool.before.length, end - tool.before.length);
+            const before = value.slice(start - wrapped.before.length, start);
+            const after = value.slice(end, end + wrapped.after.length);
+            if (selected && before === wrapped.before && after === wrapped.after) {
+                replace(start - wrapped.before.length, end + wrapped.after.length, selected, start - wrapped.before.length, end - wrapped.before.length);
                 return;
             }
-            const text = selected || tool.placeholder;
-            const from = start + tool.before.length;
-            replace(start, end, `${tool.before}${text}${tool.after}`, from, from + text.length);
-        } else if (tool.kind === 'line') {
+            const text = selected || wrapped.placeholder;
+            const from = start + wrapped.before.length;
+            replace(start, end, `${wrapped.before}${text}${wrapped.after}`, from, from + text.length);
+        } else if (line) {
             // Prefix every selected line, starting from the beginning of the first one; a second press removes it
             const lineStart = value.lastIndexOf('\n', start - 1) + 1;
             const lines = value.slice(lineStart, end).split('\n');
-            const prefixOf = (index: number) => (typeof tool.prefix === 'function' ? tool.prefix(index) : tool.prefix);
-            const isOn = lines.every((line, index) => line.startsWith(prefixOf(index)));
-            const block = lines.map((line, index) => (isOn ? line.slice(prefixOf(index).length) : `${prefixOf(index)}${line}`)).join('\n');
+            const prefixOf = (index: number) => (typeof line === 'function' ? line(index) : line);
+            const isOn = lines.every((text, index) => text.startsWith(prefixOf(index)));
+            const block = lines.map((text, index) => (isOn ? text.slice(prefixOf(index).length) : `${prefixOf(index)}${text}`)).join('\n');
             replace(lineStart, end, block, lineStart + block.length);
-        } else if (tool.kind === 'link') {
+        } else if (tool.id === 'link') {
             const looksLikeUrl = /^https?:\/\//.test(selected);
-            setLinkDraft({ text: looksLikeUrl ? '' : selected, url: looksLikeUrl ? selected : '', start, end });
-        } else {
-            // Inside an existing table: edit that one. Otherwise a new one goes where the cursor is.
-            void import('./TableEditor').then((loaded) => {
-                setTableModule(loaded);
-                const found = loaded.tableAt(value, start);
-                setTableDraft(found ? { initial: found.table, start: found.start, end: found.end } : { initial: null, start, end });
-            });
+            setLinkDraft({ text: looksLikeUrl ? '' : selected, url: looksLikeUrl ? selected : '', showText: true, start, end });
+        } else if (tool.id === 'codeblock') {
+            const head = value.slice(0, start);
+            const before = !head || head.endsWith('\n') ? '' : '\n';
+            const text = selected || 'code';
+            const open = `${before}\`\`\`\n`;
+            replace(start, end, `${open}${text}\n\`\`\`\n`, start + open.length, start + open.length + text.length);
+        } else if (tool.id === 'table') {
+            // A table needs a blank line before it and after it
+            const head = value.slice(0, start);
+            const before = !head || head.endsWith('\n\n') ? '' : head.endsWith('\n') ? '\n' : '\n\n';
+            const after = value.slice(end).startsWith('\n') ? '\n' : '\n\n';
+            const insert = `${before}${NEW_TABLE}${after}`;
+            replace(start, end, insert, start + insert.length);
         }
     }
 
-    function insertTable(markdown: string) {
-        if (!tableDraft) return;
-        const { start, end, initial } = tableDraft;
-        setTableDraft(null);
-        if (initial) {
-            replace(start, end, markdown, start + markdown.length);
-            return;
-        }
-        // A table needs a blank line before it and after it
-        const before = start === 0 ? '' : value.slice(0, start).endsWith('\n\n') ? '' : value.slice(0, start).endsWith('\n') ? '\n' : '\n\n';
-        const after = value.slice(end).startsWith('\n') ? '\n' : '\n\n';
-        const insert = `${before}${markdown}${after}`;
-        replace(start, end, insert, start + insert.length);
-    }
-
-    function insertLink() {
+    function insertLink({ text, url }: { text: string; url: string }) {
         if (!linkDraft) return;
-        const url = /^https?:\/\//i.test(linkDraft.url.trim()) ? linkDraft.url.trim() : `https://${linkDraft.url.trim()}`;
-        const text = linkDraft.text.trim() || url;
         const markdown = `[${text}](${url})`;
         setLinkDraft(null);
         replace(linkDraft.start, linkDraft.end, markdown, linkDraft.start + markdown.length);
@@ -203,6 +196,11 @@ export function MarkdownEditor({
             continueList(event);
             return;
         }
+        if (mod && event.altKey && event.code === 'KeyC') {
+            event.preventDefault();
+            apply(ALL_TOOLS.find((candidate) => candidate.id === 'codeblock')!);
+            return;
+        }
         if (!mod || event.altKey) return;
         const key = event.key.toLowerCase();
         const shortcut = event.shiftKey ? `Shift+${event.code.startsWith('Digit') ? event.code.slice(5) : key.toUpperCase()}` : key.toUpperCase();
@@ -213,6 +211,24 @@ export function MarkdownEditor({
         }
     }
 
+    const menu = (
+        <Dropdown>
+            <DropdownTrigger asChild>
+                <button
+                    type="button"
+                    aria-label="Editor options"
+                    title="Editor options"
+                    className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted transition-colors hover:bg-hover hover:text-text"
+                >
+                    <Ellipsis className="size-4" />
+                </button>
+            </DropdownTrigger>
+            <DropdownContent align="end">
+                <DropdownItem onSelect={switchMode}>{mode === 'rich' ? 'Switch to Markdown' : 'Switch to rich text'}</DropdownItem>
+            </DropdownContent>
+        </Dropdown>
+    );
+
     return (
         <div
             className={twMerge(
@@ -221,133 +237,54 @@ export function MarkdownEditor({
                 className
             )}
         >
-            <div className="flex items-center gap-1 border-b border-border px-1.5 py-1">
-                <div role="toolbar" aria-label="Formatting" className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [scrollbar-width:none]">
-                    {TOOLS.map((group, groupIndex) => (
-                        <div key={groupIndex} className="flex shrink-0 items-center gap-0.5">
-                            {groupIndex > 0 && <span aria-hidden className="mx-1 h-4 w-px bg-border" />}
-                            {group.map((tool) => {
-                                const hint = tool.shortcut ? `${tool.label} (${MOD}${tool.shortcut})` : tool.label;
-                                return (
-                                    <button
-                                        key={tool.id}
-                                        type="button"
-                                        aria-label={hint}
-                                        title={hint}
-                                        disabled={isPreview}
-                                        // Keep the text selection while clicking a tool
-                                        onMouseDown={(event) => event.preventDefault()}
-                                        onClick={() => apply(tool)}
-                                        className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted transition-colors hover:bg-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
-                                    >
-                                        <tool.icon className="size-4" />
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    ))}
-                </div>
-                {!isCompact && (
-                    <div className="flex shrink-0 gap-0.5 rounded-lg p-0.5 text-xs font-semibold ring-1 ring-inset ring-border">
-                        {(['Write', 'Preview'] as const).map((tab) => (
-                            <button
-                                key={tab}
-                                type="button"
-                                aria-pressed={(tab === 'Preview') === isPreview}
-                                onClick={() => setIsPreview(tab === 'Preview')}
-                                className={twMerge(
-                                    'h-6 cursor-pointer rounded-md px-2 transition-colors',
-                                    (tab === 'Preview') === isPreview ? 'bg-active text-text' : 'text-muted hover:text-text'
-                                )}
-                            >
-                                {tab}
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {linkDraft && (
-                // The link dialog: what to show and where it goes
-                <div
-                    role="dialog"
-                    aria-label="Add a link"
-                    className="absolute left-2 right-2 top-11 z-20 flex flex-col gap-2 rounded-[10px] bg-surface-raised p-3 shadow-raised sm:right-auto sm:w-80"
-                    onKeyDown={(event) => {
-                        if (event.key === 'Escape') {
-                            event.preventDefault();
-                            setLinkDraft(null);
-                            textarea.current?.focus();
-                        }
-                        if (event.key === 'Enter') {
-                            event.preventDefault();
-                            insertLink();
-                        }
-                    }}
-                >
-                    <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
-                        Text
-                        <input
-                            id={`${name}-link-text`}
-                            value={linkDraft.text}
-                            onChange={(event) => setLinkDraft({ ...linkDraft, text: event.target.value })}
-                            placeholder="What people will see"
-                            autoFocus={!linkDraft.text}
-                            className="h-8 rounded-[7px] border border-border-strong bg-surface px-2.5 text-sm font-normal text-text outline-none focus:border-muted"
-                        />
-                    </label>
-                    <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
-                        Link
-                        <input
-                            id={`${name}-link-url`}
-                            value={linkDraft.url}
-                            onChange={(event) => setLinkDraft({ ...linkDraft, url: event.target.value })}
-                            placeholder="https://"
-                            inputMode="url"
-                            autoFocus={Boolean(linkDraft.text)}
-                            className="h-8 rounded-[7px] border border-border-strong bg-surface px-2.5 text-sm font-normal text-text outline-none focus:border-muted"
-                        />
-                    </label>
-                    <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => setLinkDraft(null)}>
-                            Cancel
-                        </Button>
-                        <Button size="sm" onClick={insertLink} disabled={!linkDraft.url.trim()}>
-                            Add link
-                        </Button>
-                    </div>
-                </div>
-            )}
-
-            {tableDraft && tableModule && (
-                <tableModule.default
-                    initial={tableDraft.initial}
-                    onDone={insertTable}
-                    onCancel={() => {
-                        setTableDraft(null);
-                        textarea.current?.focus();
-                    }}
-                />
-            )}
-
-            {isPreview ? (
-                <div className={twMerge('px-3 py-2.5', isCompact ? 'min-h-24' : 'min-h-40')}>
-                    {value.trim() ? <Markdown text={value} className="text-[15px] leading-6 text-body" /> : <p className="text-subtle">Nothing to preview yet.</p>}
-                </div>
-            ) : (
-                <TextArea
-                    ref={textarea}
-                    variant="bare"
-                    name={name}
-                    aria-label={placeholder}
+            {mode === 'rich' && RichEditor ? (
+                <RichEditor
+                    value={value}
+                    onChange={onChange}
                     placeholder={placeholder}
+                    label={placeholder}
                     maxLength={maxLength}
                     autoFocus={autoFocus}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className={twMerge('px-3 py-2.5', isCompact ? 'min-h-24' : 'min-h-40')}
+                    minHeightClass={minHeight}
+                    onSubmitShortcut={onSubmitShortcut}
+                    menu={menu}
                 />
+            ) : mode === 'rich' ? (
+                // Same size as the editor, for the moment it takes to load
+                <>
+                    <div className="h-9 border-b border-border" />
+                    <div className={twMerge('px-3 py-2.5 text-[15px] leading-6 text-subtle', minHeight)}>{placeholder}</div>
+                </>
+            ) : (
+                <>
+                    <div className="flex items-center gap-1 border-b border-border px-1.5 py-1">
+                        <ToolGroups groups={TOOLS} onApply={apply} />
+                        {menu}
+                    </div>
+                    {linkDraft && (
+                        <LinkPopover
+                            draft={linkDraft}
+                            onCancel={() => {
+                                setLinkDraft(null);
+                                textarea.current?.focus();
+                            }}
+                            onSave={insertLink}
+                        />
+                    )}
+                    <TextArea
+                        ref={textarea}
+                        variant="bare"
+                        name={name}
+                        aria-label={placeholder}
+                        placeholder={placeholder}
+                        maxLength={maxLength}
+                        autoFocus={autoFocus}
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className={twMerge('px-3 py-2.5', minHeight)}
+                    />
+                </>
             )}
 
             {footer && <div className="flex items-center justify-end gap-2 px-2 pb-2">{footer}</div>}

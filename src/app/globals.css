@@ -422,5 +422,64 @@
     .markdown .spoiler:focus * {
         color: inherit;
     }
+    /* The rich editor (RichEditor.tsx): the same look as a published post, plus what only editing needs */
+    .rich-editor .ProseMirror p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        float: left;
+        height: 0;
+        color: var(--text-subtle);
+        pointer-events: none;
+    }
+    /* The page shows h1 and h2 as h3, and smaller ones as h4 (Markdown.tsx) */
+    .rich-editor h1,
+    .rich-editor h2 {
+        font-size: 1.125rem;
+        font-weight: 700;
+    }
+    .rich-editor h3,
+    .rich-editor h4,
+    .rich-editor h5,
+    .rich-editor h6 {
+        font-weight: 700;
+    }
+    .rich-editor a {
+        color: var(--link);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+    /* A spoiler stays readable while it's being written */
+    .rich-editor .spoiler,
+    .rich-editor .spoiler * {
+        color: inherit;
+    }
+    .rich-editor .spoiler {
+        background: var(--active);
+        outline: 1px dashed var(--text-subtle);
+        cursor: text;
+    }
+    .rich-editor .spoiler::before {
+        content: 'Spoiler';
+        margin-right: 0.35em;
+        color: var(--text-subtle);
+        font-size: 0.7em;
+        font-weight: 600;
+    }
+    .rich-editor .tableWrapper {
+        overflow-x: auto;
+    }
+    .rich-editor table {
+        width: 100%;
+        table-layout: fixed;
+    }
+    .rich-editor th,
+    .rich-editor td {
+        height: 2.5rem;
+        min-width: 5rem;
+        border: 1px solid var(--border-strong);
+        vertical-align: top;
+    }
+    .rich-editor .selectedCell {
+        background: var(--active);
+    }
 }
 

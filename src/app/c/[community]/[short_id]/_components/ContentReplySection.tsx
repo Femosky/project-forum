@@ -1,7 +1,7 @@
 'use client';
 
 import Button from '@/components/ui/Button';
-import MarkdownEditor from '@/components/common/MarkdownEditor';
+import MarkdownEditor from '@/components/common/LazyMarkdownEditor';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { COMMENT_BODY_MAX } from '@/lib/constants';

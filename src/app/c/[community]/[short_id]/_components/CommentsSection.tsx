@@ -14,7 +14,7 @@ import { errorMessage } from '@/lib/api/errors';
 import { useUIStore } from '@/lib/uiStore';
 import { Comment, CommentResponse, CommentSort, CommentsResponse } from '@/types/api';
 import Markdown from '@/components/common/Markdown';
-import MarkdownEditor from '@/components/common/MarkdownEditor';
+import MarkdownEditor from '@/components/common/LazyMarkdownEditor';
 import { COMMENT_BODY_MAX } from '@/lib/constants';
 import { CommentSkeleton } from '@/components/post/PostSkeletons';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from './commentsApi';

@@ -6,7 +6,7 @@ import { twMerge } from 'tailwind-merge';
 // blocks, > quotes, bulleted and numbered lists, | tables |, rules, [links](https://...) and bare URLs. It builds
 // React elements directly (never HTML strings), so user text can't inject markup, and it ships no dependency.
 
-const INLINE =
+export const INLINE =
     /(`+)([^`]+?)\1|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|\*\*(.+?)\*\*|__(.+?)__|~~(.+?)~~|\*(?!\s)([^*\n]+?)\*|(?<![\w])_(?!\s)([^_\n]+?)_(?![\w])|(https?:\/\/[^\s<]*[^\s<.,:;"')\]!?])|\\([\\`*_~^[\]()#>!|-])|>!(.+?)!<|\^\(([^)\n]+)\)|\^([^\s^()]+)|~\(([^)\n]+)\)/g;
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
@@ -57,19 +57,19 @@ function renderLines(lines: string[], key: string): ReactNode[] {
     return lines.flatMap((line, i) => (i === 0 ? renderInline(line, `${key}-${i}`) : [<br key={`${key}-br${i}`} />, ...renderInline(line, `${key}-${i}`)]));
 }
 
-const FENCE = /^\s*```/;
-const HEADING = /^(#{1,6})\s+(.*)$/;
+export const FENCE = /^\s*```/;
+export const HEADING = /^(#{1,6})\s+(.*)$/;
 // A line starting with >! is a spoiler, not a quote
-const QUOTE = /^\s*>(?!!)\s?(.*)$/;
-const BULLET = /^\s*[-*+]\s+(.*)$/;
-const NUMBERED = /^\s*(\d+)[.)]\s+(.*)$/;
-const RULE = /^\s*([-*_])(\s*\1){2,}\s*$/;
+export const QUOTE = /^\s*>(?!!)\s?(.*)$/;
+export const BULLET = /^\s*[-*+]\s+(.*)$/;
+export const NUMBERED = /^\s*(\d+)[.)]\s+(.*)$/;
+export const RULE = /^\s*([-*_])(\s*\1){2,}\s*$/;
 // Tables: a | header | row, a | --- | :---: | row that sets alignment, then | body | rows
-const TABLE_ROW = /^\s*\|.*\|\s*$/;
-const TABLE_RULE = /^\s*\|(\s*:?-{3,}:?\s*\|)+\s*$/;
+export const TABLE_ROW = /^\s*\|.*\|\s*$/;
+export const TABLE_RULE = /^\s*\|(\s*:?-{3,}:?\s*\|)+\s*$/;
 
 // Cells of a "| a | b |" row; "\|" is a pipe inside a cell (the table editor writes it that way)
-function tableCells(line: string): string[] {
+export function tableCells(line: string): string[] {
     return line
         .trim()
         .replace(/^\|/, '')
@@ -191,7 +191,8 @@ export function stripMarkdown(text: string): string {
         .replace(/\^\(([^)]+)\)|~\(([^)]+)\)/g, '$1$2')
         .replace(/^\s*\|?(\s*:?-{3,}:?\s*\|)+\s*$/gm, ' ')
         .replace(/\|/g, ' ')
-        .replace(/(\*\*|__|~~|`|\*|_|\^)/g, '')
+        .replace(/\\([\\`*_~^[\]()#>!|-])/g, '$1')
+        .replace(/(?<!\\)(\*\*|__|~~|`|\*|_|\^)/g, '')
         .replace(/\s+/g, ' ')
         .trim();
 }

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import Markdown from '@/components/common/Markdown';
-import MarkdownEditor from '@/components/common/MarkdownEditor';
+import MarkdownEditor from '@/components/common/LazyMarkdownEditor';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { POST_BODY_MAX } from '@/lib/constants';
