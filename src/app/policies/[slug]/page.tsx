@@ -34,7 +34,7 @@ export default async function PolicyPage({ params }: PageProps) {
                 <p className="text-xs text-muted">Last updated {policy.updated}</p>
             </header>
             {policy.sections.map((section) => (
-                <section key={section.heading} className="flex flex-col gap-2">
+                <section key={section.heading} id={section.id} className="flex scroll-mt-20 flex-col gap-2">
                     <h2 className="text-lg font-bold">{section.heading}</h2>
                     {section.paragraphs?.map((paragraph) => (
                         <p key={paragraph.slice(0, 40)} className="leading-relaxed">

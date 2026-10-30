@@ -112,7 +112,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 ) : tab === 'stats' ? (
                     <AdminStats data={section.data as AdminStatsResponse} days={days} />
                 ) : tab === 'users' ? (
-                    <AdminUsers initialUsers={(section.data as { users: AdminUser[] }).users} />
+                    <AdminUsers initialUsers={(section.data as { users: AdminUser[] }).users} canTrust={staff.role === 'owner' || staff.role === 'admin'} />
                 ) : tab === 'communities' ? (
                     <AdminCommunities initialCommunities={(section.data as { communities: AdminCommunity[] }).communities} />
                 ) : tab === 'ads' ? (
