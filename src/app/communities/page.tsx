@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CloudOff, Search, Users } from 'lucide-react';
@@ -13,6 +14,8 @@ import EmptyState from '@/components/ui/EmptyState';
 import InputField from '@/components/ui/Input';
 import NumberUtility from '@/lib/utils/NumberUtility';
 import { communityLabel } from '@/lib/communityName';
+import { loadAds } from '@/ads/server';
+import ThreadAdSlot from '@/ads/ThreadAdSlot';
 
 type PageProps = { searchParams: Promise<{ category?: string; q?: string; sort?: string; cursor?: string }> };
 
@@ -43,10 +46,14 @@ export default async function CommunitiesPage({ searchParams }: PageProps) {
         ...(q?.trim() ? { q: q.trim().slice(0, 50) } : {}),
         ...(cursor ? { cursor } : {}),
     });
-    const [list, categories] = await Promise.all([
+    const [list, categories, ads] = await Promise.all([
         serverApi<CommunitiesResponse>(`/communities?${query}`),
         serverApi<CategoriesResponse>('/communities/categories'),
+        // One ad at most, after the first community: a page for choosing where to go stays light. Asked for like the
+        // home feed's (no community), and shown in the compact style of an ad between comments.
+        loadAds('feed', {}, 1),
     ]);
+    const ad = ads[0];
 
     const linkTo = (params: Record<string, string | undefined>) => {
         const next = new URLSearchParams(Object.entries({ category, q, ...params }).filter(([, value]) => value) as [string, string][]);
@@ -123,26 +130,33 @@ export default async function CommunitiesPage({ searchParams }: PageProps) {
             ) : (
                 <>
                     <ul className="flex flex-col divide-y divide-border bg-surface sm:rounded-xl sm:border sm:border-border">
-                        {list.data.communities.map((community) => (
-                            <li key={community.id}>
-                                <Link
-                                    href={`/c/${community.name}`}
-                                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted/60"
-                                >
-                                    <Avatar name={community.name} src={community.image_url} size="lg" shape="square" />
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate font-bold">{communityLabel(community)}</p>
-                                        {community.description && <p className="line-clamp-1 text-sm text-muted">{community.description}</p>}
-                                        {!category && categoryLabel(community.category) && (
-                                            <p className="text-xs text-muted">{categoryLabel(community.category)}</p>
-                                        )}
-                                    </div>
-                                    <span className="shrink-0 text-xs text-muted">
-                                        <span className="tabular-nums">{NumberUtility.compactFormatter.format(community.member_count)}</span>{' '}
-                                        {community.member_count === 1 ? 'member' : 'members'}
-                                    </span>
-                                </Link>
-                            </li>
+                        {list.data.communities.map((community, index) => (
+                            <Fragment key={community.id}>
+                                <li>
+                                    <Link
+                                        href={`/c/${community.name}`}
+                                        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted/60"
+                                    >
+                                        <Avatar name={community.name} src={community.image_url} size="lg" shape="square" />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate font-bold">{communityLabel(community)}</p>
+                                            {community.description && <p className="line-clamp-1 text-sm text-muted">{community.description}</p>}
+                                            {!category && categoryLabel(community.category) && (
+                                                <p className="text-xs text-muted">{categoryLabel(community.category)}</p>
+                                            )}
+                                        </div>
+                                        <span className="shrink-0 text-xs text-muted">
+                                            <span className="tabular-nums">{NumberUtility.compactFormatter.format(community.member_count)}</span>{' '}
+                                            {community.member_count === 1 ? 'member' : 'members'}
+                                        </span>
+                                    </Link>
+                                </li>
+                                {index === 0 && ad && (
+                                    <li className="px-4 py-3">
+                                        <ThreadAdSlot unit={ad} />
+                                    </li>
+                                )}
+                            </Fragment>
                         ))}
                     </ul>
                     {list.data.next_cursor && (
