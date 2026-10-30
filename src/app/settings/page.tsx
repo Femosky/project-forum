@@ -4,9 +4,10 @@ import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
 import { getTheme } from '@/components/theme/getTheme';
 import { getDataSaver } from '@/lib/dataSaver';
-import { SessionsResponse, UserResponse } from '@/types/api';
+import { NotificationSettingsResponse, SessionsResponse, UserResponse } from '@/types/api';
 import EmptyState from '@/components/ui/EmptyState';
 import AvatarSection from './_components/AvatarSection';
+import NotificationSettings from './_components/NotificationSettings';
 import Button from '@/components/ui/Button';
 import {
     DataSaverToggle,
@@ -21,12 +22,15 @@ import {
     ThemePicker,
 } from './_components/SettingsForms';
 
+const DEFAULT_NOTIFICATIONS = { email_replies: true, email_mentions: true, digest: 'weekly', push_replies: true, push_trending: true } as const;
+
 export const metadata = { title: `Settings | ${APP_NAME}`, robots: { index: false } };
 
 export default async function SettingsPage() {
-    const [me, sessions, theme, dataSaver] = await Promise.all([
+    const [me, sessions, notifications, theme, dataSaver] = await Promise.all([
         serverApi<UserResponse>('/auth/me'),
         serverApi<SessionsResponse>('/auth/sessions'),
+        serverApi<NotificationSettingsResponse>('/notifications/settings'),
         getTheme(),
         getDataSaver(),
     ]);
@@ -75,6 +79,10 @@ export default async function SettingsPage() {
                 description="Posts and communities marked NSFW: graphic news, sexual health, strong language. Porn and explicit sexual content aren't allowed anywhere. Off: they stay out of your feeds, search and the communities list, and open blurred when you follow a link."
             >
                 <MatureContentToggle initialEnabled={user.show_mature} />
+            </Section>
+
+            <Section title="Notifications" description="What brings you back, and how often.">
+                <NotificationSettings initial={notifications.data?.settings ?? DEFAULT_NOTIFICATIONS} initialHidden={notifications.data?.hidden_communities ?? []} />
             </Section>
 
             <Section title="Email">

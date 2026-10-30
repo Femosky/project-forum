@@ -345,6 +345,11 @@ export interface AppNotification {
     count: number;
 }
 
+export interface NotificationSettingsResponse {
+    settings: { email_replies: boolean; email_mentions: boolean; digest: 'weekly' | 'daily' | 'off'; push_replies: boolean; push_trending: boolean };
+    hidden_communities: string[];
+}
+
 export interface NotificationsResponse {
     notifications: AppNotification[];
     next_cursor: string | null;

@@ -255,6 +255,7 @@ export const POLICIES: Policy[] = [
                     'To run your account and show your content (performing our agreement with you).',
                     'To keep the site safe: spam and scam filters, rate limits and moderation (our legitimate interest in a safe site).',
                     'To understand which features and topics people use, so we can improve them (legitimate interest). Visitors who are not signed in are counted without any id that lasts beyond the current tab.',
+                    'To bring you back when there is something for you: emails about replies and mentions, a digest of top posts from your communities (based on the communities you joined and what you voted on or commented in), and browser notifications if you turn them on. You can change or stop each one in Settings, and every email has an unsubscribe link. The digest stops by itself if you stop visiting.',
                     'To show ads. Sponsored posts are chosen by the community you are reading, not by your personal details. Google ads only use cookies if you allow them.',
                 ],
             },

@@ -92,6 +92,8 @@ export function CommentsSection({
             method: 'POST',
             body: { body, ...(parentId ? { parent_id: parentId } : {}) },
         });
+        // After a first reply is the moment notifications make sense; never on page load
+        if ('PushManager' in window && Notification.permission === 'default') void import('@/lib/pushPrompt').then((push) => push.maybeAskForPush());
         // The post's comment count on this page follows along without a refresh
         const current = useUIStore.getState().commentCounts[postId] ?? commentCount;
         setCommentCount(postId, current + 1);
