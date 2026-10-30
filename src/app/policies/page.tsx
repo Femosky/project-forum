@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { APP_NAME } from '@/lib/constants';
 import { pageMetadata } from '@/lib/seo';
 import { POLICIES } from './policies';
+import CookieSettingsButton from '@/components/consent/CookieSettingsButton';
 
 export const metadata = pageMetadata({
     title: `Policies | ${APP_NAME}`,
@@ -23,6 +24,9 @@ export default function PoliciesPage() {
                     </li>
                 ))}
             </ul>
+            <p className="text-sm text-muted">
+                Changed your mind about cookies? <CookieSettingsButton className="cursor-pointer font-semibold text-link hover:underline" />
+            </p>
         </div>
     );
 }

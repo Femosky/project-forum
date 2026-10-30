@@ -6,7 +6,6 @@ import { Lock, MessagesSquare, Plus } from 'lucide-react';
 import { SortByDropdown } from './SortByDropdown';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import Button from '@/components/ui/Button';
-import Avatar from '@/components/ui/Avatar';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { ReplyActions } from './ReplyActions';
 import ContentReplySection from './ContentReplySection';
@@ -22,6 +21,7 @@ import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from './commen
 import ThreadAdSlot from '@/ads/ThreadAdSlot';
 import { slotAfter } from '@/ads/config';
 import type { AdUnit } from '@/ads/types';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 // Replies nest this deep; below that, "Continue this thread" opens the rest on its own
 const MAX_VISIBLE_DEPTH = 8;
@@ -199,7 +199,8 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
     const [comment, setComment] = useState<Comment>(initialComment);
     const [isReplying, setIsReplying] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(true);
+    // Collapsed (Reddit-style): the whole comment folds into one row, replies and all
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const [isLoadingReplies, setIsLoadingReplies] = useState(false);
     const [repliesError, setRepliesError] = useState<string | null>(null);
     // A comment deleted with nothing under it leaves the thread, as it would after a reload
@@ -230,9 +231,16 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
         }
     }
 
-    async function showReplies() {
-        setIsExpanded(true);
-        if (hiddenReplies > 0) await loadMoreReplies();
+    // Folds the comment and, if that left it above the screen or under the sticky bars, brings it back into view so
+    // the page doesn't seem to jump somewhere else
+    function collapse() {
+        setIsCollapsed(true);
+        requestAnimationFrame(() => {
+            const element = document.getElementById(`c-${comment.short_id}`);
+            if (!element) return;
+            const margin = parseFloat(getComputedStyle(element).scrollMarginTop) || 0;
+            if (element.getBoundingClientRect().top < margin) element.scrollIntoView({ block: 'start' });
+        });
     }
 
     async function handleReply(body: string) {
@@ -242,7 +250,7 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
             replies: [reply, ...(current.replies ?? [])],
             reply_count: current.reply_count + 1,
         }));
-        setIsExpanded(true);
+        setIsCollapsed(false);
         setIsReplying(false);
     }
 
@@ -273,23 +281,48 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
         setComment((current) => ({ ...current, status: updated.status, body: updated.body, pinned_at: updated.pinned_at }));
     }
 
-    const showsReplies = hasChildren && !continuesElsewhere && isExpanded;
+    const showsReplies = hasChildren && !continuesElsewhere;
     if (isDropped) return null;
+
+    if (isCollapsed) {
+        return (
+            <div id={`c-${comment.short_id}`} className="comment relative grid w-full scroll-mt-[calc(var(--spacing-header)+3.5rem)] grid-cols-[28px_minmax(0,1fr)] gap-x-2.5">
+                <UserAvatar user={comment.author} size={28} className="size-7 opacity-70" />
+                <button
+                    type="button"
+                    onClick={() => setIsCollapsed(false)}
+                    aria-expanded={false}
+                    aria-label={`Show ${getAuthorName(comment)}'s comment${hasChildren ? ` and ${totalReplies} ${totalReplies === 1 ? 'reply' : 'replies'}` : ''}`}
+                    className="flex h-7 min-w-0 cursor-pointer items-center gap-1.5 rounded-md text-left text-[13px] text-subtle transition-colors hover:text-text"
+                >
+                    <span className="truncate font-semibold text-muted">{getAuthorName(comment)}</span>
+                    <span aria-hidden>·</span>
+                    <time dateTime={comment.created_at} suppressHydrationWarning className="shrink-0">
+                        {TimeUtility.formatTimeAgo(comment.created_at)}
+                    </time>
+                    <span className="ml-1 flex h-[22px] shrink-0 items-center gap-0.5 rounded-full px-1.5 font-semibold text-muted ring-1 ring-inset ring-border-strong">
+                        <Plus className="size-3.5" />
+                        {hasChildren ? totalReplies : null}
+                    </span>
+                </button>
+            </div>
+        );
+    }
 
     return (
         // Notifications link here with #c-{shortId}. Replies hang off a line from this avatar (see .comment in
-        // globals.css); the line is a button that collapses them.
-        <div id={`c-${comment.short_id}`} className="comment relative grid w-full scroll-mt-header grid-cols-[28px_minmax(0,1fr)] gap-x-2.5">
+        // globals.css); the line, and each curve off it, is a button that folds this comment, replies and all.
+        <div id={`c-${comment.short_id}`} className="comment relative grid w-full scroll-mt-[calc(var(--spacing-header)+3.5rem)] grid-cols-[28px_minmax(0,1fr)] gap-x-2.5">
             {showsReplies && (
                 <button
                     type="button"
                     className="thread-line"
-                    aria-label={`Collapse ${totalReplies} ${totalReplies === 1 ? 'reply' : 'replies'} to ${getAuthorName(comment)}`}
+                    aria-label={`Collapse ${getAuthorName(comment)}'s comment and ${totalReplies} ${totalReplies === 1 ? 'reply' : 'replies'}`}
                     aria-expanded
-                    onClick={() => setIsExpanded(false)}
+                    onClick={collapse}
                 />
             )}
-            <Avatar name={getAuthorName(comment)} size="md" className="size-7 text-[11px]" />
+            <UserAvatar user={comment.author} size={28} className="size-7" />
 
             <div className="flex min-w-0 flex-col">
                 {isEditing ? (
@@ -332,6 +365,8 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
                     <div className="replies">
                         {replies.map((reply) => (
                             <div key={reply.id} className="reply">
+                                {/* The curve into this reply is part of the parent's line: clicking it folds the parent too */}
+                                <button type="button" className="thread-elbow" tabIndex={-1} aria-hidden onClick={collapse} />
                                 <CommentBlock initialComment={reply} />
                             </div>
                         ))}
@@ -350,17 +385,6 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
                     </div>
                 )}
 
-                {hasChildren && !continuesElsewhere && !isExpanded && (
-                    <button
-                        type="button"
-                        onClick={showReplies}
-                        aria-expanded={false}
-                        className="mt-1 flex h-[26px] w-fit cursor-pointer items-center gap-1.5 rounded-[7px] pl-1 pr-2 text-[13px] font-semibold text-muted ring-1 ring-inset ring-border-strong transition-colors hover:bg-hover hover:text-text"
-                    >
-                        <Plus className="size-4" />
-                        {totalReplies} {totalReplies === 1 ? 'reply' : 'replies'}
-                    </button>
-                )}
                 {repliesError && <ErrorMessage size="small" errorMessage={repliesError} role="alert" />}
             </div>
         </div>

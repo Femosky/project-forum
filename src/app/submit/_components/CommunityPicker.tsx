@@ -21,7 +21,7 @@ const nameOf = (option: CommunityOption) => communityLabel({ name: option.name, 
 
 function matches(option: CommunityOption, query: string): boolean {
     const q = query.toLowerCase();
-    return nameOf(option).toLowerCase().includes(q) || option.name.includes(q.replace(/\s+/g, '_'));
+    return nameOf(option).toLowerCase().includes(q) || option.name.includes(q.replace(/[\s_-]+/g, ''));
 }
 
 type PickerProps = {

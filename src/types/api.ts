@@ -8,6 +8,8 @@ export interface ApiErrorBody {
 }
 
 export interface AuthorRef {
+    // Drawn avatar code: the web app draws it at /avatar/{code}.svg
+    avatar?: string | null;
     username: string;
     display_name: string | null;
     avatar_id: string;
@@ -15,7 +17,9 @@ export interface AuthorRef {
 
 export interface CommunityRef {
     id: string;
+    // The URL key, lowercase (premierleague), and the handle as shown (PremierLeague)
     name: string;
+    name_styled: string;
     display_name: string | null;
     image_url: string | null;
 }
@@ -100,10 +104,14 @@ export interface Comment {
 
 export interface Community {
     id: string;
+    // The URL key, lowercase (premierleague), and the handle as shown (PremierLeague)
     name: string;
+    name_styled: string;
     display_name: string | null;
     description: string | null;
     image_url: string | null;
+    // 4:1 header picture
+    banner_url: string | null;
     rules: CommunityRule[] | null;
     category: CommunityCategoryId | null;
     visibility: 'public' | 'private';
@@ -161,6 +169,9 @@ export interface PrivateUser {
     email: string;
     display_name: string | null;
     avatar_id: string;
+    // Drawn avatar: its code (/avatar/{code}.svg) and the parts chosen (null = derived from the username), for the editor
+    avatar: string | null;
+    avatar_config: Record<string, number> | null;
     role: string;
     karma: number;
     is_email_verified: boolean;
@@ -193,6 +204,7 @@ export interface PublicUser {
     username: string;
     display_name: string | null;
     avatar_id: string;
+    avatar: string | null;
     karma: number;
     is_suspended: boolean;
     created_at: string;
@@ -217,14 +229,62 @@ export interface UserCommentsResponse {
     next_cursor: string | null;
 }
 
-export interface SearchPostsResponse {
+// First pages that found little also carry a spelling suggestion and (posts, comments) similar community names
+interface SearchHints {
+    // The words the results are for; differs from what was typed when it was auto-corrected (corrected_from)
+    query?: string;
+    corrected_from?: string | null;
+    did_you_mean?: string | null;
+    related_communities?: Community[];
+}
+
+export interface SearchPostsResponse extends SearchHints {
     posts: Post[];
     next_page: number | null;
 }
 
-export interface SearchCommunitiesResponse {
+export interface SearchCommentsResponse extends SearchHints {
+    comments: ListedComment[];
+    next_page: number | null;
+}
+
+export interface SearchCommunitiesResponse extends SearchHints {
     communities: Community[];
     next_page: number | null;
+}
+
+export interface AutocompleteResponse {
+    communities: { name: string; name_styled: string; display_name: string | null; image_url: string | null; member_count: number }[];
+    users: { username: string; display_name: string | null; avatar_id: string }[];
+}
+
+// GET /trending: snapshots recomputed every 10 minutes
+export interface TrendingPostsResponse {
+    posts: Post[];
+    computed_at: string | null;
+}
+
+export interface TrendingCommunity extends Community {
+    trending: { new_members: number; posts: number; comments: number };
+}
+
+export interface TrendingCommunitiesResponse {
+    communities: TrendingCommunity[];
+    computed_at: string | null;
+}
+
+export interface TrendingTopic {
+    kind: 'term' | 'flair';
+    term: string;
+    // A flair's community
+    community: { name: string; name_styled: string; display_name: string | null } | null;
+    posts: number;
+    authors: number;
+}
+
+export interface TrendingTopicsResponse {
+    topics: TrendingTopic[];
+    computed_at: string | null;
 }
 
 export interface AppNotification {
@@ -380,7 +440,9 @@ export interface ModLogEntry {
     target_id: string;
     reason: string | null;
     details: Record<string, unknown> | null;
-    actor: { username: string };
+    // A forum moderator, or null for site staff (staff.name in the admin panel's log)
+    actor: { username: string } | null;
+    staff?: { name: string } | null;
     community?: { name: string } | null;
 }
 
@@ -448,4 +510,70 @@ export interface BlockedTerm {
     note: string | null;
     created_at: string;
     creator?: { username: string };
+}
+
+// Admin -> Stats (GET /admin/stats). Days are Lagos dates.
+export interface DailyStats {
+    date: string;
+    total_users: number;
+    new_signups: number;
+    dau: number;
+    wau: number;
+    mau: number;
+    unique_visitors: number;
+    page_views: number;
+    posts: number;
+    comments: number;
+    votes: number;
+    ad_impressions: number;
+    ad_clicks: number;
+    house_impressions: number;
+    house_clicks: number;
+    countries: Record<string, number> | null;
+}
+
+export interface CommunityStats {
+    name: string;
+    display_name: string | null;
+    members: number;
+    new_members: number;
+    posts: number;
+    comments: number;
+    votes: number;
+    visitors: number;
+    page_views: number;
+}
+
+export interface AdminStatsResponse {
+    range: { from: string; to: string };
+    today: DailyStats;
+    days: DailyStats[];
+    top_communities: CommunityStats[];
+}
+
+// Admin panel staff accounts (separate from forum accounts)
+export type StaffRole = 'owner' | 'admin' | 'ads' | 'moderator';
+
+export interface StaffAccount {
+    id: string;
+    email: string;
+    name: string;
+    role: StaffRole;
+    has_password: boolean;
+    has_2fa: boolean;
+    password_change_required: boolean;
+    disabled_at: string | null;
+    last_login_at: string | null;
+    created_at: string;
+}
+
+export interface StaffAuditEntry {
+    id: string;
+    created_at: string;
+    action: string;
+    target_type: string | null;
+    target_id: string | null;
+    details: Record<string, unknown> | null;
+    ip_address: string | null;
+    staff: { name: string; email: string } | null;
 }

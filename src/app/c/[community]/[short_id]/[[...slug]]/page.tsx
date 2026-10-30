@@ -1,3 +1,4 @@
+import { communityHandle } from '@/lib/communityName';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
@@ -53,7 +54,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             type: 'article',
             publishedTime: post.created_at,
             modifiedTime: post.edited_at ?? undefined,
-            section: `c/${post.community.name}`,
+            section: `c/${communityHandle(post.community)}`,
             authors: post.author ? [`/u/${post.author.username}`] : undefined,
         },
     });
@@ -141,7 +142,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                     discussionJsonLd(post, canonical, showingOneThread ? [] : comments),
                     breadcrumbJsonLd([
                         { name: APP_NAME, path: '/' },
-                        { name: `c/${post.community.name}`, path: `/c/${post.community.name}` },
+                        { name: `c/${communityHandle(post.community)}`, path: `/c/${post.community.name}` },
                         { name: post.title, path: canonical },
                     ]),
                 ]}

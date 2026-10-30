@@ -13,6 +13,7 @@ import { useAuthStateStore } from '@/lib/stateStore';
 import { useUIStore } from '@/lib/uiStore';
 import { isActiveRoute, NavRoute, PRIMARY_NAV } from '@/data/ui/navigation';
 import { communityLabel } from '@/lib/communityName';
+import CookieSettingsButton from '@/components/consent/CookieSettingsButton';
 
 // Flat rows: no pill behind the current page, just full-strength text and a thin red marker at the edge
 const itemClasses =
@@ -102,6 +103,9 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                         </Link>
                     </li>
                 ))}
+                <li>
+                    <CookieSettingsButton className="cursor-pointer hover:text-text hover:underline" />
+                </li>
             </ul>
         </nav>
     );

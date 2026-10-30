@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Copy, Pause, Play, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Copy, Megaphone, Pause, Play, Plus } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import InputField, { selectStyles } from '@/components/ui/Input';
 import TextArea from '@/components/ui/TextArea';
+import ImageUpload from '@/components/common/ImageUpload';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
@@ -65,15 +67,19 @@ export function AdminAds({ initial }: { initial: AdsOverview }) {
                 </p>
                 <p className="mt-1 text-muted">
                     Slots go to direct campaigns that target the page first, then direct campaigns that run everywhere, then house
-                    ads, then AdSense. Turn AdSense on with ADSENSE_ENABLED and the ADSENSE_* ids in the API&apos;s settings.
+                    ads, then AdSense. House ads with a share of slots also win that share outright, so your own products are seen. Turn AdSense on with ADSENSE_ENABLED and the ADSENSE_* ids in the API&apos;s settings.
                 </p>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
+                <Button size="sm" variant="secondary" onClick={() => setAdding(adding === 'promote' ? null : 'promote')}>
+                    <Megaphone className="size-4" /> Promote your own product
+                </Button>
                 <Button size="sm" onClick={() => setAdding(adding === 'advertiser' ? null : 'advertiser')}>
                     <Plus className="size-4" /> Add advertiser
                 </Button>
             </div>
+            {adding === 'promote' && <PromoteForm onCancel={() => setAdding(null)} />}
             {adding === 'advertiser' && <AdvertiserForm onSaved={reload} onCancel={() => setAdding(null)} />}
 
             {data.advertisers.length === 0 && (
@@ -145,8 +151,8 @@ function AdvertiserForm({ onSaved, onCancel }: { onSaved: () => Promise<void>; o
             <Field label="Website">
                 <InputField name="website" type="url" placeholder="https://example.com" value={fields.website} onChange={set('website')} />
             </Field>
-            <Field label="Logo (https link, square)">
-                <InputField name="logo_url" type="url" placeholder="https://example.com/logo.png" value={fields.logo_url} onChange={set('logo_url')} />
+            <Field label="Logo (square)">
+                <ImageUpload endpoint="/admin/images?purpose=ad_logo" aspect="square" label="Logo" value={fields.logo_url || null} onChange={(url) => setFields({ ...fields, logo_url: url ?? '' })} />
             </Field>
             <Field label="Notes (only admins see these)" className="sm:col-span-2">
                 <TextArea name="notes" placeholder="Deal terms, contact person" value={fields.notes} onChange={set('notes')} />
@@ -158,6 +164,92 @@ function AdvertiserForm({ onSaved, onCancel }: { onSaved: () => Promise<void>; o
                 </Button>
                 <Button type="submit" disabled={!fields.name.trim()}>
                     Save advertiser
+                </Button>
+            </div>
+        </form>
+    );
+}
+
+// One step to advertise the site's own things (another app, a feature, an event): an advertiser named after the
+// product, a live house campaign with a share of slots, and its first feed ad. Labelled "From us" on the site.
+function PromoteForm({ onCancel }: { onCancel: () => void }) {
+    const router = useRouter();
+    const [fields, setFields] = useState({ product: '', headline: '', body: '', click_url: '', share: '20', logo_url: '', image_url: '' });
+    const [error, setError] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const set = (key: keyof typeof fields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setFields({ ...fields, [key]: e.target.value });
+
+    async function submit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        setError(null);
+        setIsSaving(true);
+        try {
+            const { advertiser } = await api<{ advertiser: Advertiser }>('/admin/ads/advertisers', {
+                method: 'POST',
+                body: { name: fields.product.trim(), logo_url: fields.logo_url || null },
+            });
+            const { campaign } = await api<{ campaign: Campaign }>('/admin/ads/campaigns', {
+                method: 'POST',
+                body: {
+                    advertiser_id: advertiser.id,
+                    name: `${fields.product.trim()} (house)`,
+                    kind: 'house',
+                    status: 'active',
+                    house_share: Math.min(Math.max(Number(fields.share) || 0, 0), 50),
+                    frequency_cap: 3,
+                },
+            });
+            await api(`/admin/ads/campaigns/${campaign.id}/creatives`, {
+                method: 'POST',
+                body: {
+                    format: 'feed_post',
+                    headline: fields.headline.trim(),
+                    body: fields.body.trim() || null,
+                    image_url: fields.image_url || null,
+                    click_url: fields.click_url.trim(),
+                },
+            });
+            router.push(`/admin?tab=ads&campaign=${campaign.id}`);
+        } catch (error) {
+            setError(errorMessage(error));
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <form onSubmit={submit} className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+                <h3 className="font-bold">Promote your own product</h3>
+                <p className="text-sm text-muted">Shows as &quot;From us&quot; in the feed, even when paid campaigns are running. You can add a reply-style ad and pictures on the next screen.</p>
+            </div>
+            <Field label="Product">
+                <InputField name="product" placeholder="Cardernir" required value={fields.product} onChange={set('product')} />
+            </Field>
+            <Field label="Link">
+                <InputField name="click_url" placeholder="https://cardernir.app or /communities" required value={fields.click_url} onChange={set('click_url')} />
+            </Field>
+            <Field label="Headline" className="sm:col-span-2">
+                <InputField name="headline" placeholder="Cardernir: your cards, sorted" required value={fields.headline} onChange={set('headline')} />
+            </Field>
+            <Field label="Text (optional)" className="sm:col-span-2">
+                <TextArea name="body" placeholder="One or two lines about it" value={fields.body} onChange={set('body')} />
+            </Field>
+            <Field label="Logo (square)">
+                <ImageUpload endpoint="/admin/images?purpose=ad_logo" aspect="square" label="Logo" value={fields.logo_url || null} onChange={(url) => setFields({ ...fields, logo_url: url ?? '' })} />
+            </Field>
+            <Field label="Picture (optional)">
+                <ImageUpload endpoint="/admin/images?purpose=ad_image" aspect="card" label="Picture" value={fields.image_url || null} onChange={(url) => setFields({ ...fields, image_url: url ?? '' })} />
+            </Field>
+            <Field label="Share of ad slots (%, up to 50)">
+                <InputField name="share" type="number" min={0} max={50} value={fields.share} onChange={set('share')} />
+            </Field>
+            {error && <ErrorMessage size="small" errorMessage={error} role="alert" className="sm:col-span-2" />}
+            <div className="flex items-end justify-end gap-2">
+                <Button variant="ghost" onClick={onCancel}>
+                    Cancel
+                </Button>
+                <Button type="submit" disabled={isSaving || !fields.product.trim() || fields.headline.trim().length < 3 || !fields.click_url.trim()}>
+                    Start promoting
                 </Button>
             </div>
         </form>
@@ -226,6 +318,24 @@ export function AdminCampaign({ initial }: { initial: CampaignDetail }) {
                 <StatusBadge campaign={campaign} />
                 <span className="text-sm text-muted">for {advertiser.name}</span>
             </header>
+
+            {/* The advertiser's logo shows on every one of its ads */}
+            <div className="flex items-center gap-4 rounded-xl border border-border bg-surface p-4">
+                <ImageUpload
+                    endpoint="/admin/images?purpose=ad_logo"
+                    aspect="square"
+                    label="Logo"
+                    value={advertiser.logo_url}
+                    onChange={async (url) => {
+                        await api(`/admin/ads/advertisers/${advertiser.id}`, { method: 'PATCH', body: { logo_url: url } });
+                        await reload();
+                    }}
+                />
+                <div className="text-sm">
+                    <p className="font-semibold">{advertiser.name} logo</p>
+                    <p className="text-muted">Square, shown next to the name on every ad. Without one, the first letter is shown.</p>
+                </div>
+            </div>
 
             <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                 {[
@@ -316,6 +426,7 @@ function CampaignForm({ campaign, onSaved }: { campaign: Campaign; onSaved: () =
         currency: campaign.currency,
         frequency_cap: campaign.frequency_cap ? String(campaign.frequency_cap) : '',
         priority: String(campaign.priority),
+        house_share: String(campaign.house_share ?? 0),
         payment_url: campaign.payment_url ?? '',
         paid: Boolean(campaign.paid_at),
     });
@@ -353,6 +464,7 @@ function CampaignForm({ campaign, onSaved }: { campaign: Campaign; onSaved: () =
                     currency: fields.currency,
                     frequency_cap: fields.frequency_cap ? Number(fields.frequency_cap) : null,
                     priority: Number(fields.priority) || 0,
+                    ...(fields.kind === 'house' ? { house_share: Math.min(Math.max(Number(fields.house_share) || 0, 0), 50) } : {}),
                     payment_url: fields.payment_url.trim() || null,
                     paid: fields.paid,
                 },
@@ -405,6 +517,14 @@ function CampaignForm({ campaign, onSaved }: { campaign: Campaign; onSaved: () =
                     <InputField name="priority" type="number" min={-100} max={100} value={fields.priority} onChange={(e) => set('priority', e.target.value)} />
                 </Field>
             </div>
+            {fields.kind === 'house' && (
+                <Field label="Share of ad slots (%)" className="sm:col-span-2">
+                    <InputField name="house_share" type="number" min={0} max={50} value={fields.house_share} onChange={(e) => set('house_share', e.target.value)} />
+                    <span className="text-xs text-muted">
+                        0 = only slots nobody paid for. Up to 50 = shown in that share of slots even when paid campaigns want them (all house ads together max 50%). Frequency caps and where-it-shows rules still apply.
+                    </span>
+                </Field>
+            )}
 
             <fieldset className="flex flex-col gap-2 sm:col-span-2">
                 <legend className="mb-1 text-sm font-semibold">Where it shows</legend>
@@ -478,9 +598,12 @@ function CampaignForm({ campaign, onSaved }: { campaign: Campaign; onSaved: () =
 }
 
 const previewUnit = (creative: Pick<Creative, 'id' | 'headline' | 'body' | 'image_url' | 'cta_label' | 'click_url'>, campaign: Campaign, advertiser: Advertiser): NativeAdUnit => {
-    let host = creative.click_url;
+    // Same rule as the API: a page on this site (a /path, this site's address or a local test link) shows the site's name
+    let host: string | null = null;
     try {
-        host = new URL(creative.click_url).hostname.replace(/^www\./, '');
+        const url = new URL(creative.click_url, APP_URL);
+        const local = /^(localhost|127\.|10\.|192\.168\.)|\.local$/.test(url.hostname);
+        host = url.host === new URL(APP_URL).host || local ? null : url.hostname.replace(/^www\./, '');
     } catch {}
     return {
         kind: campaign.kind,
@@ -557,9 +680,12 @@ function Creatives({ campaign, advertiser, creatives, onChanged }: { campaign: C
 
 function Preview({ unit, format }: { unit: NativeAdUnit; format: Creative['format'] }) {
     return format === 'feed_post' ? (
-        <SponsoredPostCard unit={unit} preview className="border border-border sm:rounded-xl" />
+        // The feed column pads cards on wider screens; the preview box does the same so nothing touches its edges
+        <SponsoredPostCard unit={unit} preview className="rounded-xl border border-border sm:px-4" />
     ) : (
-        <SponsoredCommentItem unit={unit} preview />
+        <div className="rounded-xl border border-border p-4">
+            <SponsoredCommentItem unit={unit} preview />
+        </div>
     );
 }
 
@@ -611,12 +737,12 @@ function CreativeForm({ campaign, advertiser, onSaved, onCancel }: { campaign: C
                 </Field>
                 {fields.format === 'feed_post' && (
                     <Field label="Image (optional, https, 1.91:1 like 1200×628)">
-                        <InputField name="image_url" type="url" value={fields.image_url} onChange={set('image_url')} />
+                        <ImageUpload endpoint="/admin/images?purpose=ad_image" aspect="card" label="Picture" value={fields.image_url || null} onChange={(url) => setFields({ ...fields, image_url: url ?? '' })} />
                     </Field>
                 )}
                 <div className="grid grid-cols-[1fr_auto] gap-3">
                     <Field label="Link">
-                        <InputField name="click_url" type="url" required placeholder="https://example.com/offer" value={fields.click_url} onChange={set('click_url')} />
+                        <InputField name="click_url" required placeholder="https://example.com/offer, or /communities for a page here" value={fields.click_url} onChange={set('click_url')} />
                     </Field>
                     <Field label="Button">
                         <InputField name="cta_label" maxLength={24} className="w-36" value={fields.cta_label} onChange={set('cta_label')} />

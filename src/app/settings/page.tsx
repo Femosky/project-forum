@@ -6,6 +6,7 @@ import { getTheme } from '@/components/theme/getTheme';
 import { getDataSaver } from '@/lib/dataSaver';
 import { SessionsResponse, UserResponse } from '@/types/api';
 import EmptyState from '@/components/ui/EmptyState';
+import AvatarSection from './_components/AvatarSection';
 import Button from '@/components/ui/Button';
 import {
     DataSaverToggle,
@@ -49,17 +50,16 @@ export default async function SettingsPage() {
         <div className="mx-auto flex w-full max-w-content flex-col gap-3 py-3 sm:px-4 sm:py-4">
             <h1 className="px-4 text-2xl font-extrabold sm:px-0">Settings</h1>
 
-            {user.role === 'admin' && (
-                <Section title="Site admin" description="Reports and held posts from every community, accounts, takedowns and the blocklist.">
-                    <Button asChild variant="secondary" className="self-start">
-                        <Link href="/admin">Open the admin panel</Link>
-                    </Button>
-                </Section>
-            )}
 
             <Section title="Profile">
                 <ProfileForm user={user} />
             </Section>
+
+            <div id="avatar" className="scroll-mt-16">
+                <Section title="Avatar" description="Drawn, never a photo: mix and match until it feels like you.">
+                    <AvatarSection user={user} />
+                </Section>
+            </div>
 
             <Section title="Appearance" description="Follow your device, or pick one.">
                 <ThemePicker initialTheme={theme} />

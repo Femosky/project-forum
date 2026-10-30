@@ -12,6 +12,7 @@ import { ApiError, errorMessage } from '@/lib/api/errors';
 import { useAuthStateStore } from '@/lib/stateStore';
 import { safeNextPath } from '@/lib/utils/NavigationUtility';
 import { UserResponse } from '@/types/api';
+import { trackConversion } from '@/lib/googleAds';
 
 const USERNAME_PATTERN = /^[a-z][a-z0-9_]*$/;
 
@@ -70,6 +71,7 @@ function SignupForm() {
                 body: { email: fields.email.trim(), username: fields.username.trim(), password: fields.password, is_adult: true, turnstile_token: challenge.token },
             });
             login();
+            trackConversion('sign_up');
             router.replace(next);
             router.refresh();
         } catch (error) {

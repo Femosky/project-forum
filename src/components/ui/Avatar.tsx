@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar as RadixAvatar } from 'radix-ui';
+import { useState } from 'react';
 import { cva, VariantProps } from 'class-variance-authority';
 import { twMerge } from 'tailwind-merge';
 import { useDataSaver } from '@/lib/useDataSaver';
@@ -38,21 +38,23 @@ export function colourFor(name: string): string {
     return FALLBACK_COLOURS[hash % FALLBACK_COLOURS.length];
 }
 
-// Shows the image when it loads, otherwise the first letter of the name on the name's colour.
-// With data saver on, always the letter.
+// The picture when there is one (communities, advertisers), otherwise the first letter of the name on the name's
+// colour, which also stays if the picture fails. With data saver on, always the letter. (People have drawn avatars
+// instead: UserAvatar.) A plain <img>, not a Radix primitive, to keep it out of every page's JavaScript.
 export function Avatar({ name, src: imageSrc, size, shape, className }: AvatarProps) {
     const dataSaver = useDataSaver();
-    const src = dataSaver ? null : imageSrc;
+    const [failed, setFailed] = useState<string | null>(null);
+    const src = dataSaver || failed === imageSrc ? null : imageSrc;
     return (
-        <RadixAvatar.Root className={twMerge(avatarStyles({ size, shape }), className)} style={{ backgroundColor: colourFor(name) }}>
-            {src && <RadixAvatar.Image src={src} alt={`${name}'s avatar`} className="size-full object-cover" />}
-            <RadixAvatar.Fallback
-                delayMs={src ? 300 : 0}
-                className="flex size-full items-center justify-center font-bold uppercase text-white"
-            >
+        <span className={twMerge(avatarStyles({ size, shape }), className)} style={{ backgroundColor: colourFor(name) }}>
+            <span aria-hidden className="flex size-full items-center justify-center font-bold uppercase text-white">
                 {name.replace(/[^a-z0-9]/gi, '').charAt(0) || '?'}
-            </RadixAvatar.Fallback>
-        </RadixAvatar.Root>
+            </span>
+            {src && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={src} alt="" loading="lazy" onError={() => setFailed(src)} className="absolute inset-0 size-full object-cover" />
+            )}
+        </span>
     );
 }
 

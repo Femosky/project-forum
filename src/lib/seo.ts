@@ -1,3 +1,4 @@
+import { communityHandle } from '@/lib/communityName';
 import type { Metadata } from 'next';
 import { APP_DESCRIPTION, APP_NAME, APP_URL, SITE_OG_LOCALE, TWITTER_HANDLE } from '@/lib/constants';
 import { stripMarkdown } from '@/components/common/Markdown';
@@ -113,7 +114,7 @@ export function discussionJsonLd(post: Post, path: string, comments: Comment[]) 
         datePublished: post.created_at,
         ...(post.edited_at ? { dateModified: post.edited_at } : {}),
         author: personFor(post.author, post.is_anonymous),
-        isPartOf: { '@type': 'WebPage', name: `c/${post.community.name}`, url: absoluteUrl(`/c/${post.community.name}`) },
+        isPartOf: { '@type': 'WebPage', name: `c/${communityHandle(post.community)}`, url: absoluteUrl(`/c/${post.community.name}`) },
         ...(post.url ? { sharedContent: { '@type': 'WebPage', url: post.url } } : {}),
         interactionStatistic: counters(post.upvote_count, post.comment_count),
         comment: comments

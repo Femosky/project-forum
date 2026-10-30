@@ -40,11 +40,12 @@ export function QueueList({ initialItems, site = false }: { initialItems: QueueI
     const dismiss = (item: QueueItem) =>
         run(item, async () => {
             // Closing one report closes every open report on the same target
-            if (item.report_ids[0]) await api(`/reports/${item.report_ids[0]}/resolve`, { method: 'POST', body: { status: 'dismissed' } });
+            // Staff (the site queue) decide through the admin API; community moderators through the forum's
+            if (item.report_ids[0]) await api(`${site ? '/admin' : ''}/reports/${item.report_ids[0]}/resolve`, { method: 'POST', body: { status: 'dismissed' } });
         });
 
     const moderate = (item: QueueItem, action: 'approve' | 'remove', reason?: string) =>
-        api(`/${item.target_type}s/${item.target_id}/moderation`, { method: 'POST', body: { action, reason } });
+        api(`${site ? '/admin' : ''}/${item.target_type}s/${item.target_id}/moderation`, { method: 'POST', body: { action, reason } });
 
     function askRemove(item: QueueItem) {
         setPending({

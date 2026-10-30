@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { useDataSaver } from '@/lib/useDataSaver';
 import { ADSENSE_HEIGHT } from './config';
-import { askForAdConsent, useAdConsent } from './consent';
+import { useConsent } from '@/lib/consent';
 import type { AdPlacement, AdSenseUnit } from './types';
 
 declare global {
@@ -27,13 +27,14 @@ function addScript(client: string) {
 
 // An AdSense unit (in-feed or in-article). The box has a fixed height from the start, so the page never moves
 // when the ad fills it (or doesn't). adsbygoogle.js loads only when a slot comes near the screen, after the reader
-// has answered the ad-cookie prompt, and never with data saver on.
+// has answered the cookie banner, and never with data saver on. Without the advertising choice, Google serves
+// non-personalised ads (and Consent Mode, set in the layout, says the same).
 export function AdSenseSlot({ unit, placement, className }: { unit: AdSenseUnit; placement: AdPlacement; className?: string }) {
     const box = useRef<HTMLDivElement>(null);
     const [isNear, setIsNear] = useState(false);
     // One push per slot: AdSense fills the <ins> once
     const pushed = useRef(false);
-    const consent = useAdConsent();
+    const consent = useConsent();
     const dataSaver = useDataSaver();
     const height = ADSENSE_HEIGHT[placement];
 
@@ -45,17 +46,13 @@ export function AdSenseSlot({ unit, placement, className }: { unit: AdSenseUnit;
         return () => observer.disconnect();
     }, [isNear]);
 
-    useEffect(() => {
-        if (isNear && !consent) askForAdConsent();
-    }, [isNear, consent]);
-
     const canLoad = isNear && consent !== null && !dataSaver;
 
     useEffect(() => {
         if (!canLoad || pushed.current) return;
         pushed.current = true;
         window.adsbygoogle = window.adsbygoogle || [];
-        if (consent === 'limited') window.adsbygoogle.requestNonPersonalizedAds = 1;
+        window.adsbygoogle.requestNonPersonalizedAds = consent?.ads ? 0 : 1;
         addScript(unit.client);
         try {
             window.adsbygoogle.push({});

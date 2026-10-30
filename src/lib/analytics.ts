@@ -1,12 +1,16 @@
+import { analyticsAllowed } from './consent';
+
 // Page views and shares, sent to PostHog through this site's own /_a path (a rewrite in next.config.ts) so there
 // is no third-party script, no cookie and no storage. Each tab gets a random id that lives only in memory, so
 // visits can't be followed from one day to the next; signed-in activity is counted by the API instead.
-// Nothing is sent without NEXT_PUBLIC_POSTHOG_KEY, or when the browser asks not to be tracked.
+// Nothing is sent without NEXT_PUBLIC_POSTHOG_KEY, when the browser asks not to be tracked, or when the reader
+// turned analytics off in the cookie banner.
 
 const KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 let tabId: string | undefined;
 
 function optedOut() {
+    if (!analyticsAllowed()) return true;
     const nav = navigator as Navigator & { globalPrivacyControl?: boolean };
     return nav.globalPrivacyControl === true || nav.doNotTrack === '1';
 }

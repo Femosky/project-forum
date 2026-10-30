@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { CalendarDays, ChevronDown, ScrollText, ShieldCheck, Tag } from 'lucide-react';
+import { CalendarDays, ChevronDown, ScrollText, Search, ShieldCheck, Tag } from 'lucide-react';
 import { CommunityResponse } from '@/types/api';
-import Avatar from '@/components/ui/Avatar';
 import { categoryLabel } from '@/lib/moderation';
+import { communityLabel } from '@/lib/communityName';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 const cardClasses = 'flex flex-col gap-3 px-4 py-4 sm:px-0';
 
@@ -27,6 +28,22 @@ export function CommunityRail({ data }: { data: CommunityResponse }) {
                         <span className="ml-auto rounded-full bg-brand px-2 text-xs text-white tabular-nums">{viewer.queue_count} waiting</span>
                     ) : null}
                 </Link>
+            )}
+
+            {/* "Search in": a plain GET form, so it works before scripts load */}
+            {community.visibility === 'public' && (
+                <form action="/search" role="search" className="relative mx-4 mt-4 sm:mx-0">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-subtle" />
+                    <input type="hidden" name="community" value={community.name} />
+                    <input
+                        type="search"
+                        name="q"
+                        minLength={2}
+                        aria-label={`Search in ${communityLabel(community)}`}
+                        placeholder={`Search in ${communityLabel(community)}`}
+                        className="h-8 w-full rounded-[7px] bg-transparent pl-8 pr-2 text-sm text-text ring-1 ring-inset ring-border placeholder:text-subtle outline-none transition-colors hover:ring-border-strong focus:ring-border-strong"
+                    />
+                </form>
             )}
 
             <section className={cardClasses}>
@@ -87,7 +104,7 @@ export function CommunityRail({ data }: { data: CommunityResponse }) {
                         {moderators.map((moderator) => (
                             <li key={moderator.username}>
                                 <Link href={`/u/${moderator.username}`} className="flex items-center gap-2 text-sm hover:underline">
-                                    <Avatar name={moderator.username} size="sm" />
+                                    <UserAvatar user={moderator} size={24} className="size-6" />
                                     <span className="truncate font-semibold">@{moderator.username}</span>
                                     {moderator.role === 'owner' && <span className="text-xs text-muted">owner</span>}
                                 </Link>

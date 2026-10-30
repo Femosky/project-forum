@@ -3,6 +3,8 @@ import { CRAWLER_UA } from './src/lib/bots';
 import { sentryEndpoint } from './src/lib/errorReport';
 
 const nextConfig: NextConfig = {
+    // Local testing on 127.0.0.1 (a second checkout runs there so its sign-in cookies don't mix with localhost's)
+    allowedDevOrigins: ['127.0.0.1'],
     // Crawlers get metadata in <head> rather than streamed after it
     htmlLimitedBots: CRAWLER_UA,
     // Analytics events reach PostHog through the site's own origin (src/lib/analytics.ts)

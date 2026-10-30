@@ -10,7 +10,8 @@ export type NativeCreative = {
     body: string | null;
     image_url: string | null;
     cta_label: string;
-    display_url: string;
+    // The advertiser's domain, or null when the ad leads to a page on this site (cards then show the site's name)
+    display_url: string | null;
 };
 
 export type NativeAdUnit = {
@@ -53,6 +54,8 @@ export type Campaign = {
     currency: string;
     frequency_cap: number | null;
     priority: number;
+    // House campaigns: percent of slots (0-50) they take even when paid campaigns want them
+    house_share: number;
     payment_url: string | null;
     paid_at: string | null;
     stats_token: string | null;

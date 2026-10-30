@@ -8,7 +8,7 @@ type ChunkResponse = {
     urls: { community?: string; short_id?: string; slug?: string; name?: string; username?: string; lastmod: string | null }[];
 };
 
-const STATIC_PAGES: SitemapEntry[] = [{ path: '/' }, { path: '/communities' }];
+const STATIC_PAGES: SitemapEntry[] = [{ path: '/' }, { path: '/trending' }, { path: '/communities' }];
 
 function pathFor(kind: string, url: ChunkResponse['urls'][number]): string {
     if (kind === 'posts') return `/c/${url.community}/${url.short_id}${url.slug ? `/${url.slug}` : ''}`;

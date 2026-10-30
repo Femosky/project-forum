@@ -1,5 +1,6 @@
 'use client';
 
+import { communityHandle } from '@/lib/communityName';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Community, CommunityViewer, MembershipResponse } from '@/types/api';
@@ -21,7 +22,8 @@ function initialState(viewer: CommunityViewer | null): MembershipState {
     return 'none';
 }
 
-export function CommunityHeader({ community, viewer }: { community: Community; viewer: CommunityViewer | null }) {
+// `banner` is drawn by the (server) page, so its markup costs no JavaScript here
+export function CommunityHeader({ community, viewer, banner }: { community: Community; viewer: CommunityViewer | null; banner?: React.ReactNode }) {
     const [membership, setMembership] = useState<MembershipState>(initialState(viewer));
     const [members, setMembers] = useState(community.member_count);
     const [isBusy, setIsBusy] = useState(false);
@@ -84,12 +86,13 @@ export function CommunityHeader({ community, viewer }: { community: Community; v
 
     return (
         <header className="flex flex-col gap-4 border-b border-border px-4 pb-6 pt-7 sm:px-0">
+            {banner}
             <div className="flex items-center gap-4">
                 <Avatar name={community.name} src={community.image_url} size="xl" shape="square" className="size-14" />
                 <div className="min-w-0 flex-1">
                     <h1 className="truncate text-[22px] font-semibold leading-7 tracking-[-0.015em]">{communityLabel(community)}</h1>
                     <p className="mt-0.5 text-[13.5px] text-subtle">
-                        <span>/c/{community.name} · </span>
+                        <span>c/{communityHandle(community)} · </span>
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(members)}</span>{' '}
                         {members === 1 ? 'member' : 'members'} ·{' '}
                         <span className="tabular-nums">{NumberUtility.compactFormatter.format(community.post_count)}</span>{' '}

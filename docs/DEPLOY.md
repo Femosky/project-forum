@@ -1,6 +1,6 @@
 # Deploying the web app
 
-Private testing runs on **Vercel Hobby** (free) at `https://forum.oskeylabs.com`, talking to the API at `https://api.forum.oskeylabs.com` (see `docs/DEPLOY.md` in the API repo). Functions run in `cle1` (Cleveland), next to the API and database in Ohio (`vercel.json`).
+Private testing runs on **Vercel Hobby** (free) at `https://forum.oskeylabs.com`, talking to the API at `https://api.forum.oskeylabs.com` (see `docs/DEPLOY.md` in the API repo). Functions run in `fra1` (Frankfurt, `vercel.json`), next to the API and database once they move to Frankfurt (project-root `docs/LAUNCH.md`, "Moving to Frankfurt"). Until that move they sat in `cle1` (Cleveland), next to Ohio.
 
 Vercel Hobby is for non-commercial use. Before ads go live, move to Vercel Pro or to Cloudflare (docs/ROADMAP.md, decision 5).
 
@@ -30,8 +30,20 @@ Vercel's GitHub integration builds every push. `main` goes to production; every 
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key | The bot check on signup, password reset, repeated failed logins and a new account's first posts. Set it together with the API's `TURNSTILE_SECRET_KEY`. Vercel type: Config |
 | `NEXT_PUBLIC_SENTRY_DSN` | Sentry project DSN | Error alerts from browsers and the server, sent through `/_e` without the Sentry SDK (`src/lib/errorReport.ts`). Vercel type: Config |
 | `NEXT_PUBLIC_TWITTER_HANDLE` | when there is an account | |
+| `NEXT_PUBLIC_GOOGLE_ADS_ID` | `AW-...`, when you run Google Ads campaigns | Conversion tracking for sign-ups and new posts. Unset = no Google tag at all. It loads only after a reader allows advertising cookies, never with data saver, once the page is idle. Vercel type: Config |
+| `NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_LABEL`, `NEXT_PUBLIC_GOOGLE_ADS_POST_LABEL` | with the id above | Each conversion action's label (Google Ads → Goals → Conversions → the action → Tag setup → "send_to": `AW-.../LABEL`) |
 | `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` | at public launch | The `content` value of each verification meta tag |
 | `INDEXNOW_KEY` | at public launch | Same value as the API's |
+
+## Guest page caching
+
+Logged-out visitors to `/`, `/trending`, `/c/{name}` and post pages get HTML that is the same for every guest, so `src/proxy.ts` marks it `Vercel-CDN-Cache-Control: public, s-maxage=60, stale-while-revalidate=300`: Vercel's CDN keeps it for a minute and serves it stale for five more while it re-renders. Browsers get `Cache-Control: public, max-age=0, must-revalidate` and the response carries `X-Guest-Cache: <variant>`. Requests with sign-in cookies are never cached (Next's `private, no-store`), and guest copies are keyed separately per theme and data-saver setting (`?__guest=` on the internal rewrite). Guest HTML contains nothing personal, so even a cache mistake could only show someone the signed-out page. Ads in cached pages ignore the per-reader frequency cookie for up to a minute.
+
+To check after a deploy: `curl -sI https://forum.oskeylabs.com/trending | grep -i -E 'x-vercel-cache|cache-control|x-guest'` twice (the second says `x-vercel-cache: HIT`), then the same with `-H 'Cookie: refresh_token=x'` (no `X-Guest-Cache`, `private, no-store`).
+
+## Cookies and consent
+
+Every new visitor gets the cookie banner (`src/components/consent`): Accept all, Reject all, or Choose (strictly necessary always on; analytics, on unless turned off; advertising, off until allowed). The answer is `cookie_consent=v1.a1.d0` for a year; bump `CONSENT_VERSION` in `src/lib/consentDefaults.ts` to ask everyone again after a policy change. An inline script sets Google Consent Mode v2 defaults (all denied) before any Google script. When an IAB TCF consent platform is on the page (`__tcfapi`, e.g. Google's own "Privacy & messaging" message), the banner stays away. **EEA/UK visitors**: Google requires a Google-certified consent platform to serve AdSense there; once AdSense approves the site, turn on AdSense → Privacy & messaging → European regulations message (free) and ours steps aside.
 
 ## Analytics
 

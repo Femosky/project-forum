@@ -6,7 +6,6 @@ import { twMerge } from 'tailwind-merge';
 import { APP_NAME, REPUTATION_LABEL } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
 import { PostsResponse, PublicUserResponse, UserCommentsResponse, UserResponse, UserStatsResponse } from '@/types/api';
-import Avatar from '@/components/ui/Avatar';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
@@ -18,6 +17,7 @@ import JsonLd from '@/components/common/JsonLd';
 import ShareButton from '@/components/post/ShareButton';
 import PageBar from '@/components/layout/PageBar';
 import { noindexMetadata, pageMetadata, profileJsonLd } from '@/lib/seo';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 type PageProps = {
     params: Promise<{ username: string }>;
@@ -88,7 +88,13 @@ export default async function ProfilePage({ params, searchParams }: PageProps) {
                 <JsonLd data={profileJsonLd(user)} />
                 <header className="flex flex-col gap-5 border-b border-border px-4 pb-6 pt-7 sm:px-0">
                     <div className="flex items-center gap-4">
-                        <Avatar name={user.username} size="xl" className="size-14 text-lg" />
+                        {isMe ? (
+                            <Link href="/settings#avatar" title="Edit avatar" aria-label="Edit avatar" className="rounded-full transition-opacity hover:opacity-80">
+                                <UserAvatar user={user} size={56} className="size-14" />
+                            </Link>
+                        ) : (
+                            <UserAvatar user={user} size={56} className="size-14" />
+                        )}
                         <div className="min-w-0 flex-1">
                             <h1 className="truncate text-[22px] font-semibold leading-7 tracking-[-0.015em]">{user.display_name ?? `@${user.username}`}</h1>
                             <p className="mt-0.5 text-[13.5px] text-subtle">

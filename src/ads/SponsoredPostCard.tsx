@@ -6,6 +6,7 @@ import { twMerge } from 'tailwind-merge';
 import Avatar from '@/components/ui/Avatar';
 import Badge from '@/components/ui/Badge';
 import { adClickUrl } from './config';
+import { APP_NAME } from '@/lib/constants';
 import { useAdImpression } from './impressions';
 import AdMenu from './AdMenu';
 import type { NativeAdUnit } from './types';
@@ -55,7 +56,7 @@ export function SponsoredPostCard({ unit, className, preview = false }: { unit: 
 
                 <footer className="mt-3 flex items-center justify-between gap-3">
                     <span className="flex min-w-0 items-center gap-1 truncate text-[13px] font-medium text-subtle">
-                        {creative.display_url} <ExternalLink className="size-3 shrink-0" />
+                        {creative.display_url ?? APP_NAME} <ExternalLink className="size-3 shrink-0" />
                     </span>
                     <span className="flex h-[30px] shrink-0 items-center rounded-[7px] px-3 text-[13.5px] font-semibold text-text ring-1 ring-inset ring-border-strong">
                         {creative.cta_label}
