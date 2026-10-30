@@ -5,7 +5,6 @@ import {
     DATA_SAVER_COOKIE_NAME,
     REFRESH_TOKEN_COOKIE_NAME,
     THEME_COOKIE_NAME,
-    THEMES,
 } from './lib/constants';
 import { CRAWLER_UA } from './lib/bots';
 
@@ -87,43 +86,32 @@ async function crawlerStatus(request: NextRequest): Promise<NextResponse | null>
     return null;
 }
 
-// Guest pages at the edge. Logged-out visitors to the home, trending, community and post pages get HTML that is the
-// same for every guest, so Vercel's CDN may keep it for 60 seconds (and serve it stale for 5 more minutes while it
-// re-renders). Signed-in requests are never stored: they keep Next's private, no-store response.
+// Guest pages at the edge. Signed-out visits to the home, trending, community and post pages are rewritten to a
+// copy of the same page under /guest (app/guest), which renders without cookies or headers and is kept for 60
+// seconds (Next's ISR; on Vercel the CDN serves it, stale for up to 5 more minutes while it re-renders). Every guest
+// gets the same HTML and the API, and with it the database, is asked about once a minute instead of on every visit.
 //
-// The guest page still varies by the theme cookie and data saver (the layout renders both), so the request is
-// rewritten to carry that as a ?__guest= key, giving each combination its own cache entry and keeping guest
-// entries apart from the URLs signed-in people request. Even if a cache served a guest copy to someone signed in,
-// it would only show them signed out: guest HTML holds nothing personal, and nothing personal is ever stored.
-// Votes, saves and memberships only exist for signed-in people, whose pages render fresh with them.
-const GUEST_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=300';
+// Only plain visits qualify: no sign-in cookies (signed-in pages hold votes, saves and memberships and are never
+// shared), no theme or data-saver choice and no Save-Data header (the layout renders those), and no query string
+// (sort, cursor and ?comment= change the page; the guest copy ignores them). Everyone else gets the page rendered
+// for them, as before. Client navigations (RSC payloads) aren't rewritten either.
 const GUEST_PAGES = [/^\/$/, /^\/trending\/?$/, /^\/c\/[^/]+\/?$/, /^\/c\/[^/]+\/[^/]+(?:\/[^/]*)?\/?$/];
 const NOT_GUEST_PAGES = /^\/c\/[^/]+\/(?:mod|submit)(?:\/|$)/;
 
-function guestVariant(request: NextRequest): string | null {
-    if (request.method !== 'GET' && request.method !== 'HEAD') return null;
-    if (request.cookies.has(REFRESH_TOKEN_COOKIE_NAME) || request.cookies.has(ACCESS_TOKEN_COOKIE_NAME)) return null;
-    // Client navigations fetch RSC payloads keyed by router state (?_rsc=; Next hides the RSC header from the
-    // proxy); only full documents are shared
-    if (request.nextUrl.searchParams.has('_rsc') || request.headers.has('rsc') || request.headers.has('next-router-prefetch')) return null;
-    const { pathname } = request.nextUrl;
-    if (NOT_GUEST_PAGES.test(pathname) || !GUEST_PAGES.some((pattern) => pattern.test(pathname))) return null;
-
-    const theme = request.cookies.get(THEME_COOKIE_NAME)?.value;
-    const saver = request.cookies.get(DATA_SAVER_COOKIE_NAME)?.value;
-    const dataSaver = saver === 'on' || (saver !== 'off' && request.headers.get('save-data')?.toLowerCase() === 'on');
-    return `${(THEMES as readonly string[]).includes(theme ?? '') ? theme : 'auto'}.${dataSaver ? 'lite' : 'full'}`;
+function isPlainGuestVisit(request: NextRequest): boolean {
+    if (request.method !== 'GET' && request.method !== 'HEAD') return false;
+    const { cookies, headers, nextUrl } = request;
+    if (cookies.has(REFRESH_TOKEN_COOKIE_NAME) || cookies.has(ACCESS_TOKEN_COOKIE_NAME)) return false;
+    if (cookies.has(THEME_COOKIE_NAME) || cookies.has(DATA_SAVER_COOKIE_NAME) || headers.get('save-data')?.toLowerCase() === 'on') return false;
+    if (nextUrl.search !== '' || headers.has('rsc') || headers.has('next-router-prefetch')) return false;
+    return !NOT_GUEST_PAGES.test(nextUrl.pathname) && GUEST_PAGES.some((pattern) => pattern.test(nextUrl.pathname));
 }
 
-function cacheForGuests(request: NextRequest, variant: string) {
+function serveGuestCopy(request: NextRequest) {
     const url = request.nextUrl.clone();
-    url.searchParams.set('__guest', variant);
+    url.pathname = url.pathname === '/' ? '/guest' : `/guest${url.pathname}`;
     const response = NextResponse.rewrite(url);
-    // Vercel's CDN reads Vercel-CDN-Cache-Control first and never passes it on; browsers get Cache-Control and
-    // always check back, so a reader who signs in next sees their own page straight away
-    response.headers.set('Vercel-CDN-Cache-Control', GUEST_CACHE_CONTROL);
-    response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
-    response.headers.set('X-Guest-Cache', variant);
+    response.headers.set('X-Guest-Cache', 'shared');
     return response;
 }
 
@@ -133,6 +121,12 @@ export async function proxy(request: NextRequest) {
     if (CRAWLER_UA.test(request.headers.get('user-agent') ?? '')) {
         const answer = await crawlerStatus(request);
         if (answer) return answer;
+    }
+
+    // The guest copies are only reached through the rewrite below; their own addresses lead back to the real page
+    const { pathname } = request.nextUrl;
+    if (pathname === '/guest' || pathname.startsWith('/guest/')) {
+        return NextResponse.redirect(new URL((pathname.slice('/guest'.length) || '/') + request.nextUrl.search, request.url), 308);
     }
 
     const hasRefreshToken = request.cookies.has(REFRESH_TOKEN_COOKIE_NAME);
@@ -147,8 +141,7 @@ export async function proxy(request: NextRequest) {
         return refreshSession(request);
     }
 
-    const variant = guestVariant(request);
-    if (variant) return cacheForGuests(request, variant);
+    if (isPlainGuestVisit(request)) return serveGuestCopy(request);
 
     return NextResponse.next();
 }
