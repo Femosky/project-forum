@@ -9,6 +9,7 @@ import { adClickUrl } from './config';
 import { APP_NAME } from '@/lib/constants';
 import { useAdImpression } from './impressions';
 import AdMenu from './AdMenu';
+import AdPicture from './AdPicture';
 import type { NativeAdUnit } from './types';
 
 // A native ad in the feed. Same row as a post (see PostCard), with the advertiser's logo and name in place of the author,
@@ -48,10 +49,13 @@ export function SponsoredPostCard({ unit, className, preview = false }: { unit: 
                 {creative.body && <p className="line-clamp-2 break-words text-[14.5px] leading-[22px] text-muted">{creative.body}</p>}
 
                 {creative.image_url && (
-                    // Advertiser images come from anywhere, so next/image's allow-list doesn't apply. Fixed aspect ratio
-                    // keeps the row's height known before the image loads.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={creative.image_url} alt="" loading="lazy" className="data-saver-hide mt-3 aspect-[1.91/1] w-full rounded-xl object-cover ring-1 ring-border" />
+                    // A fixed 1.91:1 frame keeps the row's height known before the picture loads
+                    <AdPicture
+                        src={creative.image_url}
+                        focus={creative.image_focus}
+                        fit={creative.image_fit}
+                        className="mt-3 aspect-[1.91/1] w-full rounded-xl ring-1 ring-border"
+                    />
                 )}
 
                 <footer className="mt-3 flex items-center justify-between gap-3">
