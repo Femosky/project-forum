@@ -66,7 +66,16 @@ export type Campaign = {
     spent_minor?: number | null;
 };
 
-export type CampaignSummary = Campaign & { creative_count: number; active_creatives: number; impressions: number; clicks: number };
+export type CampaignSummary = Campaign & {
+    creative_count: number;
+    active_creatives: number;
+    impressions: number;
+    clicks: number;
+    // From the API's ad-pictures release on; older APIs leave them out
+    last_7_days?: { impressions: number; clicks: number };
+    // Where its live ads run
+    placements?: { feed: boolean; comments: boolean };
+};
 
 export type Advertiser = {
     id: string;
