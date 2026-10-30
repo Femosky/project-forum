@@ -14,6 +14,7 @@ import { communityLabel } from '@/lib/communityName';
 import ViewCount from './ViewCount';
 import UserAvatar from '@/components/ui/UserAvatar';
 import MatureBlur from './MatureBlur';
+import PostPicture from './PostPicture';
 
 // How a community is named in the interface (see lib/communityName)
 export { communityLabel };
@@ -127,6 +128,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 <h1 className="text-[22px] font-medium leading-[29px] tracking-[-0.015em] break-words text-pretty">{post.title}</h1>
                 {badges}
                 <MatureBlur blur={post.blur_mature && !isDeleted} className="flex flex-col gap-3">
+                    {post.type === 'image' && post.image && <PostPicture image={post.image} maxHeight="80vh" />}
                     {post.type === 'link' && post.url && <LinkPreviewCard post={post} />}
                     <div className="text-[15px] leading-6 text-body">
                         {isDeleted ? <p className="italic text-muted">[deleted]</p> : <PostBody post={post} />}
@@ -163,8 +165,12 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 <h2 className="mb-1 mt-2 text-[15.5px] font-medium leading-[22px] tracking-[-0.003em] break-words text-pretty">{post.title}</h2>
                 {badges && <div className="mb-1">{badges}</div>}
                 {isDeleted && <p className="text-[14.5px] italic leading-[22px] text-muted">[deleted]</p>}
-                {(post.body && post.type !== 'link') || (post.type === 'link' && post.url) ? (
+                {(post.body && post.type !== 'link') || (post.type === 'link' && post.url) || (post.type === 'image' && post.image) ? (
                     <MatureBlur blur={post.blur_mature && !isDeleted}>
+                        {post.type === 'image' && post.image && (
+                            // Taps fall through to the row's link, so the picture opens the thread like the rest of the row
+                            <PostPicture image={post.image} maxHeight="32rem" className="mb-2 mt-1" />
+                        )}
                         {post.body && post.type !== 'link' && (
                             <p className="line-clamp-2 break-words text-[14.5px] leading-[22px] text-muted">{stripMarkdown(post.body)}</p>
                         )}
