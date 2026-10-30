@@ -12,6 +12,9 @@ import { errorMessage } from '@/lib/api/errors';
 import { useAuthStateStore } from '@/lib/stateStore';
 import { safeNextPath } from '@/lib/utils/NavigationUtility';
 import { UserResponse } from '@/types/api';
+import { describedBy, FormField } from '@/components/forms/FormField';
+import { emailError } from '@/components/forms/rules';
+import { useFieldErrors } from '@/components/forms/useFieldErrors';
 
 export default function LoginPage() {
     return (
@@ -31,13 +34,15 @@ function LoginForm() {
     const [isLoading, setIsLoading] = useState(false);
     const challenge = useChallenge(false);
     const [error, setError] = useState<string | null>(null);
+    const { errors, check, recheck, checkAll } = useFieldErrors({
+        // An email is checked as one; anything else is taken as a username
+        identifier: () => (!identifier.trim() ? 'Enter your email or username.' : identifier.includes('@') ? emailError(identifier) : undefined),
+        password: () => (password ? undefined : 'Enter your password.'),
+    });
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        if (!identifier.trim() || !password) {
-            setError('Enter your email or username and your password.');
-            return;
-        }
+        if (!checkAll()) return;
         if (challenge.isPending) {
             setError('Complete the check below first.');
             return;
@@ -64,38 +69,41 @@ function LoginForm() {
                 <p className="mt-1 text-sm text-muted">Welcome back.</p>
 
                 <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
-                    <div className="flex flex-col gap-1.5">
-                        <label htmlFor="identifier" className="text-sm font-semibold">
-                            Email or username
-                        </label>
+                    <FormField name="identifier" label="Email or username" error={errors.identifier}>
                         <InputField
-                            name="identifier"
                             autoComplete="username"
                             autoCapitalize="none"
-                            placeholder="you@example.com"
+                            spellCheck={false}
+                            placeholder="you@example.com or ada_l"
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
+                            onBlur={() => check('identifier')}
+                            onKeyUp={() => recheck('identifier')}
+                            {...describedBy('identifier', errors.identifier)}
                         />
-                    </div>
+                    </FormField>
 
-                    <div className="flex flex-col gap-1.5">
-                        <div className="flex items-baseline justify-between">
-                            <label htmlFor="password" className="text-sm font-semibold">
-                                Password
-                            </label>
+                    <FormField
+                        name="password"
+                        label="Password"
+                        error={errors.password}
+                        aside={
                             <Link href="/auth/forgot-password" className="text-sm text-link hover:underline">
                                 Forgot password?
                             </Link>
-                        </div>
+                        }
+                    >
                         <InputField
                             type="password"
-                            name="password"
                             autoComplete="current-password"
                             placeholder=" "
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            onBlur={() => check('password')}
+                            onKeyUp={() => recheck('password')}
+                            {...describedBy('password', errors.password)}
                         />
-                    </div>
+                    </FormField>
 
                     {challenge.widget}
                     <Button type="submit" size="lg" disabled={isLoading} className="mt-2 w-full">

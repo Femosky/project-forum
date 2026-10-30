@@ -9,6 +9,9 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import AuthCard from '../_components/AuthCard';
+import { describedBy, FormField } from '@/components/forms/FormField';
+import { emailError } from '@/components/forms/rules';
+import { useFieldErrors } from '@/components/forms/useFieldErrors';
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
@@ -16,13 +19,11 @@ export default function ForgotPasswordPage() {
     const [isSent, setIsSent] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const challenge = useChallenge(true);
+    const { errors, check, recheck, checkAll } = useFieldErrors({ email: () => emailError(email) });
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
-            setError('Enter a valid email address.');
-            return;
-        }
+        if (!checkAll()) return;
         if (challenge.isPending) {
             setError('Complete the check below first.');
             return;
@@ -58,20 +59,19 @@ export default function ForgotPasswordPage() {
     return (
         <AuthCard title="Forgot your password?" subtitle="Enter your account's email and we'll send you a link to choose a new one.">
             <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
-                <div className="flex flex-col gap-1.5">
-                    <label htmlFor="email" className="text-sm font-semibold">
-                        Email
-                    </label>
+                <FormField name="email" label="Email" error={errors.email}>
                     <InputField
                         type="email"
-                        name="email"
                         autoComplete="email"
                         autoCapitalize="none"
                         placeholder="you@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        onBlur={() => check('email')}
+                        onKeyUp={() => recheck('email')}
+                        {...describedBy('email', errors.email)}
                     />
-                </div>
+                </FormField>
                 {challenge.widget}
                 <Button type="submit" size="lg" disabled={isLoading} className="mt-2 w-full">
                     {isLoading ? 'Sending...' : 'Send reset link'}

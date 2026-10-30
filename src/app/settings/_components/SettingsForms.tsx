@@ -15,6 +15,10 @@ import { API_BASE, DATA_SAVER_COOKIE_NAME, Theme } from '@/lib/constants';
 import { useAuthStateStore } from '@/lib/stateStore';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import { PrivateUser, Session } from '@/types/api';
+import { describedBy, FormField } from '@/components/forms/FormField';
+import { PasswordStrength } from '@/components/forms/PasswordStrength';
+import { emailError, newPasswordError, PASSWORD_MIN } from '@/components/forms/rules';
+import { useFieldErrors } from '@/components/forms/useFieldErrors';
 
 export function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
     return (
@@ -192,11 +196,15 @@ export function PasswordForm({ user }: { user: PrivateUser }) {
     const [current, setCurrent] = useState('');
     const [next, setNext] = useState('');
     const { isSaving, error, success, run } = useFormState();
+    const { errors, check, recheck, checkAll } = useFieldErrors({
+        current_password: () => (user.has_password && !current ? 'Enter your current password.' : undefined),
+        new_password: () => newPasswordError(next, user),
+    });
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
+        if (!checkAll()) return;
         run(async () => {
-            if (next.length < 8) throw new Error('Use at least 8 characters for your new password.');
             await api('/auth/change-password', {
                 method: 'POST',
                 body: { ...(user.has_password ? { current_password: current } : {}), new_password: next },
@@ -208,31 +216,41 @@ export function PasswordForm({ user }: { user: PrivateUser }) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
             {user.has_password && (
-                <Field label="Current password" name="current_password">
+                <FormField name="current_password" label="Current password" error={errors.current_password}>
                     <InputField
                         type="password"
-                        name="current_password"
                         autoComplete="current-password"
                         placeholder=" "
                         value={current}
                         onChange={(e) => setCurrent(e.target.value)}
+                        onBlur={() => check('current_password')}
+                        onKeyUp={() => recheck('current_password')}
+                        {...describedBy('current_password', errors.current_password)}
                     />
-                </Field>
+                </FormField>
             )}
-            <Field label={user.has_password ? 'New password' : 'Set a password'} name="new_password">
+            <FormField
+                name="new_password"
+                label={user.has_password ? 'New password' : 'Set a password'}
+                error={errors.new_password}
+                hint="Not your username or email."
+            >
                 <InputField
                     type="password"
-                    name="new_password"
                     autoComplete="new-password"
-                    placeholder="At least 8 characters"
+                    placeholder={`At least ${PASSWORD_MIN} characters`}
                     value={next}
                     onChange={(e) => setNext(e.target.value)}
+                    onBlur={() => check('new_password')}
+                    onKeyUp={() => recheck('new_password')}
+                    {...describedBy('new_password', errors.new_password)}
                 />
-            </Field>
+                <PasswordStrength password={next} />
+            </FormField>
             <FormStatus error={error} success={success} />
-            <Button type="submit" className="self-start" disabled={isSaving || !next || (user.has_password && !current)}>
+            <Button type="submit" className="self-start" disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Change password'}
             </Button>
         </form>
@@ -243,9 +261,14 @@ export function EmailForm({ user }: { user: PrivateUser }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { isSaving, error, success, run } = useFormState();
+    const { errors, check, recheck, checkAll } = useFieldErrors({
+        new_email: () => emailError(email) ?? (email.trim().toLowerCase() === user.email ? 'That is already your email.' : undefined),
+        email_password: () => (password ? undefined : 'Enter your password.'),
+    });
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
+        if (!checkAll()) return;
         run(async () => {
             await api('/auth/change-email', { method: 'POST', body: { new_email: email.trim(), password } });
             setPassword('');
@@ -254,35 +277,40 @@ export function EmailForm({ user }: { user: PrivateUser }) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
             <p className="text-sm">
                 Current: <span className="font-semibold">{user.email}</span>
                 {!user.is_email_verified && <span className="text-muted"> (not confirmed yet)</span>}
             </p>
             {user.has_password ? (
                 <>
-                    <Field label="New email" name="new_email">
+                    <FormField name="new_email" label="New email" error={errors.new_email}>
                         <InputField
                             type="email"
-                            name="new_email"
                             autoComplete="email"
+                            autoCapitalize="none"
                             placeholder="you@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            onBlur={() => check('new_email')}
+                            onKeyUp={() => recheck('new_email')}
+                            {...describedBy('new_email', errors.new_email)}
                         />
-                    </Field>
-                    <Field label="Your password" name="email_password">
+                    </FormField>
+                    <FormField name="email_password" label="Your password" error={errors.email_password}>
                         <InputField
                             type="password"
-                            name="email_password"
                             autoComplete="current-password"
                             placeholder=" "
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            onBlur={() => check('email_password')}
+                            onKeyUp={() => recheck('email_password')}
+                            {...describedBy('email_password', errors.email_password)}
                         />
-                    </Field>
+                    </FormField>
                     <FormStatus error={error} success={success} />
-                    <Button type="submit" className="self-start" disabled={isSaving || !email.trim() || !password}>
+                    <Button type="submit" className="self-start" disabled={isSaving}>
                         {isSaving ? 'Sending...' : 'Change email'}
                     </Button>
                 </>
