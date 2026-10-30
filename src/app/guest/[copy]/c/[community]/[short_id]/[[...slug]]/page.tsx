@@ -1,6 +1,6 @@
-// Guest copy of a post page, for the edge cache (proxy.ts, "Guest pages at the edge"). Rendered without cookies or
-// headers and kept for 60 seconds, so every signed-out reader shares it and the database is asked once a minute, not
-// per visit.
+// Guest copy of a post page, for the edge cache (proxy.ts, "Guest pages at the edge"; the [copy] segment is always
+// "shared"). Rendered without cookies or headers and kept for 60 seconds, so every signed-out reader shares it and
+// the database is asked once a minute, not per visit.
 import Page, { generateMetadata as metadataFor } from '@/app/c/[community]/[short_id]/[[...slug]]/page';
 
 type Props = { params: Promise<{ community: string; short_id: string; slug?: string[] }> };

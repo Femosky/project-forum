@@ -1,6 +1,6 @@
-// Guest copy of the home page, for the edge cache (proxy.ts, "Guest pages at the edge"). Rendered without cookies or
-// headers and kept for 60 seconds, so every signed-out reader shares it and the database is asked once a minute, not
-// per visit.
+// Guest copy of the home page, for the edge cache (proxy.ts, "Guest pages at the edge"; the [copy] segment is always
+// "shared"). Rendered without cookies or headers and kept for 60 seconds, so every signed-out reader shares it and
+// the database is asked once a minute, not per visit.
 import Page, { generateMetadata as metadataFor } from '@/app/page';
 
 // The guest copy never has a query string (proxy.ts), and passing none keeps the render free of request data
@@ -13,3 +13,5 @@ export default function GuestPage() {
 
 export const dynamic = 'force-static';
 export const revalidate = 60;
+// Rendered on first visit, not at build time
+export const generateStaticParams = () => [];

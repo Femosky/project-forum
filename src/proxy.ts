@@ -87,7 +87,7 @@ async function crawlerStatus(request: NextRequest): Promise<NextResponse | null>
 }
 
 // Guest pages at the edge. Signed-out visits to the home, trending, community and post pages are rewritten to a
-// copy of the same page under /guest (app/guest), which renders without cookies or headers and is kept for 60
+// copy of the same page under /guest/shared (app/guest), which renders without cookies or headers and is kept for 60
 // seconds (Next's ISR; on Vercel the CDN serves it, stale for up to 5 more minutes while it re-renders). Every guest
 // gets the same HTML and the API, and with it the database, is asked about once a minute instead of on every visit.
 //
@@ -109,7 +109,8 @@ function isPlainGuestVisit(request: NextRequest): boolean {
 
 function serveGuestCopy(request: NextRequest) {
     const url = request.nextUrl.clone();
-    url.pathname = url.pathname === '/' ? '/guest' : `/guest${url.pathname}`;
+    // app/guest/[copy]: a placeholder segment, so no copy is rendered at build time (when the API may be out of reach)
+    url.pathname = url.pathname === '/' ? '/guest/shared' : `/guest/shared${url.pathname}`;
     const response = NextResponse.rewrite(url);
     response.headers.set('X-Guest-Cache', 'shared');
     return response;
@@ -126,7 +127,8 @@ export async function proxy(request: NextRequest) {
     // The guest copies are only reached through the rewrite below; their own addresses lead back to the real page
     const { pathname } = request.nextUrl;
     if (pathname === '/guest' || pathname.startsWith('/guest/')) {
-        return NextResponse.redirect(new URL((pathname.slice('/guest'.length) || '/') + request.nextUrl.search, request.url), 308);
+        const real = pathname.replace(/^\/guest(?:\/[^/]*)?/, '') || '/';
+        return NextResponse.redirect(new URL(real + request.nextUrl.search, request.url), 308);
     }
 
     const hasRefreshToken = request.cookies.has(REFRESH_TOKEN_COOKIE_NAME);

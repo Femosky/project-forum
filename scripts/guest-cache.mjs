@@ -37,8 +37,8 @@ for (const { name, path, cookie, headers, shared } of cases) {
     if (shared) check(!response.headers.has('set-cookie'), `${name}: no Set-Cookie on a shared page`);
 }
 
-const direct = await fetch(`${base}/guest/c/budget`, { redirect: 'manual' });
-check(direct.status === 308 && direct.headers.get('location')?.endsWith('/c/budget'), `/guest/c/budget leads back to /c/budget (${direct.status})`);
+const direct = await fetch(`${base}/guest/shared/c/budget`, { redirect: 'manual' });
+check(direct.status === 308 && direct.headers.get('location')?.endsWith('/c/budget'), `/guest/shared/c/budget leads back to /c/budget (${direct.status})`);
 
 if (failed) {
     console.error(`${failed} check(s) failed`);
