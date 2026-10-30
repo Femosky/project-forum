@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Plus, ShieldCheck } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
-import { colourFor } from '../ui/Avatar';
+import Avatar from '../ui/Avatar';
 import { Skeleton } from '../ui/Skeleton';
 import { api } from '@/lib/api/client';
 import { ModerationOverview, MyCommunitiesResponse } from '@/types/api';
@@ -94,11 +94,7 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                                             aria-current={isActiveRoute(pathname, href) ? 'page' : undefined}
                                             className={twMerge(itemClasses, isActiveRoute(pathname, href) && activeClasses)}
                                         >
-                                            <span
-                                                aria-hidden
-                                                className="mx-1 size-2 shrink-0 rounded-full"
-                                                style={{ backgroundColor: colourFor(community.name) }}
-                                            />
+                                            <Avatar name={community.name} src={community.image_url} shape="square" className="size-[18px] text-[10px]" />
                                             <span className="truncate">{communityLabel(community)}</span>
                                             {community.role !== 'member' && (
                                                 <span className="ml-auto text-[11px] font-semibold text-subtle">{community.role === 'owner' ? 'Owner' : 'Mod'}</span>
