@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { Flame } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -13,6 +14,9 @@ import PostCard from '@/components/post/PostCard';
 import { TrendingTopics } from '@/components/trending/TrendingTopics';
 import { communityLabel } from '@/lib/communityName';
 import NumberUtility from '@/lib/utils/NumberUtility';
+import { loadAds } from '@/ads/server';
+import { slotAfter, slotsBetween } from '@/ads/config';
+import FeedAdSlot from '@/ads/FeedAdSlot';
 
 export const metadata: Metadata = pageMetadata({
     title: `Trending on ${APP_NAME}`,
@@ -22,11 +26,16 @@ export const metadata: Metadata = pageMetadata({
 
 // What's busy right now, from snapshots the API refreshes every 10 minutes. Rendered on the server for search
 // engines and no-JS readers; guests get it from the CDN cache (see proxy.ts).
+const TRENDING_POSTS = 25;
+
 export default async function TrendingPage() {
-    const [posts, topics, communities] = await Promise.all([
-        serverApi<TrendingPostsResponse>('/trending?type=posts&limit=25'),
+    const [posts, topics, communities, ads] = await Promise.all([
+        serverApi<TrendingPostsResponse>(`/trending?type=posts&limit=${TRENDING_POSTS}`),
         serverApi<TrendingTopicsResponse>('/trending?type=topics&limit=20'),
         serverApi<TrendingCommunitiesResponse>('/trending?type=communities&limit=8'),
+        // Feed ads, placed like the home feed's (after the 3rd thread, then every 8th). Like the home feed it's no
+        // community's page, so only ads that run everywhere show.
+        loadAds('feed', {}, slotsBetween(0, TRENDING_POSTS, 'feed')),
     ]);
     const postList = posts.data?.posts ?? [];
     const topicList = topics.data?.topics ?? [];
@@ -55,9 +64,15 @@ export default async function TrendingPage() {
                         />
                     ) : (
                         <div className="flex flex-col divide-y divide-border">
-                            {postList.map((post) => (
-                                <PostCard key={post.id} post={post} />
-                            ))}
+                            {postList.map((post, index) => {
+                                const slot = slotAfter(index, 'feed');
+                                return (
+                                    <Fragment key={post.id}>
+                                        <PostCard post={post} />
+                                        {slot !== null && <FeedAdSlot unit={ads[slot]} />}
+                                    </Fragment>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
