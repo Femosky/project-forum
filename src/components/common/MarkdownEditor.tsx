@@ -18,6 +18,9 @@ import {
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import TextArea from '@/components/ui/TextArea';
+import type { Table as TableData } from './TableEditor';
+
+type TableModule = typeof import('./TableEditor');
 import Button from '@/components/ui/Button';
 import Markdown from './Markdown';
 
@@ -50,7 +53,6 @@ const TOOLS: Tool[][] = [
 ];
 const ALL_TOOLS = TOOLS.flat();
 
-const TABLE_TEMPLATE = '| Column 1 | Column 2 |\n| --- | --- |\n| Cell | Cell |\n| Cell | Cell |';
 // A list or quote line: indentation, the marker, and what follows it
 const CONTINUED_LINE = /^(\s*)([-*+]|\d+[.)]|>)(\s+)(.*)$/;
 
@@ -72,7 +74,7 @@ type MarkdownEditorProps = {
 };
 
 // Textarea with a formatting toolbar, keyboard shortcuts (⌘B, ⌘I, ⌘K...), lists that continue on Enter, a small
-// link dialog, and a Write/Preview switch.
+// link dialog, a table editor, and a Write/Preview switch.
 export function MarkdownEditor({
     name,
     value,
@@ -88,6 +90,10 @@ export function MarkdownEditor({
 }: MarkdownEditorProps) {
     const [isPreview, setIsPreview] = useState(false);
     const [linkDraft, setLinkDraft] = useState<{ text: string; url: string; start: number; end: number } | null>(null);
+    // The table being added (at start..end) or edited (start..end is the old table)
+    const [tableDraft, setTableDraft] = useState<{ initial: TableData | null; start: number; end: number } | null>(null);
+    // The table editor's code, fetched the first time someone opens it, so pages don't carry it
+    const [tableModule, setTableModule] = useState<TableModule | null>(null);
     const textarea = useRef<HTMLTextAreaElement>(null);
     const isCompact = variant === 'compact';
 
@@ -129,11 +135,28 @@ export function MarkdownEditor({
             const looksLikeUrl = /^https?:\/\//.test(selected);
             setLinkDraft({ text: looksLikeUrl ? '' : selected, url: looksLikeUrl ? selected : '', start, end });
         } else {
-            const lineStart = value.lastIndexOf('\n', start - 1) + 1;
-            const needsBreak = start > 0 && value[start - 1] !== '\n' ? '\n\n' : start > lineStart ? '\n' : '';
-            const insert = `${needsBreak}${TABLE_TEMPLATE}\n`;
-            replace(start, end, insert, start + needsBreak.length + 2, start + needsBreak.length + 10);
+            // Inside an existing table: edit that one. Otherwise a new one goes where the cursor is.
+            void import('./TableEditor').then((loaded) => {
+                setTableModule(loaded);
+                const found = loaded.tableAt(value, start);
+                setTableDraft(found ? { initial: found.table, start: found.start, end: found.end } : { initial: null, start, end });
+            });
         }
+    }
+
+    function insertTable(markdown: string) {
+        if (!tableDraft) return;
+        const { start, end, initial } = tableDraft;
+        setTableDraft(null);
+        if (initial) {
+            replace(start, end, markdown, start + markdown.length);
+            return;
+        }
+        // A table needs a blank line before it and after it
+        const before = start === 0 ? '' : value.slice(0, start).endsWith('\n\n') ? '' : value.slice(0, start).endsWith('\n') ? '\n' : '\n\n';
+        const after = value.slice(end).startsWith('\n') ? '\n' : '\n\n';
+        const insert = `${before}${markdown}${after}`;
+        replace(start, end, insert, start + insert.length);
     }
 
     function insertLink() {
@@ -294,6 +317,17 @@ export function MarkdownEditor({
                         </Button>
                     </div>
                 </div>
+            )}
+
+            {tableDraft && tableModule && (
+                <tableModule.default
+                    initial={tableDraft.initial}
+                    onDone={insertTable}
+                    onCancel={() => {
+                        setTableDraft(null);
+                        textarea.current?.focus();
+                    }}
+                />
             )}
 
             {isPreview ? (

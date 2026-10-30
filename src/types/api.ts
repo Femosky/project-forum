@@ -37,6 +37,8 @@ export interface UserStatsResponse {
     stats: { posts: number; comments: number; upvotes_received: number; downvotes_received: number; views: number };
 }
 
+export type PostImage = { url: string; width: number; height: number; variants: { url: string; width: number; height: number }[] };
+
 export interface LinkPreview {
     title?: string;
     description?: string;
@@ -50,11 +52,13 @@ export interface Post {
     id: string;
     short_id: string;
     slug: string;
-    type: 'text' | 'link';
+    type: 'text' | 'link' | 'image';
     title: string;
     body: string;
     url: string | null;
     link_preview: LinkPreview | null;
+    // Picture posts: uploaded here, redrawn without location data, checked before posting
+    image: PostImage | null;
     ai_summary: string | null;
     is_anonymous: boolean;
     // Mature: marked so itself or by its community. Shown blurred unless the viewer switched on "Show mature

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ExternalLink, FileText, Link2, Repeat } from 'lucide-react';
+import { ExternalLink, FileText, ImageIcon, Link2, Repeat } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import { useChallenge } from '@/components/common/Turnstile';
@@ -14,25 +14,27 @@ import { getPostPath } from '@/components/post/PostCard';
 import { api } from '@/lib/api/client';
 import { ApiError, errorMessage } from '@/lib/api/errors';
 import { POST_BODY_MAX, POST_TITLE_MAX, POST_TITLE_MIN } from '@/lib/constants';
-import { Flair, FlairsResponse, LinkPreview, LinkPreviewResponse, Post, PostResponse, PostsResponse } from '@/types/api';
+import { Flair, FlairsResponse, LinkPreview, LinkPreviewResponse, Post, PostImage, PostResponse, PostsResponse } from '@/types/api';
 import { communityLabel } from '@/lib/communityName';
 import CommunityPicker, { CommunityOption } from './CommunityPicker';
+import PictureField from './PictureField';
 import { trackConversion } from '@/lib/googleAds';
 
 export type { CommunityOption };
 
 type Draft = {
     community: string;
-    type: 'text' | 'link';
+    type: 'text' | 'link' | 'image';
     title: string;
     body: string;
     url: string;
+    image: PostImage | null;
     flairId: string;
     isAnonymous: boolean;
 };
 
 const DRAFT_KEY = 'post-draft';
-const EMPTY_DRAFT: Draft = { community: '', type: 'text', title: '', body: '', url: '', flairId: '', isAnonymous: false };
+const EMPTY_DRAFT: Draft = { community: '', type: 'text', title: '', body: '', url: '', image: null, flairId: '', isAnonymous: false };
 
 // Wait for typing to pause before looking a link up
 const LINK_CHECK_DELAY_MS = 600;
@@ -76,6 +78,7 @@ function validate(draft: Draft): Record<string, string> {
             errors.url = 'Enter a full link, starting with https://';
         }
     }
+    if (draft.type === 'image' && !draft.image) errors.image = 'Choose a picture.';
     return errors;
 }
 
@@ -184,6 +187,7 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
                     title: draft.title.trim(),
                     body: draft.body.trim(),
                     ...(draft.type === 'link' ? { url: draft.url.trim() } : {}),
+                    ...(draft.type === 'image' && draft.image ? { image: draft.image } : {}),
                     ...(draft.flairId && availableFlairs.some((flair) => flair.id === draft.flairId) ? { flair_id: draft.flairId } : {}),
                     is_anonymous: draft.isAnonymous,
                     turnstile_token: challenge.token,
@@ -221,6 +225,7 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
                     [
                         { value: 'text', label: 'Text', icon: FileText },
                         { value: 'link', label: 'Link', icon: Link2 },
+                        { value: 'image', label: 'Picture', icon: ImageIcon },
                     ] as const
                 ).map(({ value, label, icon: Icon }) => (
                     <button
@@ -228,7 +233,7 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
                         type="button"
                         role="tab"
                         aria-selected={draft.type === value}
-                        disabled={value === 'link' && !canPostLinks}
+                        disabled={value !== 'text' && !canPostLinks}
                         onClick={() => update('type', value)}
                         className={twMerge(
                             'flex h-9 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
@@ -242,7 +247,7 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
 
             {!canPostLinks && (
                 <p className="-mt-2 text-xs text-muted">
-                    New accounts can share links once they are a day old or have 10 karma. This keeps scammers out.
+                    New accounts can share links and pictures once they are a day old or have 10 karma. This keeps scammers out.
                 </p>
             )}
 
@@ -265,6 +270,13 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
                 />
                 {fieldErrors.title && <ErrorMessage errorMessage={fieldErrors.title} />}
             </div>
+
+            {draft.type === 'image' && (
+                <div className="flex flex-col gap-1.5">
+                    <PictureField value={draft.image} onChange={(image) => update('image', image)} invalid={Boolean(fieldErrors.image)} />
+                    {fieldErrors.image && <ErrorMessage errorMessage={fieldErrors.image} />}
+                </div>
+            )}
 
             {draft.type === 'link' && (
                 <div className="flex flex-col gap-1.5">
@@ -345,7 +357,7 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
 
             <div className="flex flex-col gap-1.5">
                 <label htmlFor="body" className="text-sm font-semibold">
-                    {draft.type === 'link' ? 'Add some context (optional)' : 'Details (optional)'}
+                    {draft.type === 'link' ? 'Add some context (optional)' : draft.type === 'image' ? 'Caption (optional)' : 'Details (optional)'}
                 </label>
                 <MarkdownEditor
                     name="body"
