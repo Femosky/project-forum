@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, ShieldCheck } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { colourFor } from '../ui/Avatar';
 import { Skeleton } from '../ui/Skeleton';
 import { api } from '@/lib/api/client';
-import { MyCommunitiesResponse } from '@/types/api';
+import { ModerationOverview, MyCommunitiesResponse } from '@/types/api';
 import { useAuthStateStore } from '@/lib/stateStore';
 import { useUIStore } from '@/lib/uiStore';
 import { isActiveRoute, NavRoute, PRIMARY_NAV } from '@/data/ui/navigation';
@@ -28,6 +28,7 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
     const membershipVersion = useUIStore((state) => state.membershipVersion);
     const [communities, setCommunities] = useState<MyCommunitiesResponse['communities']>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [modCount, setModCount] = useState<number | null>(null);
 
     // Refetch on sign-in and whenever the viewer joins or leaves a community. Guests have none.
     useEffect(() => {
@@ -36,7 +37,15 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsLoading(true);
         api<MyCommunitiesResponse>('/users/me/communities')
-            .then((data) => isCurrent && setCommunities(data.communities))
+            .then((data) => {
+                if (!isCurrent) return;
+                setCommunities(data.communities);
+                if (data.communities.some(({ role }) => role !== 'member')) {
+                    api<ModerationOverview>('/moderation/overview')
+                        .then((overview) => isCurrent && setModCount(overview.total))
+                        .catch(() => isCurrent && setModCount(0));
+                } else setModCount(null);
+            })
             .catch(() => isCurrent && setCommunities([]))
             .finally(() => isCurrent && setIsLoading(false));
         return () => {
@@ -55,6 +64,14 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                         onNavigate={onNavigate}
                     />
                 ))}
+                {isAuthenticated && modCount !== null && (
+                    <SidebarItem
+                        route={MODERATION_ROUTE}
+                        count={modCount}
+                        isActive={isActiveRoute(pathname, MODERATION_ROUTE.href)}
+                        onNavigate={onNavigate}
+                    />
+                )}
             </ul>
 
             {isAuthenticated && (isLoading || communities.length > 0) && (
@@ -83,6 +100,9 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                                                 style={{ backgroundColor: colourFor(community.name) }}
                                             />
                                             <span className="truncate">{communityLabel(community)}</span>
+                                            {community.role !== 'member' && (
+                                                <span className="ml-auto text-[11px] font-semibold text-subtle">{community.role === 'owner' ? 'Owner' : 'Mod'}</span>
+                                            )}
                                         </Link>
                                     </li>
                                 );
@@ -121,10 +141,13 @@ const FOOTER_LINKS = [
     { href: '/policies/cookies', label: 'Cookies' },
 ];
 
-function SidebarItem({ route, isActive, onNavigate }: { route: NavRoute; isActive: boolean; onNavigate?: () => void }) {
+const MODERATION_ROUTE = { href: '/moderation', label: 'Moderation', icon: ShieldCheck } as NavRoute;
+
+function SidebarItem({ route, isActive, onNavigate, count }: { route: NavRoute; isActive: boolean; onNavigate?: () => void; count?: number }) {
     const Icon = route.icon;
-    const unread = useUIStore((state) => state.unreadCount);
-    const showCount = route.href === '/notifications' && Boolean(unread);
+    const unreadCount = useUIStore((state) => state.unreadCount);
+    const unread = count ?? unreadCount;
+    const showCount = (count !== undefined || route.href === '/notifications') && Boolean(unread);
     return (
         <li>
             <Link
@@ -138,7 +161,7 @@ function SidebarItem({ route, isActive, onNavigate }: { route: NavRoute; isActiv
                 {showCount && (
                     <span className="ml-auto rounded-full bg-brand px-1.5 text-[11px] font-semibold leading-[18px] text-white tabular-nums">
                         {unread! > 99 ? '99+' : unread}
-                        <span className="sr-only"> unread</span>
+                        <span className="sr-only"> waiting</span>
                     </span>
                 )}
             </Link>

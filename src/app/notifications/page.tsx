@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AtSign, Bell, ChevronRight, CloudOff, MessageCircle, Reply } from 'lucide-react';
+import { AtSign, Bell, ChevronRight, CloudOff, MessageCircle, Reply, ShieldCheck } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
@@ -16,7 +16,23 @@ export const metadata = { title: `Notifications | ${APP_NAME}`, robots: { index:
 
 type PageProps = { searchParams: Promise<{ cursor?: string }> };
 
-const ICONS = { post_reply: MessageCircle, comment_reply: Reply, mention: AtSign } as const;
+const ICONS = {
+    post_reply: MessageCircle,
+    comment_reply: Reply,
+    mention: AtSign,
+    mod_queue: ShieldCheck,
+    mod_report: ShieldCheck,
+    mod_join_request: ShieldCheck,
+    mod_invite: ShieldCheck,
+} as const;
+
+// Moderator notices point at a community rather than a comment
+const MOD_NOTICES: Record<string, { text: (count: number) => string; tab?: string }> = {
+    mod_queue: { text: (count) => (count === 1 ? 'A post or comment is held for review' : `${count} posts or comments are held for review`), tab: 'queue' },
+    mod_report: { text: (count) => (count === 1 ? 'Something was reported' : `${count} things were reported`), tab: 'queue' },
+    mod_join_request: { text: (count) => (count === 1 ? 'Someone asked to join' : `${count} people asked to join`), tab: 'requests' },
+    mod_invite: { text: () => "You've been invited to moderate" },
+};
 
 function describe(notification: AppNotification): string {
     const who = notification.actor?.username ?? 'Someone';
@@ -64,9 +80,14 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
                 <ul className="flex flex-col divide-y divide-border bg-surface sm:rounded-xl sm:border sm:border-border">
                     {data.notifications.map((notification) => {
                         const Icon = ICONS[notification.type];
-                        const { post } = notification;
-                        const short = notification.comment.short_id;
-                        const href = `/c/${post.community}/${post.short_id}${post.slug ? `/${post.slug}` : ''}?comment=${short}#c-${short}`;
+                        const { post, comment } = notification;
+                        const notice = MOD_NOTICES[notification.type];
+                        const short = comment?.short_id;
+                        const href = notice
+                            ? notice.tab
+                                ? `/c/${notification.community}/mod?tab=${notice.tab}`
+                                : '/moderation'
+                            : `/c/${post!.community}/${post!.short_id}${post!.slug ? `/${post!.slug}` : ''}?comment=${short}#c-${short}`;
                         const isUnread = notification.read_at === null;
                         return (
                             <li key={notification.id}>
@@ -86,11 +107,11 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
                                     </span>
                                     <div className="min-w-0 flex-1">
                                         <p className="text-sm">
-                                            <span className="font-bold">{describe(notification)}</span>
-                                            <span className="text-muted"> in {humanizeHandle(post.community)}</span>
+                                            <span className="font-bold">{notice ? notice.text(notification.count) : describe(notification)}</span>
+                                            <span className="text-muted"> in {humanizeHandle(notification.community ?? post!.community)}</span>
                                         </p>
-                                        <p className="truncate text-xs text-muted">{post.title}</p>
-                                        <p className="mt-1 line-clamp-2 text-sm">{stripMarkdown(notification.comment.excerpt)}</p>
+                                        {post && <p className="truncate text-xs text-muted">{post.title}</p>}
+                                        {comment && <p className="mt-1 line-clamp-2 text-sm">{stripMarkdown(comment.excerpt)}</p>}
                                         <time dateTime={notification.created_at} className="text-xs text-muted">
                                             {TimeUtility.formatTimeAgo(notification.created_at)}
                                         </time>
