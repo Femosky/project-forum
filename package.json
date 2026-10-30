@@ -7,10 +7,20 @@
         "build": "next build",
         "start": "next start",
         "lint": "eslint",
+        "test": "vitest run",
         "budget": "node scripts/perf-budget.mjs",
         "mock-api": "node scripts/mock-api.mjs"
     },
     "dependencies": {
+        "@tiptap/core": "^3.32.2",
+        "@tiptap/extension-list": "^3.32.2",
+        "@tiptap/extension-subscript": "^3.32.2",
+        "@tiptap/extension-superscript": "^3.32.2",
+        "@tiptap/extension-table": "^3.32.2",
+        "@tiptap/extensions": "^3.32.2",
+        "@tiptap/pm": "^3.32.2",
+        "@tiptap/react": "^3.32.2",
+        "@tiptap/starter-kit": "^3.32.2",
         "class-variance-authority": "^0.7.1",
         "device-detector-js": "^3.0.3",
         "lucide-react": "^0.564.0",
@@ -31,6 +41,7 @@
         "eslint": "^9",
         "eslint-config-next": "16.4.3",
         "tailwindcss": "^4",
-        "typescript": "^5"
+        "typescript": "^5",
+        "vitest": "^3.2.4"
     }
 }
