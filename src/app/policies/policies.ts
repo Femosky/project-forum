@@ -3,7 +3,7 @@ import { APP_NAME, LEGAL_EMAIL } from '@/lib/constants';
 // The policy pages. Plain data so the pages stay static and the wording is easy to review in one place.
 // Before public launch these should get a one-off legal review (see docs/ROADMAP.md, section 5).
 
-export type PolicySection = { heading: string; paragraphs?: string[]; items?: string[] };
+export type PolicySection = { heading: string; id?: string; paragraphs?: string[]; items?: string[] };
 export type Policy = { slug: string; title: string; summary: string; updated: string; sections: PolicySection[] };
 
 const UPDATED = '30 October 2026';
@@ -104,9 +104,23 @@ export const POLICIES: Policy[] = [
                 ],
             },
             {
-                heading: 'New accounts',
+                heading: 'What is reputation?',
+                id: 'reputation',
                 paragraphs: [
-                    'To keep scammers out, new accounts have a few limits at first: no links for the first day (or until you have some karma), a cap on how many posts and comments you can make in an hour, and anonymous posting opens once your account is a day old and your email is verified.',
+                    'Reputation is the score shown on your profile. It goes up when people upvote your posts and comments, and down when they downvote them. It shows that real people find what you share useful, which is why it unlocks a few things for new accounts.',
+                ],
+            },
+            {
+                heading: 'New accounts',
+                id: 'new-accounts',
+                paragraphs: [
+                    'To keep scammers out, new accounts have a few limits at first. Whenever one stops you, the site tells you which one and when it lifts.',
+                ],
+                items: [
+                    'Links and pictures: open once your account is a day old or has 10 reputation, whichever comes first.',
+                    'Posting pace: for the first week (or until you have 10 reputation) you can make 3 posts and 10 comments an hour.',
+                    'Anonymous posts: open once your account is a day old and your email is verified.',
+                    'Accounts the site knows and trusts can be marked as trusted by the admins, which lifts these limits.',
                 ],
             },
         ],

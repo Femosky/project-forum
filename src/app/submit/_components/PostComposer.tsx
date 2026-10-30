@@ -88,10 +88,20 @@ type ComposerProps = {
     initialCommunity?: string;
     // New-account limits (the API enforces them; this explains them before anyone hits an error)
     canPostLinks: boolean;
+    linksUnlockAt: string | null;
+    reputationNeeded: number;
     canPostAnonymously: boolean;
 };
 
-export function PostComposer({ joined, popular, initialCommunity, canPostLinks, canPostAnonymously }: ComposerProps) {
+// "about 9 hours", "about 40 minutes"
+function timeUntil(iso: string) {
+    const minutes = Math.max(1, Math.ceil((new Date(iso).getTime() - Date.now()) / 60000));
+    if (minutes < 60) return `about ${minutes} minute${minutes === 1 ? '' : 's'}`;
+    const hours = Math.round(minutes / 60);
+    return `about ${hours} hour${hours === 1 ? '' : 's'}`;
+}
+
+export function PostComposer({ joined, popular, initialCommunity, canPostLinks, linksUnlockAt, reputationNeeded, canPostAnonymously }: ComposerProps) {
     const router = useRouter();
     const [draft, setDraft] = useState<Draft>({ ...EMPTY_DRAFT, community: initialCommunity ?? '' });
     const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
@@ -234,6 +244,7 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
                         role="tab"
                         aria-selected={draft.type === value}
                         disabled={value !== 'text' && !canPostLinks}
+                        aria-describedby={value !== 'text' && !canPostLinks ? 'links-limit' : undefined}
                         onClick={() => update('type', value)}
                         className={twMerge(
                             'flex h-9 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
@@ -246,8 +257,13 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
             </div>
 
             {!canPostLinks && (
-                <p className="-mt-2 text-xs text-muted">
-                    New accounts can share links and pictures once they are a day old or have 10 karma. This keeps scammers out.
+                <p id="links-limit" className="-mt-2 text-xs text-muted" suppressHydrationWarning>
+                    New accounts can post links and pictures after 1 day or 10 reputation
+                    {reputationNeeded > 0 && reputationNeeded < 10 ? ` (you need ${reputationNeeded} more)` : ''}.
+                    {linksUnlockAt ? ` You can in ${timeUntil(linksUnlockAt)}.` : ''}{' '}
+                    <Link href="/policies/community-guidelines#reputation" className="font-semibold text-text underline">
+                        What is reputation?
+                    </Link>
                 </p>
             )}
 

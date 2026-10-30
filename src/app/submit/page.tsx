@@ -50,6 +50,8 @@ export default async function SubmitPage({ searchParams }: PageProps) {
                 popular={others}
                 initialCommunity={community}
                 canPostLinks={me.data?.user.can_post_links ?? true}
+                linksUnlockAt={me.data?.user.links_unlock_at ?? null}
+                reputationNeeded={me.data?.user.reputation_needed ?? 0}
                 canPostAnonymously={me.data?.user.can_post_anonymously ?? true}
             />
         </div>
