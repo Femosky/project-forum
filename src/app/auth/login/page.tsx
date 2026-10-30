@@ -15,7 +15,8 @@ import { UserResponse } from '@/types/api';
 import { describedBy, FormField } from '@/components/forms/FormField';
 import { emailError } from '@/components/forms/rules';
 import { useFieldErrors } from '@/components/forms/useFieldErrors';
-import { connectPendingGoogle, GoogleSignIn, readPendingGoogle } from '@/components/auth/GoogleSignIn';
+import { LazyGoogleSignIn } from '@/components/auth/LazyGoogleSignIn';
+import { connectPendingGoogle, readPendingGoogle } from '@/components/auth/googlePending';
 
 export default function LoginPage() {
     return (
@@ -132,7 +133,7 @@ function LoginForm() {
                     {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
                 </form>
                 <div className="mt-4">
-                    <GoogleSignIn next={next} onLinkRequired={askToLinkGoogle} />
+                    <LazyGoogleSignIn next={next} onLinkRequired={askToLinkGoogle} />
                 </div>
 
                 <p className="mt-6 text-center text-sm text-muted">
