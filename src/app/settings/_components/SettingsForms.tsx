@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Download, Monitor, Moon, Smartphone, Sun } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
-import InputField from '@/components/ui/Input';
+import InputField, { selectStyles } from '@/components/ui/Input';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { applyTheme, ThemeChoice, useThemeChoice } from '@/components/theme/ThemeMenu';
@@ -397,11 +397,21 @@ export function DeleteAccount({ user }: { user: PrivateUser }) {
     const [confirmText, setConfirmText] = useState('');
     const { isSaving, error, run } = useFormState();
     const logout = useAuthStateStore((state) => state.logout);
+    // Communities this person owns: they're warned, and can choose who takes over each one
+    const [owned, setOwned] = useState<{ name: string; moderators: string[] }[]>([]);
+    const [successors, setSuccessors] = useState<Record<string, string>>({});
+
+    function open() {
+        setIsOpen(true);
+        api<{ communities: { name: string; moderators: string[] }[] }>('/users/me/owned-communities')
+            .then((data) => setOwned(data.communities))
+            .catch(() => setOwned([]));
+    }
 
     function handleDelete(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         run(async () => {
-            await api('/users/me', { method: 'DELETE', body: user.has_password ? { password } : {} });
+            await api('/users/me', { method: 'DELETE', body: { ...(user.has_password ? { password } : {}), successors } });
             logout();
             window.location.href = '/';
             return '';
@@ -410,7 +420,7 @@ export function DeleteAccount({ user }: { user: PrivateUser }) {
 
     return (
         <>
-            <Button variant="danger" className="self-start" onClick={() => setIsOpen(true)}>
+            <Button variant="danger" className="self-start" onClick={open}>
                 Delete my account
             </Button>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -419,6 +429,31 @@ export function DeleteAccount({ user }: { user: PrivateUser }) {
                     description="You'll be signed out everywhere and your username freed. Your posts and comments stay, without your name on them. This can't be undone."
                 >
                     <form onSubmit={handleDelete} className="flex flex-col gap-3" noValidate>
+                        {owned.length > 0 && (
+                            <div className="flex flex-col gap-2 rounded-lg bg-hover p-3 text-sm">
+                                <p className="font-semibold">You own {owned.length === 1 ? 'a community' : `${owned.length} communities`}</p>
+                                <p className="text-muted">Choose who takes over, or the longest-serving moderator will. With no moderators, the site looks after it.</p>
+                                {owned.map((community) => (
+                                    <label key={community.name} className="flex items-center justify-between gap-2">
+                                        c/{community.name}
+                                        <select
+                                            aria-label={`New owner of c/${community.name}`}
+                                            className={twMerge(selectStyles, 'h-8 w-auto text-sm')}
+                                            value={successors[community.name] ?? ''}
+                                            disabled={community.moderators.length === 0}
+                                            onChange={(e) => setSuccessors({ ...successors, [community.name]: e.target.value })}
+                                        >
+                                            <option value="">{community.moderators.length ? 'Automatic' : 'No moderators'}</option>
+                                            {community.moderators.map((name) => (
+                                                <option key={name} value={name}>
+                                                    {name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
                         {user.has_password && (
                             <Field label="Your password" name="delete_password">
                                 <InputField

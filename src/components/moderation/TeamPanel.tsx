@@ -10,17 +10,21 @@ import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { ModPermission, TeamResponse } from '@/types/api';
 
-const PERMISSION_LABELS: Record<ModPermission, string> = { all: 'Everything', posts: 'Posts only' };
+const PERMISSION_LABELS: Record<ModPermission, string> = { lead: 'Lead mod', all: 'Everything', posts: 'Posts only' };
 
-// Who moderates this community. The owner invites people (they accept), sets what they can do, removes them and can
-// hand the community over; a moderator can step down.
-export function TeamPanel({ community, initial, viewerRole, viewerName }: { community: string; initial: TeamResponse; viewerRole: string | null; viewerName: string }) {
+// Who moderates this community. The owner and Lead mods invite people (they accept), set what they can do and remove
+// them. Only the owner makes Lead mods or hands the community over. A moderator can step down.
+type TeamPanelProps = { community: string; initial: TeamResponse; viewerRole: string | null; viewerPermission: ModPermission | null; viewerName: string };
+
+export function TeamPanel({ community, initial, viewerRole, viewerPermission, viewerName }: TeamPanelProps) {
     const router = useRouter();
     const [team, setTeam] = useState(initial);
     const [username, setUsername] = useState('');
     const [permission, setPermission] = useState<ModPermission>('all');
     const [error, setError] = useState<string | null>(null);
     const isOwner = viewerRole === 'owner';
+    const canManage = isOwner || viewerPermission === 'lead';
+    const levels: ModPermission[] = isOwner ? ['lead', 'all', 'posts'] : ['all', 'posts'];
     const base = `/communities/${community}`;
 
     async function run(action: () => Promise<unknown>) {
@@ -52,7 +56,7 @@ export function TeamPanel({ community, initial, viewerRole, viewerName }: { comm
 
     return (
         <div className="flex flex-col gap-4">
-            {isOwner && (
+            {canManage && (
                 <form onSubmit={invite} className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4" noValidate>
                     <label htmlFor="invite-username" className="text-sm font-semibold">
                         Invite a moderator
@@ -68,12 +72,15 @@ export function TeamPanel({ community, initial, viewerRole, viewerName }: { comm
                             onChange={(e) => setUsername(e.target.value)}
                         />
                         <select aria-label="What they can do" className={twMerge(selectStyles, 'w-auto')} value={permission} onChange={(e) => setPermission(e.target.value as ModPermission)}>
-                            <option value="all">{PERMISSION_LABELS.all}</option>
-                            <option value="posts">{PERMISSION_LABELS.posts}</option>
+                            {levels.map((level) => (
+                                <option key={level} value={level}>
+                                    {PERMISSION_LABELS[level]}
+                                </option>
+                            ))}
                         </select>
                         <Button type="submit">Invite</Button>
                     </div>
-                    <p className="text-xs text-muted">They become a moderator once they accept. Posts only means the queue and reports, without bans, join requests or settings.</p>
+                    <p className="text-xs text-muted">They become a moderator once they accept. Lead mods can also manage moderators. Posts only means the queue and reports, without bans, join requests or settings.</p>
                 </form>
             )}
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
@@ -85,7 +92,7 @@ export function TeamPanel({ community, initial, viewerRole, viewerName }: { comm
                             <p className="text-sm font-bold">{mod.username}</p>
                             <p className="text-xs text-muted">{mod.role === 'owner' ? 'Owner' : `Moderator · ${PERMISSION_LABELS[mod.permission]}`}</p>
                         </div>
-                        {isOwner && mod.role === 'moderator' && (
+                        {canManage && mod.role === 'moderator' && mod.username !== viewerName && (isOwner || mod.permission !== 'lead') && (
                             <>
                                 <select
                                     aria-label={`What ${mod.username} can do`}
@@ -93,18 +100,23 @@ export function TeamPanel({ community, initial, viewerRole, viewerName }: { comm
                                     value={mod.permission}
                                     onChange={(e) => run(() => api(`${base}/team/${mod.username}`, { method: 'PATCH', body: { permission: e.target.value } }))}
                                 >
-                                    <option value="all">{PERMISSION_LABELS.all}</option>
-                                    <option value="posts">{PERMISSION_LABELS.posts}</option>
+                                    {levels.map((level) => (
+                                        <option key={level} value={level}>
+                                            {PERMISSION_LABELS[level]}
+                                        </option>
+                                    ))}
                                 </select>
-                                <Button size="sm" variant="ghost" onClick={() => transfer(mod.username)}>
-                                    Make owner
-                                </Button>
+                                {isOwner && (
+                                    <Button size="sm" variant="ghost" onClick={() => transfer(mod.username)}>
+                                        Make owner
+                                    </Button>
+                                )}
                                 <Button size="sm" variant="ghost" onClick={() => run(() => api(`${base}/team/${mod.username}`, { method: 'DELETE' }))}>
                                     Remove
                                 </Button>
                             </>
                         )}
-                        {!isOwner && mod.role === 'moderator' && mod.username === viewerName && (
+                        {mod.role === 'moderator' && mod.username === viewerName && (
                             <Button size="sm" variant="ghost" onClick={() => run(() => api(`${base}/team/${mod.username}`, { method: 'DELETE' }))}>
                                 Step down
                             </Button>
@@ -117,7 +129,7 @@ export function TeamPanel({ community, initial, viewerRole, viewerName }: { comm
                             <p className="text-sm font-bold">{invite.username}</p>
                             <p className="text-xs text-muted">Invited · {PERMISSION_LABELS[invite.permission]}</p>
                         </div>
-                        {isOwner && (
+                        {canManage && (
                             <Button size="sm" variant="ghost" onClick={() => run(() => api(`${base}/team/invites/${invite.id}`, { method: 'DELETE' }))}>
                                 Cancel
                             </Button>

@@ -229,6 +229,18 @@ export function AdminCommunities({ initialCommunities }: { initialCommunities: A
         }
     }
 
+    async function reassign(name: string) {
+        const username = window.prompt(`New owner of c/${name} (their username)`)?.trim().toLowerCase();
+        if (!username) return;
+        setError(null);
+        try {
+            await api(`/admin/communities/${name}/owner`, { method: 'POST', body: { username } });
+            setCommunities((current) => current.map((community) => (community.name === name ? { ...community, needs_moderator: false } : community)));
+        } catch (error) {
+            setError(errorMessage(error));
+        }
+    }
+
     const setStatus = (name: string, status: string) =>
         setCommunities((current) => current.map((community) => (community.name === name ? { ...community, status } : community)));
 
@@ -266,6 +278,7 @@ export function AdminCommunities({ initialCommunities }: { initialCommunities: A
                                 </Link>
                                 {community.visibility === 'private' && <Badge>Private</Badge>}
                                 {community.status === 'deleted' && <Badge variant="danger">Taken down</Badge>}
+                                {community.needs_moderator && <Badge variant="danger">Needs a moderator</Badge>}
                             </p>
                             <p className="text-xs text-muted">
                                 {community.member_count} members · {community.post_count} posts · created{' '}
@@ -273,6 +286,11 @@ export function AdminCommunities({ initialCommunities }: { initialCommunities: A
                             </p>
                         </div>
                         {community.status !== 'deleted' && <AdsSwitch community={community} onChange={(value) => setAds(community.name, value)} />}
+                        {community.status !== 'deleted' && (
+                            <Button size="sm" variant="secondary" onClick={() => reassign(community.name)}>
+                                Set owner
+                            </Button>
+                        )}
                         {community.status === 'deleted' ? (
                             <Button size="sm" variant="secondary" onClick={() => restore(community.name)}>
                                 <RotateCcw className="size-4" /> Restore
