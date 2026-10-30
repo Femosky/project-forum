@@ -13,6 +13,7 @@ import {
     DeleteAccount,
     EmailForm,
     ExportData,
+    MatureContentToggle,
     PasswordForm,
     ProfileForm,
     Section,
@@ -67,6 +68,13 @@ export default async function SettingsPage() {
 
             <Section title="Data saver" description="Uses less data on slow or metered connections. Turns on by itself when your browser asks to save data.">
                 <DataSaverToggle initialEnabled={dataSaver.enabled} />
+            </Section>
+
+            <Section
+                title="Mature content"
+                description="Posts and communities marked NSFW: graphic news, sexual health, strong language. Porn and explicit sexual content aren't allowed anywhere. Off: they stay out of your feeds, search and the communities list, and open blurred when you follow a link."
+            >
+                <MatureContentToggle initialEnabled={user.show_mature} />
             </Section>
 
             <Section title="Email">

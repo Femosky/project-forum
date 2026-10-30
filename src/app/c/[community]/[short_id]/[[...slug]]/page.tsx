@@ -45,11 +45,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const fallback = `${post.comment_count} ${post.comment_count === 1 ? 'comment' : 'comments'} in c/${post.community.name}`;
     return pageMetadata({
         title: postTitle(post),
-        description: summarize(post.ai_summary || post.body || post.link_preview?.description || '') || fallback,
+        // A mature post's words don't go into link previews and search snippets
+        description: post.is_nsfw ? `Marked mature. ${fallback}` : summarize(post.ai_summary || post.body || post.link_preview?.description || '') || fallback,
         path: getPostPath(post),
         image: `/og/post/${post.short_id}`,
         // Removed posts (seen by moderators), posts by brand-new accounts and very short posts stay out of the index
         noindex: !post.is_indexable,
+        mature: post.is_nsfw,
         openGraph: {
             type: 'article',
             publishedTime: post.created_at,

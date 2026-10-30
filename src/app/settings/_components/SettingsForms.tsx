@@ -155,6 +155,39 @@ export function DataSaverToggle({ initialEnabled }: { initialEnabled: boolean })
     );
 }
 
+// Off by default. On: mature (NSFW) posts and communities show in feeds, search and the directory, without the blur.
+// Saved to the account, so it follows the reader to other devices; pages pick it up on the next load.
+export function MatureContentToggle({ initialEnabled }: { initialEnabled: boolean }) {
+    const router = useRouter();
+    const [enabled, setEnabled] = useState(initialEnabled);
+    const { error, run } = useFormState();
+
+    function toggle() {
+        const next = !enabled;
+        setEnabled(next);
+        void run(async () => {
+            try {
+                await api('/users/me', { method: 'PATCH', body: { show_mature: next } });
+            } catch (error) {
+                setEnabled(!next);
+                throw error;
+            }
+            router.refresh();
+            return '';
+        });
+    }
+
+    return (
+        <div className="flex flex-col gap-2">
+            <label className="flex cursor-pointer items-center justify-between gap-4">
+                <span className="text-sm">Show mature content</span>
+                <input type="checkbox" role="switch" checked={enabled} onChange={toggle} className="size-5 shrink-0 accent-accent" />
+            </label>
+            <FormStatus error={error} success={null} />
+        </div>
+    );
+}
+
 export function PasswordForm({ user }: { user: PrivateUser }) {
     const [current, setCurrent] = useState('');
     const [next, setNext] = useState('');

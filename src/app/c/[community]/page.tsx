@@ -39,6 +39,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
         image: `/og/c/${community.name}`,
         // Sorted and later pages are for people; crawlers follow their links but index the community once
         noindex: community.visibility === 'private' || Boolean(sort || cursor),
+        mature: community.is_nsfw,
     });
 }
 

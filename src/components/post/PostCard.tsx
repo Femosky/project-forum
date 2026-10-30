@@ -13,6 +13,7 @@ import { stripMarkdown } from '@/components/common/Markdown';
 import { communityLabel } from '@/lib/communityName';
 import ViewCount from './ViewCount';
 import UserAvatar from '@/components/ui/UserAvatar';
+import MatureBlur from './MatureBlur';
 
 // How a community is named in the interface (see lib/communityName)
 export { communityLabel };
@@ -81,7 +82,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
     const badges = (post.flair || post.is_nsfw || isLocked || post.status === 'removed' || post.status === 'pending') && (
         <div className="flex flex-wrap gap-1.5">
             {post.flair && <Badge>{post.flair.name}</Badge>}
-            {post.is_nsfw && <Badge variant="danger">NSFW</Badge>}
+            {post.is_nsfw && <Badge variant="danger">NSFW · Mature</Badge>}
             {isLocked && <Badge>Locked</Badge>}
             {post.status === 'removed' && <Badge variant="danger">Removed by moderators</Badge>}
             {post.status === 'pending' && <Badge variant="highlight">{post.held_reason ? `Held: ${post.held_reason}` : 'Waiting for review'}</Badge>}
@@ -125,10 +126,12 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 </header>
                 <h1 className="text-[22px] font-medium leading-[29px] tracking-[-0.015em] break-words text-pretty">{post.title}</h1>
                 {badges}
-                {post.type === 'link' && post.url && <LinkPreviewCard post={post} />}
-                <div className="text-[15px] leading-6 text-body">
-                    {isDeleted ? <p className="italic text-muted">[deleted]</p> : <PostBody post={post} />}
-                </div>
+                <MatureBlur blur={post.blur_mature && !isDeleted} className="flex flex-col gap-3">
+                    {post.type === 'link' && post.url && <LinkPreviewCard post={post} />}
+                    <div className="text-[15px] leading-6 text-body">
+                        {isDeleted ? <p className="italic text-muted">[deleted]</p> : <PostBody post={post} />}
+                    </div>
+                </MatureBlur>
                 <div className="pt-1">{actions}</div>
             </article>
         );
@@ -160,14 +163,18 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 <h2 className="mb-1 mt-2 text-[15.5px] font-medium leading-[22px] tracking-[-0.003em] break-words text-pretty">{post.title}</h2>
                 {badges && <div className="mb-1">{badges}</div>}
                 {isDeleted && <p className="text-[14.5px] italic leading-[22px] text-muted">[deleted]</p>}
-                {post.body && post.type !== 'link' && (
-                    <p className="line-clamp-2 break-words text-[14.5px] leading-[22px] text-muted">{stripMarkdown(post.body)}</p>
-                )}
-                {post.type === 'link' && post.url && (
-                    <div className="mt-2.5">
-                        <LinkPreviewCard post={post} />
-                    </div>
-                )}
+                {(post.body && post.type !== 'link') || (post.type === 'link' && post.url) ? (
+                    <MatureBlur blur={post.blur_mature && !isDeleted}>
+                        {post.body && post.type !== 'link' && (
+                            <p className="line-clamp-2 break-words text-[14.5px] leading-[22px] text-muted">{stripMarkdown(post.body)}</p>
+                        )}
+                        {post.type === 'link' && post.url && (
+                            <div className="mt-2.5">
+                                <LinkPreviewCard post={post} />
+                            </div>
+                        )}
+                    </MatureBlur>
+                ) : null}
 
                 <div className="mt-3.5">{actions}</div>
             </div>
