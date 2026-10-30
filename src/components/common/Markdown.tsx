@@ -68,8 +68,14 @@ const RULE = /^\s*([-*_])(\s*\1){2,}\s*$/;
 const TABLE_ROW = /^\s*\|.*\|\s*$/;
 const TABLE_RULE = /^\s*\|(\s*:?-{3,}:?\s*\|)+\s*$/;
 
+// Cells of a "| a | b |" row; "\|" is a pipe inside a cell (the table editor writes it that way)
 function tableCells(line: string): string[] {
-    return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
+    return line
+        .trim()
+        .replace(/^\|/, '')
+        .replace(/(?<!\\)\|$/, '')
+        .split(/(?<!\\)\|/)
+        .map((cell) => cell.trim().replace(/\\\|/g, '|'));
 }
 
 function renderBlocks(source: string, keyPrefix = 'b'): ReactNode[] {

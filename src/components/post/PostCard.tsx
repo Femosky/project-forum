@@ -128,7 +128,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 <h1 className="text-[22px] font-medium leading-[29px] tracking-[-0.015em] break-words text-pretty">{post.title}</h1>
                 {badges}
                 <MatureBlur blur={post.blur_mature && !isDeleted} className="flex flex-col gap-3">
-                    {post.type === 'image' && post.image && <PostPicture image={post.image} maxHeight="80vh" />}
+                    {post.type === 'image' && post.image && <PostPicture image={post.image} maxHeight="80vh" sizes="(min-width: 768px) 720px, 100vw" />}
                     {post.type === 'link' && post.url && <LinkPreviewCard post={post} />}
                     <div className="text-[15px] leading-6 text-body">
                         {isDeleted ? <p className="italic text-muted">[deleted]</p> : <PostBody post={post} />}
@@ -169,7 +169,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                     <MatureBlur blur={post.blur_mature && !isDeleted}>
                         {post.type === 'image' && post.image && (
                             // Taps fall through to the row's link, so the picture opens the thread like the rest of the row
-                            <PostPicture image={post.image} maxHeight="32rem" className="mb-2 mt-1" />
+                            <PostPicture image={post.image} maxHeight="32rem" sizes="(min-width: 768px) 600px, calc(100vw - 80px)" className="mb-2 mt-1" />
                         )}
                         {post.body && post.type !== 'link' && (
                             <p className="line-clamp-2 break-words text-[14.5px] leading-[22px] text-muted">{stripMarkdown(post.body)}</p>

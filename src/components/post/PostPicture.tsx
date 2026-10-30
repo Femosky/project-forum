@@ -4,7 +4,8 @@ import type { PostImage } from '@/types/api';
 // A picture post's picture. Its stored width and height set the box before it loads (nothing moves), capped in height
 // so a tall photo doesn't fill the screen: the rest of the box shows the picture whole on a quiet background. The
 // browser picks the smaller copy on narrow screens. Data saver hides it.
-export default function PostPicture({ image, maxHeight, className }: { image: PostImage; maxHeight: string; className?: string }) {
+// sizes: how wide it shows, so the browser picks the 720 px copy in feeds and the 2048 px one on the post's page
+export default function PostPicture({ image, maxHeight, sizes, className }: { image: PostImage; maxHeight: string; sizes: string; className?: string }) {
     const sources = [...image.variants].sort((a, b) => a.width - b.width);
     return (
         <div
@@ -16,7 +17,7 @@ export default function PostPicture({ image, maxHeight, className }: { image: Po
             <img
                 src={image.url}
                 srcSet={sources.length ? sources.map((source) => `${source.url} ${source.width}w`).join(', ') : undefined}
-                sizes="(min-width: 768px) 720px, 100vw"
+                sizes={sizes}
                 width={image.width}
                 height={image.height}
                 alt=""
