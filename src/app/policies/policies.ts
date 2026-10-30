@@ -54,8 +54,15 @@ export const POLICIES: Policy[] = [
             {
                 heading: 'What happens when something breaks the rules',
                 paragraphs: [
-                    'Moderators and the site team may remove content, lock threads, mute or ban accounts from a community, and suspend accounts from the whole site. Some posts and comments are held for review automatically, for example when a new account shares a phone number or a shortened link, or when an automatic check finds sexual content, severe violence or a risk of self-harm. Sexual content is reviewed by the site team, not the community\'s moderators. Graphic content that is allowed is marked NSFW instead of being held. Held posts are reviewed by a person; nothing is deleted automatically.',
+                    'Moderators and the site team may remove content, lock threads, mute or ban accounts from a community, and suspend accounts from the whole site. Some posts and comments are held for review automatically, for example when a new account shares a phone number or a shortened link, or when an automatic check finds explicit sexual content. Sexual content is reviewed by the site team, not the community\'s moderators. Revealing or graphic content that is allowed is marked NSFW instead of being held. Held posts are reviewed by a person; nothing is deleted automatically.',
                     'Every moderation action is logged with who took it and why.',
+                ],
+            },
+            {
+                heading: 'Automatic checks',
+                paragraphs: [
+                    'We use automated checks to filter explicit content: words and phrases in posts and comments, and every picture before it appears. They run on our own servers. They are good at the obvious cases, but they can miss things and they can flag something by mistake, so a person reviews what they hold.',
+                    'Anything that gets past them is still against this policy. When it is reported or we find it, we review it, and we can remove any content or account at our discretion.',
                 ],
             },
             {
@@ -182,6 +189,7 @@ export const POLICIES: Policy[] = [
                     'You must be 18 or older to create an account.',
                     'Keep your password to yourself. You are responsible for what happens on your account.',
                     'Follow the content policy and community guidelines. Moderators and the site team can remove content and limit or close accounts that break them.',
+                    'We use automated checks to filter explicit content, but they can miss things. Anything that gets past them is reviewed when it is reported or found, and we can remove any content or account at our discretion. Use Report to tell us about anything that breaks the rules.',
                     "Don't scrape the site in a way that slows it down, try to break its security, or use it to send spam.",
                 ],
             },
@@ -239,7 +247,7 @@ export const POLICIES: Policy[] = [
             {
                 heading: 'Who we share it with',
                 paragraphs: [
-                    'We do not sell your data. Service providers process it for us under contract: Neon (database), Render and Vercel (hosting), Resend (email), PostHog (usage counts, stored in the EU), OpenAI (an automatic safety check of posts, comments and link pictures; it does not use them to train its models), Cloudflare (bot checks and image storage) and Google (sign-in, and ads if you allow them). Some of them store data outside Nigeria, including in the United States and the European Union. We share data with authorities only when the law requires it.',
+                    'We do not sell your data. Service providers process it for us under contract: Neon (database), Render and Vercel (hosting), Resend (email), PostHog (usage counts, stored in the EU), OpenAI (only if we switch on its extra safety check of posts, comments and pictures; it does not use them to train its models), Cloudflare (bot checks and image storage) and Google (sign-in, and ads if you allow them). Some of them store data outside Nigeria, including in the United States and the European Union. We share data with authorities only when the law requires it.',
                 ],
             },
             {
