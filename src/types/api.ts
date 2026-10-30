@@ -57,7 +57,10 @@ export interface Post {
     link_preview: LinkPreview | null;
     ai_summary: string | null;
     is_anonymous: boolean;
+    // Mature: marked so itself or by its community. Shown blurred unless the viewer switched on "Show mature
+    // content" (blur_mature says which, per viewer; always true for guests)
     is_nsfw: boolean;
+    blur_mature: boolean;
     is_sponsored: boolean;
     status: ContentStatus;
     // Why the automatic filters held it for review; moderators only
@@ -177,6 +180,8 @@ export interface PrivateUser {
     is_email_verified: boolean;
     has_password: boolean;
     has_google: boolean;
+    // "Show mature content": NSFW posts and communities in lists, unblurred
+    show_mature: boolean;
     created_at: string;
     // New-account limits, so the composer can explain them up front
     can_post_links: boolean;

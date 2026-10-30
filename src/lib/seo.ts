@@ -31,18 +31,21 @@ type PageMetadataInput = {
     imageAlt?: string;
     // Keep the page out of the index but let crawlers follow its links (paging, sorts, thin posts)
     noindex?: boolean;
+    // Mature (NSFW): kept out of the index and marked rating=adult, so SafeSearch filters it
+    mature?: boolean;
     openGraph?: Metadata['openGraph'];
 };
 
 const NOINDEX: Metadata['robots'] = { index: false, follow: true };
 
-export function pageMetadata({ title, description = APP_DESCRIPTION, path, image = '/og/site/default', imageAlt, noindex, openGraph }: PageMetadataInput): Metadata {
+export function pageMetadata({ title, description = APP_DESCRIPTION, path, image = '/og/site/default', imageAlt, noindex, mature, openGraph }: PageMetadataInput): Metadata {
     const images = [{ url: image, width: 1200, height: 630, alt: imageAlt ?? title }];
     return {
         title,
         description,
         alternates: { canonical: path },
-        robots: noindex ? NOINDEX : undefined,
+        robots: noindex || mature ? NOINDEX : undefined,
+        ...(mature ? { other: { rating: 'adult' } } : {}),
         openGraph: {
             type: 'website',
             siteName: APP_NAME,
