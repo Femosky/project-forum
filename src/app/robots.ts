@@ -22,7 +22,7 @@ const AI_CRAWLERS = [
 ];
 
 // Personal pages, forms and endless search results
-const DISALLOW = ['/submit', '/ads/', '/settings', '/saved', '/notifications', '/profile', '/auth/', '/search?', '/v1/', '/api/', '/_a/', '/_e'];
+const DISALLOW = ['/submit', '/ads/', '/settings', '/saved', '/notifications', '/moderation', '/unsubscribe', '/profile', '/auth/', '/search?', '/v1/', '/api/', '/_a/', '/_e'];
 
 export default function robots(): MetadataRoute.Robots {
     // Private testing: keep every crawler out until launch

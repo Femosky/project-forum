@@ -168,6 +168,39 @@ export interface CommunityViewer {
     muted_until: string | null;
     // Moderators only: items waiting in the mod queue
     queue_count: number | null;
+    // Moderators (not owners): posts-only moderators have the queue and reports only
+    mod_permission: ModPermission | null;
+}
+
+export type ModPermission = 'all' | 'posts';
+export type ModEmailFrequency = 'instant' | 'daily' | 'off';
+
+export interface ModerationOverview {
+    communities: {
+        name: string;
+        display_name: string | null;
+        image_url: string | null;
+        visibility: string;
+        role: 'owner' | 'moderator';
+        permission: ModPermission;
+        queue: number;
+        join_requests: number;
+        email: ModEmailFrequency;
+    }[];
+    invites: { id: string; permission: ModPermission; inviter: { username: string }; community: { name: string; display_name: string | null } }[];
+    total: number;
+}
+
+export interface JoinRequest {
+    id: string;
+    message: string | null;
+    created_at: string;
+    user: { username: string; created_at: string };
+}
+
+export interface TeamResponse {
+    moderators: { username: string; avatar: string | null; role: 'owner' | 'moderator'; permission: ModPermission; joined_at: string }[];
+    invites: { id: string; username: string; permission: ModPermission; created_at: string }[];
 }
 
 export interface PrivateUser {
@@ -301,12 +334,15 @@ export interface TrendingTopicsResponse {
 
 export interface AppNotification {
     id: string;
-    type: 'post_reply' | 'comment_reply' | 'mention';
+    type: 'post_reply' | 'comment_reply' | 'mention' | 'mod_queue' | 'mod_report' | 'mod_join_request' | 'mod_invite';
     created_at: string;
     read_at: string | null;
     actor: AuthorRef | null;
-    post: { short_id: string; slug: string; title: string; community: string };
-    comment: { short_id: string; excerpt: string };
+    // Replies and mentions have post and comment; moderator notices have community and a running count
+    post: { short_id: string; slug: string; title: string; community: string } | null;
+    comment: { short_id: string; excerpt: string } | null;
+    community: string | null;
+    count: number;
 }
 
 export interface NotificationsResponse {

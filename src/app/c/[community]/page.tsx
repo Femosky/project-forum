@@ -5,9 +5,8 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import { CloudOff, Lock, Plus } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
 import { serverApi } from '@/lib/api/server';
-import { CommunityResponse, FlairsResponse, PostsResponse } from '@/types/api';
+import { CommunityResponse, PostsResponse } from '@/types/api';
 import CommunityHeader from '@/components/community/CommunityHeader';
-import ManageFlairs from '@/components/community/ManageFlairs';
 import CommunityRail from '@/components/community/CommunityRail';
 import EmptyState from '@/components/ui/EmptyState';
 import { PostList, SortTabs, parsePostSort } from '@/components/post/PostList';
@@ -68,10 +67,6 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
         return <EmptyState icon={<CloudOff />} title="Couldn't load this community" description="Try again in a moment." />;
     }
 
-    const role = community.data.viewer?.role;
-    const isModerator = role === 'owner' || role === 'moderator';
-    const flairs = isModerator ? await serverApi<FlairsResponse>(`/communities/${encodeURIComponent(name)}/flairs`) : null;
-
     const isPrivateAndClosed = !posts.data && (posts.status === 403 || posts.status === 404);
 
     return (
@@ -114,8 +109,6 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
                 <CommunityRail data={community.data} />
             </div>
             <div className="flex min-w-0 flex-col xl:col-start-1">
-                {isModerator && <ManageFlairs community={community.data.community.name} initialFlairs={flairs?.data?.flairs ?? []} />}
-
                 {isPrivateAndClosed ? (
                     <EmptyState
                         icon={<Lock />}

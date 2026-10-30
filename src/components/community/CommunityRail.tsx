@@ -24,6 +24,7 @@ export function CommunityRail({ data }: { data: CommunityResponse }) {
                     className="mx-4 mt-4 flex items-center gap-2 rounded-[7px] px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-border-strong transition-colors hover:bg-hover sm:mx-0"
                 >
                     <ShieldCheck className="size-4" /> Mod tools
+                    <span className="text-xs font-normal text-muted">{viewer?.role === 'owner' ? 'You own this' : "You're a mod"}</span>
                     {viewer?.queue_count ? (
                         <span className="ml-auto rounded-full bg-brand px-2 text-xs text-white tabular-nums">{viewer.queue_count} waiting</span>
                     ) : null}
