@@ -35,8 +35,8 @@ export default function AdPictureField({ value, onChange, linkImage }: { value: 
             <div className="flex flex-col gap-1.5">
                 <span className="text-sm font-semibold">Picture (optional)</span>
                 <p className="text-xs text-muted">
-                    Best at <strong>1200 × 628</strong> (wide, 1.91:1), the same as link previews on social media. Any shape works: you choose below
-                    what shows. JPEG, PNG, WebP or GIF, up to 5 MB.
+                    Best size: <strong>1200 × 630</strong> (the standard link-preview size). Other shapes get cropped, or shown whole on a
+                    blurred backdrop: you choose below. JPEG, PNG, WebP or GIF, up to 5 MB.
                 </p>
                 <ImageUpload
                     endpoint="/admin/images?purpose=ad_image"
@@ -211,7 +211,7 @@ function FocusPicker({ src, x, y, onChange }: { src: string; x: number; y: numbe
             <p className="text-xs text-muted">
                 {ratio !== null && !croppable
                     ? 'This picture already has the card’s shape, so all of it shows.'
-                    : 'Drag the bright area over the part that must show. Everything outside it is cut off in the feed.'}
+                    : 'Drag the bright area over the part that must show. Everything outside it is cut off, in the feed and in the small picture between comments.'}
             </p>
         </div>
     );

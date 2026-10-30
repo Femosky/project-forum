@@ -34,7 +34,8 @@ export function SponsoredCommentItem({ unit, preview = false }: { unit: NativeAd
                     )}
                 </div>
                 {/* Compact, like Reddit's: the text, and the picture as a small thumbnail at the side, never the feed's
-                    big card. The thumbnail's box is fixed, so nothing moves when it loads. */}
+                    big card. Same 1.91:1 shape as the feed card and as link previews everywhere (1200 × 630), so a
+                    standard picture fits both without cropping; the box is fixed, so nothing moves when it loads. */}
                 <div className="flex items-start gap-3">
                     <div className="min-w-0 flex-1 text-sm leading-[21px]">
                         <p className="font-medium text-text">{creative.title}</p>
@@ -46,7 +47,7 @@ export function SponsoredCommentItem({ unit, preview = false }: { unit: NativeAd
                                 src={creative.image_url}
                                 focus={creative.image_focus}
                                 fit={creative.image_fit}
-                                className="aspect-[4/3] w-24 rounded-lg ring-1 ring-border"
+                                className="aspect-[1.91/1] w-28 rounded-lg ring-1 ring-border sm:w-38"
                             />
                         </a>
                     )}

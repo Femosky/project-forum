@@ -413,7 +413,7 @@ function PromoteForm({ onCancel }: { onCancel: () => void }) {
             <Field label="Logo (the ad's profile picture)" hint="Square, 256 × 256 or bigger. Without one, the first letter shows.">
                 <ImageUpload endpoint="/admin/images?purpose=ad_logo" aspect="square" label="Logo" value={fields.logo_url || null} onChange={(url) => setFields({ ...fields, logo_url: url ?? '' })} />
             </Field>
-            <Field label="Picture (optional)" hint="Best at 1200 × 628. Without one, the link's preview image is used.">
+            <Field label="Picture (optional)" hint="Best size: 1200 × 630 (the standard link-preview size). Without one, the link's preview image is used.">
                 <ImageUpload endpoint="/admin/images?purpose=ad_image" aspect="card" label="Picture" value={fields.image_url || null} onChange={(url) => setFields({ ...fields, image_url: url ?? '' })} />
             </Field>
             <Field label="Share of ad slots (%)" hint="Up to 50. It gets this share even when paid campaigns want the slots.">
