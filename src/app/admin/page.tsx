@@ -6,6 +6,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import QueueList from '@/components/moderation/QueueList';
 import ModLog from '@/components/moderation/ModLog';
 import ToolTabs from '@/components/moderation/ToolTabs';
+import AlertEmailToggle from './_components/AlertEmailToggle';
 import { AdminCommunities, AdminUsers, Blocklist } from './_components/AdminPanels';
 import { AdminAds, AdminCampaign } from './_components/AdminAds';
 import type { AdsOverview, CampaignDetail } from '@/ads/types';
@@ -108,7 +109,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 {!section.data ? (
                     <EmptyState icon={<CloudOff />} title="Couldn't load this section" description="Try again in a moment." />
                 ) : tab === 'queue' ? (
-                    <QueueList initialItems={(section.data as QueueResponse).items} site />
+                    <>
+                        {(staff.role === 'owner' || staff.role === 'admin') && <AlertEmailToggle initial={staff.alert_email} />}
+                        <QueueList initialItems={(section.data as QueueResponse).items} site />
+                    </>
                 ) : tab === 'stats' ? (
                     <AdminStats data={section.data as AdminStatsResponse} days={days} />
                 ) : tab === 'users' ? (

@@ -621,6 +621,7 @@ export interface StaffAccount {
     disabled_at: string | null;
     last_login_at: string | null;
     created_at: string;
+    alert_email: boolean;
 }
 
 export interface StaffAuditEntry {
