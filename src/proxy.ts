@@ -127,6 +127,8 @@ function cacheForGuests(request: NextRequest, variant: string) {
     return response;
 }
 
+const SIGNED_OUT_ONLY = new Set(['/auth/login', '/auth/signup', '/auth/forgot-password']);
+
 export async function proxy(request: NextRequest) {
     if (CRAWLER_UA.test(request.headers.get('user-agent') ?? '')) {
         const answer = await crawlerStatus(request);
@@ -135,7 +137,9 @@ export async function proxy(request: NextRequest) {
 
     const hasRefreshToken = request.cookies.has(REFRESH_TOKEN_COOKIE_NAME);
 
-    if (hasRefreshToken && request.nextUrl.pathname.startsWith('/auth/')) {
+    // Signed-in people have no use for the sign-in pages, but the pages emailed links open (confirm email, reset
+    // password) must still load: someone who just signed up is signed in when they tap "confirm"
+    if (hasRefreshToken && SIGNED_OUT_ONLY.has(request.nextUrl.pathname)) {
         return NextResponse.redirect(new URL('/', request.url));
     }
 

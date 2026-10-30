@@ -27,6 +27,8 @@ jobs:
           node scripts/mock-api.mjs 3001 &
           npm start &
           for i in $(seq 1 30); do curl -sf http://localhost:3000/robots.txt > /dev/null && break; sleep 1; done
+      - name: Emailed links open for signed-in people
+        run: node scripts/auth-links.mjs http://localhost:3000
       - name: Page weight and no-JS reading
         run: npm run budget -- http://localhost:3000
       - name: Lighthouse (Slow 4G, mid-range phone)
