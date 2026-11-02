@@ -1,5 +1,5 @@
 import { AvatarConfig, parseAvatarCode } from './code';
-import { BGTONE, Drawing, drawAvatar, drawStarter, EYEWEAR, FACES, HAIR, NECKS, SKIN, TOPS } from './art';
+import { BGTONE, Crop, Drawing, drawAvatar, drawStarter, EYEWEAR, FACES, HAIR, NECKS, SKIN, TOPS } from './art';
 
 // Every option an avatar can use. Saved avatars keep names, not positions, so options can be added, reordered or
 // retired here at any time, with no API change: a name this file doesn't know simply draws the part's default.
@@ -14,7 +14,7 @@ const BACKGROUNDS: Record<string, string> = { blue: '#a9d4ff', coral: '#ffc9a8',
 const STARTER_TONES = ['#12a8bd', '#2b5fe6', '#6a3fd9', '#d42e8a', '#ec4a32', '#f09a14', '#566784', '#a4552a'];
 const THREAD_STYLES = ['fire', 'lightning', 'river', 'iron', 'beads'];
 
-const NATURAL_SKIN = ['umber', 'walnut', 'chestnut', 'sienna', 'caramel', 'honey'];
+const NATURAL_SKIN = ['espresso', 'ebony', 'umber', 'walnut', 'chestnut', 'sienna', 'caramel', 'honey'];
 const FANTASY_SKIN = ['blue', 'purple', 'pink', 'teal', 'gold', 'terracotta', 'bronze', 'iron', 'coralred'];
 
 const EYES: Record<string, Pick<Drawing, 'eyes' | 'eyestyle' | 'glow'>> = {
@@ -33,8 +33,8 @@ const EYES: Record<string, Pick<Drawing, 'eyes' | 'eyestyle' | 'glow'>> = {
     nok: { eyestyle: 'nok' },
 };
 // Pale eyes on the darkest skin come too close to the caricatures this design rules out
-const PALE_EYES = ['white', 'cowrie'];
-const DARKEST_SKIN = ['umber', 'walnut'];
+export const PALE_EYES = ['white', 'cowrie'];
+export const DARKEST_SKIN = ['espresso', 'ebony', 'umber', 'walnut'];
 
 export const AVATAR_OPTIONS = {
     skin: { label: 'Skin', options: [...NATURAL_SKIN, ...FANTASY_SKIN].map((id) => option(id, titled(id), SKIN[id])) },
@@ -56,12 +56,22 @@ export type AvatarPart = keyof typeof AVATAR_OPTIONS;
 
 const known = <T>(list: Record<string, T>, id: string | undefined, fallback: string) => (id && Object.hasOwn(list, id) ? id : fallback);
 
-function toDrawing(config: AvatarConfig, reply: boolean): Drawing {
+const CLOSE: Crop = [20, 30, 216];
+const MEDIUM: Crop = [2, -4, 252];
+const FULL: Crop = [-8, -28, 272];
+const CLOSE_HAIR = ['bare', 'fade', 'waves', 'cornrows', 'kolese', 'taper', 'sidepart', 'pixie', 'fingerwaves'];
+const FULL_HAIR = ['gele', 'gelehigh', 'halo', 'axe', 'iroko'];
+
+// `threadWidth`: replies show at 28px with a 2px line, so the thread is 2/28 of the crop; larger previews pass their own
+function toDrawing(config: AvatarConfig, reply: boolean, threadPx: number): Drawing {
     const skin = known(SKIN, config.skin, 'chestnut');
+    const hair = known(HAIR, config.hair, 'fade');
+    const crop = CLOSE_HAIR.includes(hair) ? CLOSE : FULL_HAIR.includes(hair) ? FULL : MEDIUM;
     const eyes = PALE_EYES.includes(config.eyes) && DARKEST_SKIN.includes(skin) ? 'warm' : known(EYES, config.eyes, 'warm');
     return {
         skin,
-        hair: known(HAIR, config.hair, 'fade'),
+        hair,
+        crop,
         hc: HAIR_COLOURS.includes(config.hair_colour) ? `#${config.hair_colour}` : undefined,
         top: known(TOPS, config.top, 'tee'),
         cloth: CLOTH.includes(config.cloth) ? `#${config.cloth}` : '#2f5be0',
@@ -73,21 +83,19 @@ function toDrawing(config: AvatarConfig, reply: boolean): Drawing {
         bg: BACKGROUNDS[config.background] ?? BACKGROUNDS.blue,
         thread: reply ? (THREADS.includes(config.thread) ? `#${config.thread}` : '#f2b134') : undefined,
         threadStyle: THREAD_STYLES.includes(config.thread_style) ? config.thread_style : undefined,
-        threadWidth: THREAD_WIDTH,
+        threadWidth: (threadPx * crop[2]) / 28,
     };
 }
 
-// Replies show at 28px on a 272 grid and their line is 2px, so the two read as one thread
-const THREAD_WIDTH = 19;
-
-export const renderAvatarConfig = (config: AvatarConfig, reply = false) => drawAvatar(toDrawing(config, reply));
+export const renderAvatarConfig = (config: AvatarConfig, reply = false, threadPx = 2) => drawAvatar(toDrawing(config, reply, threadPx));
 
 export function renderAvatar(code: string, reply = false): string | null {
     const parsed = parseAvatarCode(code);
     if (!parsed) return null;
     if (!('starter' in parsed)) return renderAvatarConfig(parsed, reply);
     const tone = STARTER_TONES[parseInt(parsed.starter, 36) % STARTER_TONES.length];
-    return drawStarter({ tone, thread: reply ? tone : undefined, threadWidth: THREAD_WIDTH });
+    const crop: Crop = [22, 38, 216];
+    return drawStarter({ tone, crop, thread: reply ? tone : undefined, threadWidth: (2 * crop[2]) / 28 });
 }
 
 const look = (name: string, hair: string, skin: string, top: string, cloth: string, background: string, extra: AvatarConfig = {}) => ({ name, config: { hair, skin, top, cloth, background, ...extra } });
