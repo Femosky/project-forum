@@ -2,6 +2,7 @@ import { communityHandle } from '@/lib/communityName';
 import { ImageResponse } from 'next/og';
 import { renderAvatar } from '@/avatars/parts';
 import { APP_NAME, BRAND_COLORS, REPUTATION_LABEL } from '@/lib/constants';
+import { LOGO_DARK } from '../../logo';
 import { publicApi } from '@/lib/api/server';
 import { CommunityResponse, PostResponse, PublicUserResponse } from '@/types/api';
 import NumberUtility from '@/lib/utils/NumberUtility';
@@ -52,9 +53,9 @@ async function cardFor(kind: string, id: string): Promise<Card | null> {
     return null;
 }
 
-const SITE_CARD: Card = { eyebrow: APP_NAME, title: 'Ask questions, share what you know, get real answers.', stats: [] };
+const SITE_CARD: Card = { eyebrow: '', title: 'Ask questions, share what you know, get real answers.', stats: [] };
 
-export async function GET(request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
+export async function GET(_request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
     const { kind, id } = await params;
     const card = (kind === 'site' ? SITE_CARD : await cardFor(kind, id)) ?? SITE_CARD;
     // Very long titles shrink so they still fit in four lines
@@ -75,7 +76,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
                     color: BRAND_COLORS.text,
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 34, fontWeight: 700, color: BRAND_COLORS.accent }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 34, fontWeight: 700, color: BRAND_COLORS.muted }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {card.avatar && <img src={card.avatar} width={96} height={96} alt="" style={{ borderRadius: 48 }} />}
                     {card.eyebrow}
@@ -87,10 +88,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
                             <span key={stat}>{stat}</span>
                         ))}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontWeight: 700 }}>
-                        <div style={{ width: 20, height: 20, borderRadius: 10, background: BRAND_COLORS.accent }} />
-                        {APP_NAME}
-                    </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={LOGO_DARK} height={52} width={190} alt={APP_NAME} />
                 </div>
             </div>
         ),
