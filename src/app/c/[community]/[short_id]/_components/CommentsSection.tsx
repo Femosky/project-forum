@@ -405,6 +405,7 @@ function TitleSection({
     username,
     profile,
     isOp = false,
+    isMod = false,
     pinned = false,
     createdAt,
     editedAt,
@@ -412,6 +413,7 @@ function TitleSection({
     username: string;
     profile?: string;
     isOp?: boolean;
+    isMod?: boolean;
     pinned?: boolean;
     createdAt: string;
     editedAt: string | null;
@@ -426,6 +428,7 @@ function TitleSection({
                 <span className="font-semibold text-text">{username}</span>
             )}
             {isOp && <span className="rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-muted">OP</span>}
+            {isMod && <span className="rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-text">Mod</span>}
             {pinned && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-text">
                     <Pin className="size-3 text-brand" aria-hidden /> Pinned by moderators
@@ -453,6 +456,7 @@ function TextSection({ comment, isOp }: { comment: Comment; isOp: boolean }) {
                 username={getAuthorName(comment)}
                 profile={anonymousFor(comment).hidden ? undefined : comment.author?.username}
                 isOp={isOp}
+                isMod={Boolean(comment.author?.is_moderator)}
                 pinned={Boolean(comment.pinned_at)}
                 createdAt={comment.created_at}
                 editedAt={comment.edited_at}

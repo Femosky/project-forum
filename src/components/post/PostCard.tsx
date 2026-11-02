@@ -28,11 +28,14 @@ export function getPostPath(post: Pick<Post, 'community' | 'short_id' | 'slug'>)
 const hiddenAuthorName = (post: Post) => (post.status === 'deleted' ? '[deleted]' : 'Anonymous');
 
 // The author's name, linking to their profile unless the post is anonymous or deleted
+export const ModBadge = () => <span className="ml-1 rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-text">Mod</span>;
+
 function AuthorLink({ author, fallback, className }: { author: Post['author']; fallback: string; className?: string }) {
     if (!author) return <span className={className}>{fallback}</span>;
     return (
         <Link href={`/u/${author.username}`} className={twMerge('relative z-10 hover:underline', className)}>
             {author.username}
+            {author.is_moderator && <ModBadge />}
         </Link>
     );
 }

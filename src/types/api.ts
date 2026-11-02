@@ -13,6 +13,8 @@ export interface AuthorRef {
     username: string;
     display_name: string | null;
     avatar_id: string;
+    // Moderates the community this post or comment is in
+    is_moderator?: boolean;
 }
 
 export interface CommunityRef {
