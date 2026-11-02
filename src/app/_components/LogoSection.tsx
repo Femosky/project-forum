@@ -21,8 +21,7 @@ export function LogoSection() {
     return (
         <Link href="/" className="flex shrink-0 items-center gap-2 rounded-lg">
             <LogoMark className="h-6 w-auto" />
-            <span className="hidden text-[17px] font-semibold tracking-tight sm:inline">{APP_NAME}</span>
-            <span className="sr-only sm:hidden">{APP_NAME}</span>
+            <span className="text-[17px] font-semibold tracking-tight">{APP_NAME}</span>
         </Link>
     );
 }
