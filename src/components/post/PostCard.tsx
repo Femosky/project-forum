@@ -116,7 +116,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 <header className="flex items-center gap-2">
                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px] text-subtle">
                         <UserAvatar user={pictureOf} size={22} className="size-[22px]" />
-                        <AuthorLink author={post.author} fallback={authorName} className="font-semibold text-text" />
+                        <AuthorLink author={anonymous.hidden ? null : post.author} fallback={authorName} className="font-semibold text-text" />
                         {showCommunity && (
                             <>
                                 <span>in</span>
@@ -157,7 +157,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
 
             <div className="relative z-[2] flex min-w-0 flex-col pointer-events-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
                 <div className="flex min-w-0 items-center gap-1.5 text-[13px] leading-[18px] text-muted">
-                    <AuthorLink author={post.author} fallback={authorName} className="shrink-0 font-semibold text-text" />
+                    <AuthorLink author={anonymous.hidden ? null : post.author} fallback={authorName} className="shrink-0 font-semibold text-text" />
                     {showCommunity && <CommunityTag community={post.community} />}
                     <PostTime post={post} className="text-subtle" />
                     <div className="-my-1 -mr-1.5 ml-auto">

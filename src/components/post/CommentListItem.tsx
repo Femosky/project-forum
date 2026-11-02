@@ -22,6 +22,7 @@ export function CommentListItem({ comment }: { comment: ListedComment }) {
                     {comment.post.title}
                 </Link>{' '}
                 · <time dateTime={comment.created_at}>{TimeUtility.formatTimeAgo(comment.created_at)}</time>
+                {comment.is_anonymous && ' · Anonymous (you)'}
             </p>
             <Markdown text={comment.body} className="line-clamp-6 text-sm leading-[21px] text-body" />
             <div className="mt-1 flex items-center gap-1">
