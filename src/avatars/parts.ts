@@ -14,7 +14,7 @@ const BACKGROUNDS: Record<string, string> = { blue: '#a9d4ff', coral: '#ffc9a8',
 const STARTER_TONES = ['#12a8bd', '#2b5fe6', '#6a3fd9', '#d42e8a', '#ec4a32', '#f09a14', '#566784', '#a4552a'];
 const THREAD_STYLES = ['fire', 'lightning', 'river', 'iron', 'beads'];
 
-const NATURAL_SKIN = ['espresso', 'ebony', 'umber', 'walnut', 'chestnut', 'sienna', 'caramel', 'honey'];
+const NATURAL_SKIN = ['midnight', 'espresso', 'ebony', 'umber', 'walnut', 'chestnut', 'sienna', 'caramel', 'honey'];
 const FANTASY_SKIN = ['blue', 'purple', 'pink', 'teal', 'gold', 'terracotta', 'bronze', 'iron', 'coralred'];
 
 const EYES: Record<string, Pick<Drawing, 'eyes' | 'eyestyle' | 'glow'>> = {
@@ -34,7 +34,7 @@ const EYES: Record<string, Pick<Drawing, 'eyes' | 'eyestyle' | 'glow'>> = {
 };
 // Pale eyes on the darkest skin come too close to the caricatures this design rules out
 export const PALE_EYES = ['white', 'cowrie'];
-export const DARKEST_SKIN = ['espresso', 'ebony', 'umber', 'walnut'];
+export const DARKEST_SKIN = ['midnight', 'espresso', 'ebony', 'umber', 'walnut'];
 
 export const AVATAR_OPTIONS = {
     skin: { label: 'Skin', options: [...NATURAL_SKIN, ...FANTASY_SKIN].map((id) => option(id, titled(id), SKIN[id])) },
@@ -58,15 +58,15 @@ const known = <T>(list: Record<string, T>, id: string | undefined, fallback: str
 
 const CLOSE: Crop = [20, 30, 216];
 const MEDIUM: Crop = [2, -4, 252];
-const FULL: Crop = [-8, -28, 272];
+const FULL: Crop = [-8, -20, 272];
 const CLOSE_HAIR = ['bare', 'fade', 'waves', 'cornrows', 'kolese', 'taper', 'sidepart', 'pixie', 'fingerwaves'];
 const FULL_HAIR = ['gele', 'gelehigh', 'halo', 'axe', 'iroko'];
 
 // `threadWidth`: replies show at 28px with a 2px line, so the thread is 2/28 of the crop; larger previews pass their own
-function toDrawing(config: AvatarConfig, reply: boolean, threadPx: number): Drawing {
+function toDrawing(config: AvatarConfig, reply: boolean, threadPx: number, sameSize: boolean): Drawing {
     const skin = known(SKIN, config.skin, 'chestnut');
     const hair = known(HAIR, config.hair, 'fade');
-    const crop = CLOSE_HAIR.includes(hair) ? CLOSE : FULL_HAIR.includes(hair) ? FULL : MEDIUM;
+    const crop = sameSize ? FULL : CLOSE_HAIR.includes(hair) ? CLOSE : FULL_HAIR.includes(hair) ? FULL : MEDIUM;
     const eyes = PALE_EYES.includes(config.eyes) && DARKEST_SKIN.includes(skin) ? 'warm' : known(EYES, config.eyes, 'warm');
     return {
         skin,
@@ -87,7 +87,8 @@ function toDrawing(config: AvatarConfig, reply: boolean, threadPx: number): Draw
     };
 }
 
-export const renderAvatarConfig = (config: AvatarConfig, reply = false, threadPx = 2) => drawAvatar(toDrawing(config, reply, threadPx));
+// `sameSize`: the editor keeps one crop, so the character doesn't jump as hair changes
+export const renderAvatarConfig = (config: AvatarConfig, reply = false, threadPx = 2, sameSize = false) => drawAvatar(toDrawing(config, reply, threadPx, sameSize));
 
 export function renderAvatar(code: string, reply = false): string | null {
     const parsed = parseAvatarCode(code);

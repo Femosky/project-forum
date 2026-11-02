@@ -24,5 +24,5 @@ export default async function AvatarPage() {
             />
         );
     }
-    return <AvatarEditor code={me.data.user.avatar} />;
+    return <AvatarEditor code={me.data.user.avatar} username={me.data.user.username} />;
 }

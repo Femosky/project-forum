@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Shuffle } from 'lucide-react';
+import { Redo2, Shuffle, Undo2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import ErrorMessage from '@/components/ui/ErrorMessage';
@@ -13,7 +13,7 @@ import { AvatarConfig, avatarUrl, parseAvatarCode } from '@/avatars/code';
 import { AVATAR_LOOKS, AVATAR_OPTIONS, AvatarPart, DARKEST_SKIN, PALE_EYES, renderAvatarConfig } from '@/avatars/parts';
 import { UserResponse } from '@/types/api';
 
-const svgUrl = (config: AvatarConfig, reply = false, threadPx?: number) => `data:image/svg+xml;utf8,${encodeURIComponent(renderAvatarConfig(config, reply, threadPx))}`;
+const svgUrl = (config: AvatarConfig, reply = false, threadPx?: number) => `data:image/svg+xml;utf8,${encodeURIComponent(renderAvatarConfig(config, reply, threadPx, true))}`;
 
 // One tab per thing a person thinks about, each holding the choices that belong together
 const GROUPS: { id: string; label: string; parts: AvatarPart[] }[] = [
@@ -24,6 +24,13 @@ const GROUPS: { id: string; label: string; parts: AvatarPart[] }[] = [
     { id: 'thread', label: 'Thread', parts: ['thread', 'thread_style'] },
     { id: 'background', label: 'Background', parts: ['background'] },
 ];
+
+// The starter the API gives this username (Backend src/lib/avatars.ts)
+function starterCode(name: string) {
+    let hash = 2166136261;
+    for (const char of name.toLowerCase()) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+    return `s-${hash.toString(36)}`;
+}
 
 const one = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
@@ -38,17 +45,37 @@ function shuffled(): AvatarConfig {
 }
 
 // The whole page for making an avatar: the picture stays in view while the choices change beside it
-export default function AvatarEditor({ code }: { code: string | null }) {
+export default function AvatarEditor({ code, username }: { code: string | null; username: string }) {
     const router = useRouter();
-    const [config, setConfig] = useState<AvatarConfig>(() => {
+    const [config, setPresent] = useState<AvatarConfig>(() => {
         const parsed = code ? parseAvatarCode(code) : null;
         return parsed && !('starter' in parsed) ? parsed : {};
     });
+    const [past, setPast] = useState<AvatarConfig[]>([]);
+    const [future, setFuture] = useState<AvatarConfig[]>([]);
     const [group, setGroup] = useState('looks');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    function setConfig(next: AvatarConfig) {
+        setPast([...past, config]);
+        setFuture([]);
+        setPresent(next);
+    }
+    function undo() {
+        setFuture([config, ...future]);
+        setPresent(past[past.length - 1]);
+        setPast(past.slice(0, -1));
+    }
+    function redo() {
+        setPast([...past, config]);
+        setPresent(future[0]);
+        setFuture(future.slice(1));
+    }
+
+    // Nothing chosen means the member's starter avatar
     const untouched = Object.keys(config).length === 0;
+    const starter = avatarUrl(starterCode(username));
     const showThread = group === 'thread';
     const parts = GROUPS.find(({ id }) => id === group)?.parts ?? [];
     const set = (part: AvatarPart, id: string) => setConfig({ ...config, [part]: id });
@@ -60,7 +87,7 @@ export default function AvatarEditor({ code }: { code: string | null }) {
         setSaving(true);
         setError(null);
         try {
-            await api<UserResponse>('/users/me', { method: 'PATCH', body: { avatar_config: config } });
+            await api<UserResponse>('/users/me', { method: 'PATCH', body: { avatar_config: untouched ? null : config } });
             router.push('/settings');
             router.refresh();
         } catch (error) {
@@ -70,23 +97,31 @@ export default function AvatarEditor({ code }: { code: string | null }) {
     }
 
     return (
-        <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 md:flex-row md:items-start md:gap-8">
-            <aside className="flex shrink-0 flex-col items-center gap-3 md:sticky md:top-20 md:w-56">
+        <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 md:h-[calc(100dvh-3.5rem)] md:flex-row md:items-start md:gap-8 md:overflow-hidden">
+            <aside className="flex shrink-0 flex-col items-center gap-3 md:w-56">
                 <h1 className="self-start text-xl font-semibold">Your avatar</h1>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                    src={untouched && code ? avatarUrl(code, showThread) : svgUrl(config, showThread, 3)}
+                    src={untouched ? starter : svgUrl(config, showThread, 2.4)}
                     alt="Your avatar"
                     width={200}
                     height={200}
                     className="size-48 rounded-full ring-1 ring-border md:size-56"
                 />
-                <Button variant="secondary" size="sm" onClick={() => setConfig(shuffled())}>
-                    <Shuffle className="size-4" /> Shuffle
-                </Button>
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" aria-label="Undo" title="Undo" onClick={undo} disabled={past.length === 0}>
+                        <Undo2 className="size-4" />
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => setConfig(shuffled())}>
+                        <Shuffle className="size-4" /> Shuffle
+                    </Button>
+                    <Button variant="ghost" size="sm" aria-label="Redo" title="Redo" onClick={redo} disabled={future.length === 0}>
+                        <Redo2 className="size-4" />
+                    </Button>
+                </div>
                 {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
                 <div className="flex w-full gap-2">
-                    <Button className="flex-1" onClick={save} disabled={saving || untouched}>
+                    <Button className="flex-1" onClick={save} disabled={saving}>
                         {saving ? 'Saving...' : 'Save'}
                     </Button>
                     <Button variant="ghost" asChild>
@@ -95,7 +130,7 @@ export default function AvatarEditor({ code }: { code: string | null }) {
                 </div>
             </aside>
 
-            <section className="flex min-w-0 flex-1 flex-col gap-5">
+            <section className="flex min-w-0 flex-1 flex-col gap-5 md:h-full md:overflow-y-auto md:pr-2 md:[scrollbar-gutter:stable]">
                 <nav aria-label="Avatar choices" className="flex flex-wrap gap-1">
                     {[{ id: 'looks', label: 'Looks' }, ...GROUPS].map(({ id, label }) => (
                         <button
@@ -115,6 +150,11 @@ export default function AvatarEditor({ code }: { code: string | null }) {
 
                 {group === 'looks' && (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-3">
+                        <button type="button" onClick={() => setConfig({})} className="flex cursor-pointer flex-col items-center gap-1.5 text-xs text-muted hover:text-text">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={starter} alt="" width={88} height={88} className="size-[88px] rounded-full ring-1 ring-border" />
+                            Your starter
+                        </button>
                         {looks.map((look) => (
                             <button key={look.name} type="button" onClick={() => setConfig(look.config)} className="flex cursor-pointer flex-col items-center gap-1.5 text-xs text-muted hover:text-text">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}

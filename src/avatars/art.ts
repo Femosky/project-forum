@@ -136,7 +136,7 @@ export const FACES: Record<string, [string, string]> = {
     smirk: ['Smirk', ln('M118 130Q132 132 141 123', 4.5)],
     calm: ['Calm', ln('M119 129H137', 4.5)],
 };
-export const SKIN: Record<string, string> = { espresso: '#5f3826', ebony: '#714430', umber: '#8a5236', walnut: '#9a5e3e', chestnut: '#ab6b45', sienna: '#bb7a50', caramel: '#c98b5f', honey: '#d69c6e', terracotta: '#c8693a', bronze: '#b98a3c', iron: '#6f7788', coralred: '#d9533f', blue: '#3f6df0', purple: '#7a4de8', pink: '#d9489a', teal: '#17a9c0', gold: '#f2a32e' };
+export const SKIN: Record<string, string> = { midnight: '#472a1d', espresso: '#5f3826', ebony: '#714430', umber: '#8a5236', walnut: '#9a5e3e', chestnut: '#ab6b45', sienna: '#bb7a50', caramel: '#c98b5f', honey: '#d69c6e', terracotta: '#c8693a', bronze: '#b98a3c', iron: '#6f7788', coralred: '#d9533f', blue: '#3f6df0', purple: '#7a4de8', pink: '#d9489a', teal: '#17a9c0', gold: '#f2a32e' };
 const cowrie = (x: number, y: number, r = 0) => `<g transform="translate(${x} ${y}) rotate(${r})"><ellipse rx="5" ry="7" fill="#fff4e2" stroke="${INK}" stroke-width="2"/><path d="M0 -4.6V4.6" stroke="${INK}" stroke-width="1.6"/></g>`;
 HAIR.fulani = { name: 'Five braids', draw: (h, l) => { const b = (d: string) => rope(d, 9, h) + `<path d="${d}" fill="none" stroke="${l}" stroke-width="9" stroke-dasharray="2 8" opacity=".7"/>`; return { back: b('M78 100C60 124 60 150 72 162') + b('M178 100C196 124 196 150 184 162'), front: cap(h) + ol('<path d="M116 48C118 34 138 34 140 48L136 78H120Z"/>', h) + ln('M122 44L134 52M121 54L135 62M121 64L135 72', 2.6, l) + b('M90 84C76 102 74 130 84 150') + b('M166 84C180 102 182 130 172 150') + cowrie(84, 154) + cowrie(172, 154) + cowrie(128, 34, 0) + `<circle cx="72" cy="166" r="6" fill="#e8982e" stroke="${INK}" stroke-width="2.4"/><circle cx="184" cy="166" r="6" fill="#e8982e" stroke="${INK}" stroke-width="2.4"/>` }; } };
 HAIR.cowrieband = { name: 'Cowrie band', draw: (h, l, o) => { return { front: cap(h) + ol(c(128, 38, 20), h) + ln('M112 38Q128 24 144 38', 2.8, l) + ol('<path d="M74 92C96 72 160 72 182 92L180 104C160 84 96 84 76 104Z"/>', '#ececf0') + [0, 1, 2, 3, 4, 5, 6].map((i) => cowrie(86 + i * 14, 91 - [4, 8, 10, 11, 10, 8, 4][i], -24 + i * 8)).join('') }; } };
@@ -154,17 +154,43 @@ TOPS.indigo = { name: 'Indigo cloth', draw: () => '', fill: 'url(#indigo)' };
 TOPS.knotted = { name: 'Northern knot', draw: (o) => knot(128, 184, 1.25, '#e8c35a') + ln('M128 200V226', 2.4, '#e8c35a') };
 const fold = (col: string) => ln('M92 172C96 182 94 194 98 202M166 166C160 176 164 188 158 198M110 214Q118 208 124 216', 2.6, col);
 export const BGTONE: Record<string, string> = { '#d9b8ff': '#6a3fd9', '#a9d4ff': '#2b5fe6', '#ffc9a8': '#ec4a32', '#ffd978': '#f09a14', '#8fdde6': '#12a8bd', '#ffb3c1': '#d42e8a', '#b5b8ff': '#566784' };
-// The thread leaves the left hand and runs dead straight out of the middle of the left edge, so the reply line meets it
-const threadPath = (cy: number) => `M54 176C40 172 46 ${cy} 26 ${cy}L-60 ${cy}`;
+// The thread rises out of the left hand, curves, and runs dead straight out of the middle of the left edge, where the
+// reply line meets it. It is sampled into points so every style can follow the same curve.
+const threadPoints = (cy: number) => {
+    const points: [number, number][] = [];
+    const [x0, y0, x1, y1, x2, y2, x3, y3] = [54, 170, 50, 146, 44, cy, 24, cy];
+    for (let t = 0; t <= 1; t += 0.05) {
+        const u = 1 - t;
+        points.push([u * u * u * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3, u * u * u * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3]);
+    }
+    for (let x = 18; x >= -70; x -= 6) points.push([x, cy]);
+    return points;
+};
+const pathOf = (points: [number, number][]) => `M${points.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join('L')}`;
+const offset = (points: [number, number][], by: (index: number) => number) =>
+    points.map(([x, y], index): [number, number] => {
+        const [ax, ay] = points[Math.max(0, index - 1)], [bx, by2] = points[Math.min(points.length - 1, index + 1)];
+        const length = Math.hypot(bx - ax, by2 - ay) || 1;
+        return [x - ((by2 - ay) / length) * by(index), y + ((bx - ax) / length) * by(index)];
+    });
 export const threadLine = (style: string | undefined, col: string, w = 7, cy = 108) => {
-    const k = w / 7, sw = (n: number) => n * k, TP = threadPath(cy);
-    const base = (c: string) => `<path d="${TP}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="butt"/>`;
-    if (style === 'fire') return base('#e8381f') + `<path d="${TP}" fill="none" stroke="#ffd23f" stroke-width="${sw(3)}" stroke-dasharray="${sw(6)} ${sw(7)}"/>`;
-    if (style === 'lightning') return `<path d="M54 176L36 162L50 ${cy + 26}L30 ${cy + 16}L38 ${cy + 4}L18 ${cy + 6}L14 ${cy}L-60 ${cy}" fill="none" stroke="#ffd23f" stroke-width="${w}" stroke-linejoin="round"/>`;
-    if (style === 'river') return base('#2fa8e8') + `<path d="${TP}" fill="none" stroke="#d6f2ff" stroke-width="${sw(2)}" stroke-dasharray="${sw(8)} ${sw(9)}" stroke-linecap="round"/>`;
-    if (style === 'iron') return base('#5d6778') + `<path d="${TP}" fill="none" stroke="#c8d0dc" stroke-width="${sw(4.4)}" stroke-dasharray="${sw(9)} ${sw(6)}"/>`;
-    if (style === 'beads') return base('#7a1f1a') + `<path d="${TP}" fill="none" stroke="#e23b30" stroke-width="${sw(6)}" stroke-dasharray="1 ${sw(9)}" stroke-linecap="round"/><path d="${TP}" fill="none" stroke="#f4f4f6" stroke-width="${sw(6)}" stroke-dasharray="1 ${sw(9)}" stroke-dashoffset="${sw(5)}" stroke-linecap="round"/>`;
-    return base(col);
+    const points = threadPoints(cy), d = pathOf(points), k = w / 7;
+    const stroke = (path: string, c: string, width: number, extra = '') => `<path d="${path}" fill="none" stroke="${c}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"${extra}/>`;
+    if (style === 'fire') {
+        const flames = points.filter((_, index) => index % 3 === 1).map(([x, y], index) => `<path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${(k * 0.9).toFixed(2)})" d="M0 4C-6 1 -4 -6 0 -13C4 -6 6 1 0 4Z" fill="${index % 2 ? '#ffd23f' : '#ff8a1f'}"/>`);
+        return stroke(d, '#e8381f', w) + flames.join('');
+    }
+    if (style === 'lightning') {
+        const zig = pathOf(offset(points.filter((_, index) => index % 2 === 0), (index) => (index % 2 ? 1 : -1) * 2.2 * k));
+        return stroke(zig, '#ffd23f', w * 1.9, ' opacity=".28"') + stroke(zig, '#ffd23f', w) + stroke(zig, '#ffffff', w * 0.32);
+    }
+    if (style === 'river') {
+        const wave = pathOf(offset(points, (index) => Math.sin(index * 0.8) * 1.8 * k));
+        return stroke(wave, '#2fa8e8', w) + stroke(wave, '#d6f2ff', w * 0.3, ` stroke-dasharray="${5 * k} ${6 * k}"`);
+    }
+    if (style === 'iron') return stroke(d, '#4d5666', w * 1.25, ` stroke-dasharray="${7 * k} ${3.5 * k}"`) + stroke(d, '#c8d0dc', w * 0.6, ` stroke-dasharray="${7 * k} ${3.5 * k}"`);
+    if (style === 'beads') return points.filter((_, index) => index % 2 === 0).map(([x, y], index) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(w * 0.62).toFixed(1)}" fill="${index % 2 ? '#f4f4f6' : '#e23b30'}"/>`).join('');
+    return stroke(d, col, w) + stroke(d, '#ffffff', w * 0.2, ` stroke-dasharray="${8 * k} ${12 * k}" opacity=".5"`);
 };
 // The crop: left, top and size on the 256 grid. Short hair zooms in so the character reads at small sizes; tall styles zoom out
 export type Crop = [number, number, number];
@@ -176,7 +202,7 @@ export const drawStarter = (g: { tone: string; crop: Crop; thread?: string; thre
     const a = g.tone, soft = mix(a, '#ffffff', 0.42), line = mix(a, '#120a1c', 0.68), side = 9;
     const ink = (s: string, x: number, y: number) => `<g transform="translate(${x} ${y})" fill="${line}" stroke="${line}" stroke-width="7" stroke-linejoin="round">${s}</g>`;
     const toned = (s: string) => { const id = `t${++uid}`; return ink(s, 1.5, 2.5) + ink(s, 0, 0) + `<clipPath id="${id}">${s}</clipPath><g fill="${mix(a, '#120a1c', 0.3)}">${s}</g><g clip-path="url(#${id})"><g fill="${a}" transform="translate(-7 -8)">${s}</g><g fill="${mix(a, '#ffffff', 0.18)}" transform="translate(-16 -18)" opacity=".7">${s}</g></g>`; };
-    return `${svgOpen(g.crop)}${backdrop(g.crop, soft)}<ellipse cx="136" cy="330" rx="210" ry="110" fill="${mix(a, '#ffffff', 0.2)}"/><ellipse cx="128" cy="258" rx="58" ry="6" fill="${line}" opacity=".22"/><g transform="rotate(-2.5 128 240)">${toned('<ellipse cx="104" cy="244" rx="17" ry="8.5"/><ellipse cx="152" cy="244" rx="17" ry="8.5"/>')}${toned(`<path d="${BODY}"/>`)}<ellipse cx="${106 + side}" cy="106" rx="7" ry="9" fill="${line}"/><ellipse cx="${146 + side}" cy="106" rx="6" ry="9" fill="${line}"/><path d="M${113 + side} 128Q${124 + side} 139 ${135 + side} 128" fill="none" stroke="${line}" stroke-width="5" stroke-linecap="round"/>${toned('<circle cx="57" cy="180" r="10.5"/>')}${toned('<circle cx="199" cy="178" r="10.5"/>')}</g>${g.thread ? threadLine(undefined, g.thread, g.threadWidth, g.crop[1] + g.crop[2] / 2) : ''}</svg>`;
+    return `${svgOpen(g.crop)}${backdrop(g.crop, soft)}<ellipse cx="136" cy="330" rx="210" ry="110" fill="${mix(a, '#ffffff', 0.2)}"/><ellipse cx="128" cy="258" rx="58" ry="6" fill="${line}" opacity=".22"/><g transform="rotate(-2.5 128 240)">${toned('<ellipse cx="104" cy="244" rx="17" ry="8.5"/><ellipse cx="152" cy="244" rx="17" ry="8.5"/>')}${toned(`<path d="${BODY}"/>`)}<ellipse cx="${106 + side}" cy="106" rx="7" ry="9" fill="${line}"/><ellipse cx="${146 + side}" cy="106" rx="6" ry="9" fill="${line}"/><path d="M${113 + side} 128Q${124 + side} 139 ${135 + side} 128" fill="none" stroke="${line}" stroke-width="5" stroke-linecap="round"/>${toned('<circle cx="199" cy="178" r="10.5"/>')}</g>${g.thread ? threadLine(undefined, g.thread, g.threadWidth, g.crop[1] + g.crop[2] / 2) : ''}<g transform="rotate(-2.5 128 240)">${toned('<circle cx="57" cy="180" r="10.5"/>')}</g></svg>`;
 };
 export const drawAvatar = (g: Drawing) => {
     uid = 0;
@@ -203,5 +229,5 @@ export const drawAvatar = (g: Drawing) => {
     const armR = ol(c(199, 178, 10.5), skin);
     const armL = ol(c(57, 180, 10.5), skin);
     const foot = (x: number, r: number) => `<g transform="rotate(${r} ${x} 250)">${ol(`<ellipse cx="${x}" cy="244" rx="17" ry="8.5"/>`, top.fill ? '#f4f4f6' : '#f4f4f6')}<path d="M${x - 16} 246H${x + 16}" stroke="${INK}" stroke-width="2.4"/></g>`;
-    return `${svgOpen(g.crop)}<defs><clipPath id="b"><path d="${BODY}"/></clipPath><pattern id="ank" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="${cl}"/><circle cx="15" cy="15" r="9" fill="#f0c04a"/><circle cx="15" cy="15" r="4.4" fill="${INK}"/></pattern><pattern id="isiagu" width="44" height="44" patternUnits="userSpaceOnUse"><rect width="44" height="44" fill="${cl}"/><circle cx="22" cy="22" r="13" fill="none" stroke="#f0c04a" stroke-width="3"/><path d="M14 18L22 13L30 18L28 28H16Z" fill="#f0c04a"/><circle cx="19" cy="21" r="1.4" fill="${cl}"/><circle cx="25" cy="21" r="1.4" fill="${cl}"/></pattern><pattern id="strip" width="28" height="20" patternUnits="userSpaceOnUse"><rect width="28" height="20" fill="${cl}"/><rect width="10" height="20" fill="#f4f4f6"/><rect x="10" y="0" width="4" height="20" fill="#e8b84a"/><rect x="14" y="8" width="14" height="4" fill="${INK}"/></pattern><pattern id="indigo" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#1e2a6b"/><rect width="11" height="11" fill="#2b3f96"/><rect x="11" y="11" width="11" height="11" fill="#2b3f96"/><path d="M0 0H22M0 11H22M0 0V22M11 0V22" stroke="#7f8fd8" stroke-width="1"/></pattern></defs>${backdrop(g.crop, dk)}<ellipse cx="136" cy="330" rx="210" ry="110" fill="${hill}"/><ellipse cx="128" cy="262" rx="62" ry="6" fill="#000" opacity=".2"/><g transform="rotate(-2.5 128 240)">${hair.back || ''}${foot(104, -4)}${foot(152, 4)}${ol(`<path d="${BODY}"/>`, skin)}<g clip-path="url(#b)"><path d="M60 158C90 150 166 150 200 158V260H60Z" fill="${top.fill || cl}"/>${top.fill ? '' : `<path d="M150 150C170 180 170 214 152 240H200V150Z" fill="#1a0f24" opacity=".2"/>`}<path d="M60 158C90 150 166 150 200 158" fill="none" stroke="${INK}" stroke-width="3.4"/>${top.fill ? '' : fold(mix(cl, '#1a0f24', 0.45))}<path d="M84 110C84 80 96 66 112 60" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".22"/></g><path d="${BODY}" fill="none" stroke="${INK}" stroke-width="${OUT * 1.5}"/>${top.draw(o)}${NECKS[g.neck || 'none']()}${blush}${g.beard ? `<g clip-path="url(#b)"><path d="M74 112C84 128 96 122 112 118C124 116 132 116 152 118C166 122 174 128 184 112V156H74Z" fill="${h}"/></g>` : ''}${brows}${face}${mouth}${hair.front || ''}${g.eyewear ? EYEWEAR[g.eyewear]() : ''}${armR}${armL}</g>${g.thread ? threadLine(g.threadStyle, thread, g.threadWidth, g.crop[1] + g.crop[2] / 2) : ''}</svg>`;
+    return `${svgOpen(g.crop)}<defs><clipPath id="b"><path d="${BODY}"/></clipPath><pattern id="ank" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="${cl}"/><circle cx="15" cy="15" r="9" fill="#f0c04a"/><circle cx="15" cy="15" r="4.4" fill="${INK}"/></pattern><pattern id="isiagu" width="44" height="44" patternUnits="userSpaceOnUse"><rect width="44" height="44" fill="${cl}"/><circle cx="22" cy="22" r="13" fill="none" stroke="#f0c04a" stroke-width="3"/><path d="M14 18L22 13L30 18L28 28H16Z" fill="#f0c04a"/><circle cx="19" cy="21" r="1.4" fill="${cl}"/><circle cx="25" cy="21" r="1.4" fill="${cl}"/></pattern><pattern id="strip" width="28" height="20" patternUnits="userSpaceOnUse"><rect width="28" height="20" fill="${cl}"/><rect width="10" height="20" fill="#f4f4f6"/><rect x="10" y="0" width="4" height="20" fill="#e8b84a"/><rect x="14" y="8" width="14" height="4" fill="${INK}"/></pattern><pattern id="indigo" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#1e2a6b"/><rect width="11" height="11" fill="#2b3f96"/><rect x="11" y="11" width="11" height="11" fill="#2b3f96"/><path d="M0 0H22M0 11H22M0 0V22M11 0V22" stroke="#7f8fd8" stroke-width="1"/></pattern></defs>${backdrop(g.crop, dk)}<ellipse cx="136" cy="330" rx="210" ry="110" fill="${hill}"/><ellipse cx="128" cy="262" rx="62" ry="6" fill="#000" opacity=".2"/><g transform="rotate(-2.5 128 240)">${hair.back || ''}${foot(104, -4)}${foot(152, 4)}${ol(`<path d="${BODY}"/>`, skin)}<g clip-path="url(#b)"><path d="M60 158C90 150 166 150 200 158V260H60Z" fill="${top.fill || cl}"/>${top.fill ? '' : `<path d="M150 150C170 180 170 214 152 240H200V150Z" fill="#1a0f24" opacity=".2"/>`}<path d="M60 158C90 150 166 150 200 158" fill="none" stroke="${INK}" stroke-width="3.4"/>${top.fill ? '' : fold(mix(cl, '#1a0f24', 0.45))}<path d="M84 110C84 80 96 66 112 60" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".22"/></g><path d="${BODY}" fill="none" stroke="${INK}" stroke-width="${OUT * 1.5}"/>${top.draw(o)}${blush}${g.beard ? `<g clip-path="url(#b)"><path d="M74 112C84 128 96 122 112 118C124 116 132 116 152 118C166 122 174 128 184 112V156H74Z" fill="${h}"/></g>` : ''}${NECKS[g.neck || 'none']()}${brows}${face}${mouth}${hair.front || ''}${g.eyewear ? EYEWEAR[g.eyewear]() : ''}${armR}</g>${g.thread ? threadLine(g.threadStyle, thread, g.threadWidth, g.crop[1] + g.crop[2] / 2) : ''}<g transform="rotate(-2.5 128 240)">${armL}</g></svg>`;
 };

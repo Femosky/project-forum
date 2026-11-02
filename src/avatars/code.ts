@@ -15,4 +15,6 @@ export function parseAvatarCode(code: string): AvatarConfig | { starter: string 
 }
 
 // `reply`: the picture a reply uses, with the thread reaching the left edge where the reply line joins it
-export const avatarUrl = (avatar: string, reply = false) => `/avatar/${avatar}${reply ? '.reply' : ''}.svg`;
+// Pictures are cached for a year, so bump ART_VERSION whenever the drawings change or browsers keep showing old ones
+const ART_VERSION = 3;
+export const avatarUrl = (avatar: string, reply = false) => `/avatar/${avatar}${reply ? '.reply' : ''}.svg?v=${ART_VERSION}`;
