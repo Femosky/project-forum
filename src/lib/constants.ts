@@ -2,19 +2,19 @@
  * Application-wide constants and configuration
  */
 
-// Branding lives here: renaming the site means changing this block (the logo mark is drawn in src/app/_components/LogoSection.tsx). Page titles, share
+// Branding lives here: renaming the site means changing this block (the logo is drawn in src/app/_components/LogoSection.tsx). Page titles, share
 // previews, generated images, structured data, robots.txt and llms.txt all read from it.
-export const APP_NAME = 'Project Forum';
+export const APP_NAME = 'yarnter';
 export const APP_DESCRIPTION =
     'Ask questions, share what you know and get real answers from people who have been there.';
 export const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
 // <html lang> and og:locale. English as written and searched in Nigeria; the copy itself stays neutral.
 export const SITE_LANG = 'en-NG';
 export const SITE_OG_LOCALE = 'en_NG';
-// The site's X/Twitter account for twitter:site, e.g. '@projectforum'; left out until there is one
+// The site's X/Twitter account for twitter:site, e.g. '@yarnter'; left out until there is one
 export const TWITTER_HANDLE = process.env.NEXT_PUBLIC_TWITTER_HANDLE || undefined;
 // Colours for generated share images (match --accent and friends in globals.css)
-export const BRAND_COLORS = { background: '#00203f', text: '#ffffff', accent: '#a29bff', muted: '#9fb6cc' } as const;
+export const BRAND_COLORS = { background: '#0e0e10', text: '#f4f4f5', muted: '#8a8a94' } as const;
 // What we call the score people earn from votes on their posts and replies (Reddit calls it karma). One word,
 // used on profiles and share images; change it here to rename it everywhere.
 export const REPUTATION_LABEL = 'reputation';

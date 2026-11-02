@@ -20,10 +20,15 @@ const itemClasses =
     'relative flex h-8 items-center gap-2.5 rounded-md px-2 text-sm font-medium text-muted transition-colors hover:text-text';
 const activeClasses =
     "text-text font-semibold before:absolute before:-left-2 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-full before:bg-brand before:content-['']";
+// The phone menu: tall rows for thumbs, larger text and icons, and a soft fill on the current page, like a native list
+const largeItemClasses = 'relative flex h-12 items-center gap-3.5 rounded-2xl px-3 text-[17px] font-medium text-text transition-colors active:bg-hover';
+const largeActiveClasses = 'bg-active font-semibold';
 
-// onNavigate lets the mobile menu close itself when a link is followed
-export default function SidebarList({ onNavigate }: { onNavigate?: () => void }) {
+// onNavigate lets the mobile menu close itself when a link is followed; large is the phone menu's styling
+export default function SidebarList({ onNavigate, large }: { onNavigate?: () => void; large?: boolean }) {
     const pathname = usePathname();
+    const item = large ? largeItemClasses : itemClasses;
+    const active = large ? largeActiveClasses : activeClasses;
     const isAuthenticated = useAuthStateStore((state) => state.isAuthenticated);
     const membershipVersion = useUIStore((state) => state.membershipVersion);
     const [communities, setCommunities] = useState<MyCommunitiesResponse['communities']>([]);
@@ -54,7 +59,7 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
     }, [isAuthenticated, membershipVersion]);
 
     return (
-        <nav aria-label="Main" className="flex flex-col gap-4">
+        <nav aria-label="Main" className={twMerge('flex flex-col gap-4', large && 'flex-1 gap-6 px-3 pb-5')}>
             <ul className="flex flex-col gap-px">
                 {PRIMARY_NAV.filter((route) => isAuthenticated || route.href !== '/notifications').map((route) => (
                     <SidebarItem
@@ -62,6 +67,9 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                         route={route}
                         isActive={isActiveRoute(pathname, route.href)}
                         onNavigate={onNavigate}
+                        item={item}
+                        active={active}
+                        large={large}
                     />
                 ))}
                 {isAuthenticated && modCount !== null && (
@@ -70,13 +78,16 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                         count={modCount}
                         isActive={isActiveRoute(pathname, MODERATION_ROUTE.href)}
                         onNavigate={onNavigate}
+                        item={item}
+                        active={active}
+                        large={large}
                     />
                 )}
             </ul>
 
             {isAuthenticated && (isLoading || communities.length > 0) && (
                 <div className="flex flex-col gap-px">
-                    <h2 className="px-2 pb-1 text-xs font-semibold text-subtle">Your communities</h2>
+                    <h2 className={twMerge('px-2 pb-1 text-xs font-semibold text-subtle', large && 'px-3 pb-2 text-[13px]')}>Your communities</h2>
                     {isLoading ? (
                         <div className="flex flex-col gap-2 px-2 py-1">
                             <Skeleton className="h-5 w-3/4" />
@@ -92,9 +103,9 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                                             href={href}
                                             onClick={onNavigate}
                                             aria-current={isActiveRoute(pathname, href) ? 'page' : undefined}
-                                            className={twMerge(itemClasses, isActiveRoute(pathname, href) && activeClasses)}
+                                            className={twMerge(item, isActiveRoute(pathname, href) && active)}
                                         >
-                                            <Avatar name={community.name} src={community.image_url} shape="square" className="size-[18px] text-[10px]" />
+                                            <Avatar name={community.name} src={community.image_url} shape="square" className={large ? 'size-7 text-xs' : 'size-[18px] text-[10px]'} />
                                             <span className="truncate">{communityLabel(community)}</span>
                                             {community.role !== 'member' && (
                                                 <span className="ml-auto text-[11px] font-semibold text-subtle">{community.role === 'owner' ? 'Owner' : 'Mod'}</span>
@@ -105,13 +116,13 @@ export default function SidebarList({ onNavigate }: { onNavigate?: () => void })
                             })}
                         </ul>
                     )}
-                    <Link href="/communities" onClick={onNavigate} className={twMerge(itemClasses, 'text-subtle')}>
-                        <Plus className="size-4" /> Browse more
+                    <Link href="/communities" onClick={onNavigate} className={twMerge(item, 'text-subtle')}>
+                        <Plus className={large ? 'size-[22px]' : 'size-4'} /> Browse more
                     </Link>
                 </div>
             )}
 
-            <ul className="flex flex-wrap gap-x-3 gap-y-1 px-2 text-xs text-subtle">
+            <ul className={twMerge('flex flex-wrap gap-x-3 gap-y-1 px-2 text-xs text-subtle', large && 'mt-auto gap-x-4 gap-y-2 px-3 pt-4 text-[13px]')}>
                 {FOOTER_LINKS.map((link) => (
                     <li key={link.href}>
                         <Link href={link.href} onClick={onNavigate} className="hover:text-text hover:underline">
@@ -139,7 +150,23 @@ const FOOTER_LINKS = [
 
 const MODERATION_ROUTE = { href: '/moderation', label: 'Moderation', icon: ShieldCheck } as NavRoute;
 
-function SidebarItem({ route, isActive, onNavigate, count }: { route: NavRoute; isActive: boolean; onNavigate?: () => void; count?: number }) {
+function SidebarItem({
+    route,
+    isActive,
+    onNavigate,
+    count,
+    item,
+    active,
+    large,
+}: {
+    route: NavRoute;
+    isActive: boolean;
+    onNavigate?: () => void;
+    count?: number;
+    item: string;
+    active: string;
+    large?: boolean;
+}) {
     const Icon = route.icon;
     const unreadCount = useUIStore((state) => state.unreadCount);
     const unread = count ?? unreadCount;
@@ -150,9 +177,9 @@ function SidebarItem({ route, isActive, onNavigate, count }: { route: NavRoute; 
                 href={route.href}
                 onClick={onNavigate}
                 aria-current={isActive ? 'page' : undefined}
-                className={twMerge(itemClasses, isActive && activeClasses)}
+                className={twMerge(item, isActive && active)}
             >
-                <Icon className="size-4" />
+                <Icon className={large ? 'size-[22px]' : 'size-4'} strokeWidth={large ? 1.75 : undefined} />
                 <span>{route.label}</span>
                 {showCount && (
                     <span className="ml-auto rounded-full bg-brand px-1.5 text-[11px] font-semibold leading-[18px] text-white tabular-nums">
