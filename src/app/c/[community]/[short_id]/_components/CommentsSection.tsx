@@ -1,5 +1,6 @@
 'use client';
 
+import { anonymousFor } from '@/lib/anonymous';
 import { Fragment, createContext, useContext, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Lock, MessagesSquare, Plus } from 'lucide-react';
@@ -191,7 +192,14 @@ export function CommentsSection({
 }
 
 // The API drops author for anonymous, deleted and removed comments
+function shownAvatar(comment: Comment) {
+    const anonymous = anonymousFor(comment);
+    return anonymous.hidden ? anonymous.picture : comment.author;
+}
+
 function getAuthorName(comment: Comment): string {
+    const anonymous = anonymousFor(comment);
+    if (anonymous.hidden) return anonymous.mine ? 'Anonymous (you)' : 'Anonymous';
     if (comment.author?.username) return comment.author.username;
     return comment.status === 'deleted' || comment.status === 'removed' ? '[deleted]' : 'Anonymous';
 }
@@ -289,7 +297,7 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
     if (isCollapsed) {
         return (
             <div id={`c-${comment.short_id}`} className="comment relative grid w-full scroll-mt-[calc(var(--spacing-header)+3.5rem)] grid-cols-[28px_minmax(0,1fr)] gap-x-2.5">
-                <UserAvatar user={comment.author} size={28} className="size-7 opacity-70" />
+                <UserAvatar user={shownAvatar(comment)} size={28} className="size-7 opacity-70" />
                 <button
                     type="button"
                     onClick={() => setIsCollapsed(false)}
@@ -324,7 +332,7 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
                     onClick={collapse}
                 />
             )}
-            <UserAvatar user={comment.author} size={28} className="size-7" reply={comment.depth > thread.baseDepth} />
+            <UserAvatar user={shownAvatar(comment)} size={28} className="size-7" reply={comment.depth > thread.baseDepth} />
 
             <div className="flex min-w-0 flex-col">
                 {isEditing ? (
@@ -436,7 +444,7 @@ function TextSection({ comment, isOp }: { comment: Comment; isOp: boolean }) {
         <div className="flex flex-col">
             <TitleSection
                 username={getAuthorName(comment)}
-                profile={comment.author?.username}
+                profile={anonymousFor(comment).hidden ? undefined : comment.author?.username}
                 isOp={isOp}
                 createdAt={comment.created_at}
                 editedAt={comment.edited_at}

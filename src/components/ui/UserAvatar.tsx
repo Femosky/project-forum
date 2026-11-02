@@ -20,7 +20,7 @@ export function UserAvatar({
     return (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-            src={avatarUrl(user.avatar, reply)}
+            src={avatarUrl(user.avatar, reply ? 'reply' : size >= 56 ? 'full' : undefined)}
             alt=""
             width={size}
             height={size}

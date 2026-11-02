@@ -173,24 +173,43 @@ const offset = (points: [number, number][], by: (index: number) => number) =>
         const length = Math.hypot(bx - ax, by2 - ay) || 1;
         return [x - ((by2 - ay) / length) * by(index), y + ((bx - ax) / length) * by(index)];
     });
+// Evenly spaced along the curve, so a style looks the same on any length of thread
+const resample = (points: [number, number][], step: number) => {
+    const out: [number, number][] = [points[0]];
+    let left = step;
+    for (let index = 1; index < points.length; index++) {
+        let [ax, ay] = points[index - 1];
+        const [bx, by] = points[index];
+        let gap = Math.hypot(bx - ax, by - ay);
+        while (gap >= left) {
+            ax += ((bx - ax) * left) / gap;
+            ay += ((by - ay) * left) / gap;
+            out.push([ax, ay]);
+            gap = Math.hypot(bx - ax, by - ay);
+            left = step;
+        }
+        left -= gap;
+    }
+    return out;
+};
 export const threadLine = (style: string | undefined, col: string, w = 7, cy = 108) => {
-    const points = threadPoints(cy), d = pathOf(points), k = w / 7;
+    const k = w / 3.5, points = resample(threadPoints(cy), 2 * k), d = pathOf(points);
     const stroke = (path: string, c: string, width: number, extra = '') => `<path d="${path}" fill="none" stroke="${c}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"${extra}/>`;
     if (style === 'fire') {
-        const flames = points.filter((_, index) => index % 3 === 1).map(([x, y], index) => `<path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${(k * 0.9).toFixed(2)})" d="M0 4C-6 1 -4 -6 0 -13C4 -6 6 1 0 4Z" fill="${index % 2 ? '#ffd23f' : '#ff8a1f'}"/>`);
+        const flames = points.flatMap(([x, y], index) => (index % 7 === 3 ? [`<path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${k.toFixed(2)})" d="M0 3C-5 0 -3 -5 0 -10C3 -5 5 0 0 3Z" fill="${index % 3 ? '#ff8a1f' : '#ffd23f'}"/>`] : []));
         return stroke(d, '#e8381f', w) + flames.join('');
     }
     if (style === 'lightning') {
-        const zig = pathOf(offset(points.filter((_, index) => index % 2 === 0), (index) => (index % 2 ? 1 : -1) * 2.2 * k));
-        return stroke(zig, '#ffd23f', w * 1.9, ' opacity=".28"') + stroke(zig, '#ffd23f', w) + stroke(zig, '#ffffff', w * 0.32);
+        const zig = pathOf(offset(points.filter((_, index) => index % 5 === 0), (index) => (index % 2 ? 3.6 : -3.6) * k));
+        return stroke(zig, '#ffd23f', w * 1.45, ' opacity=".35"') + stroke(zig, '#ffd23f', w * 0.85) + stroke(zig, '#ffffff', w * 0.3);
     }
     if (style === 'river') {
-        const wave = pathOf(offset(points, (index) => Math.sin(index * 0.8) * 1.8 * k));
-        return stroke(wave, '#2fa8e8', w) + stroke(wave, '#d6f2ff', w * 0.3, ` stroke-dasharray="${5 * k} ${6 * k}"`);
+        const wave = pathOf(offset(points, (index) => Math.sin(index * 0.42) * 2.6 * k));
+        return stroke(wave, '#2fa8e8', w) + stroke(wave, '#d6f2ff', w * 0.32, ` stroke-dasharray="${6 * k} ${8 * k}"`);
     }
-    if (style === 'iron') return stroke(d, '#4d5666', w * 1.25, ` stroke-dasharray="${7 * k} ${3.5 * k}"`) + stroke(d, '#c8d0dc', w * 0.6, ` stroke-dasharray="${7 * k} ${3.5 * k}"`);
-    if (style === 'beads') return points.filter((_, index) => index % 2 === 0).map(([x, y], index) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(w * 0.62).toFixed(1)}" fill="${index % 2 ? '#f4f4f6' : '#e23b30'}"/>`).join('');
-    return stroke(d, col, w) + stroke(d, '#ffffff', w * 0.2, ` stroke-dasharray="${8 * k} ${12 * k}" opacity=".5"`);
+    if (style === 'iron') return `<path d="${d}" fill="none" stroke="#5d6778" stroke-width="${w * 1.7}" stroke-dasharray="${7 * k} ${5 * k}"/><path d="${d}" fill="none" stroke="#b9c2d0" stroke-width="${w * 0.85}" stroke-dasharray="${7 * k} ${5 * k}"/>`;
+    if (style === 'beads') return points.filter((_, index) => index % 4 === 0).map(([x, y], index) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(3.3 * k).toFixed(1)}" fill="${index % 2 ? '#f4f4f6' : '#e23b30'}"/>`).join('');
+    return stroke(d, col, w);
 };
 // The crop: left, top and size on the 256 grid. Short hair zooms in so the character reads at small sizes; tall styles zoom out
 export type Crop = [number, number, number];

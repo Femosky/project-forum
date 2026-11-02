@@ -33,9 +33,6 @@ const EYES: Record<string, Pick<Drawing, 'eyes' | 'eyestyle' | 'glow'>> = {
     star: { eyestyle: 'star' },
     nok: { eyestyle: 'nok' },
 };
-// Pale eyes on the darkest skin come too close to the caricatures this design rules out
-export const PALE_EYES = ['white', 'cowrie'];
-export const DARKEST_SKIN = ['midnight', 'espresso', 'ebony', 'umber', 'walnut'];
 
 export const AVATAR_OPTIONS = {
     skin: { label: 'Skin', options: [...NATURAL_SKIN, ...FANTASY_SKIN].map((id) => option(id, titled(id), SKIN[id])) },
@@ -64,11 +61,20 @@ const CLOSE_HAIR = ['bare', 'fade', 'waves', 'cornrows', 'kolese', 'taper', 'sid
 const FULL_HAIR = ['gele', 'gelehigh', 'halo', 'axe', 'iroko'];
 
 // `threadWidth`: replies show at 28px with a 2px line, so the thread is 2/28 of the crop; larger previews pass their own
-function toDrawing(config: AvatarConfig, reply: boolean, threadPx: number, sameSize: boolean): Drawing {
+// How high each style reaches on the grid, and how wide it needs to be seen. Feed pictures fit the head and hair tightly
+const HAIR_TOP: Record<string, number> = { afro: 6, bigcurls: 2, curlywig: 8, puffs: 20, knots: 10, threaded: 4, gele: -6, gelehigh: -6, ifecrown: 0, nokknot: 2, noklobes: 4, suku: 0, koroba: 10, hightop: 12, frohawk: 6, mohawk: 8, halo: -8, axe: 0, iroko: 0, twists: 16, shortlocs: 18, locbun: 8, manbun: 12, bun: 6, cowrieband: 14, cowriecrown: 20, hunter: 6, fila: 24, wrap: 16, cap: 28, beanie: 14, bucket: 28, moon: 24, fulani: 24, flattop: 28, dreadfade: 24 };
+const HAIR_WIDTH: Record<string, number> = { puffs: 200, pigtails: 176, horns: 190, cap: 196, fila: 196, bucket: 176, afro: 196, bigcurls: 204, shortlocs: 190, dreadfade: 180 };
+const tightCrop = (hair: string): Crop => {
+    const top = HAIR_TOP[hair] ?? 38;
+    const size = Math.max(196 - top, HAIR_WIDTH[hair] ?? 0);
+    return [128 - size / 2, top - 6, size];
+};
+
+function toDrawing(config: AvatarConfig, reply: boolean, threadPx: number, view: 'tight' | 'full' | 'same'): Drawing {
     const skin = known(SKIN, config.skin, 'chestnut');
     const hair = known(HAIR, config.hair, 'fade');
-    const crop = sameSize ? FULL : CLOSE_HAIR.includes(hair) ? CLOSE : FULL_HAIR.includes(hair) ? FULL : MEDIUM;
-    const eyes = PALE_EYES.includes(config.eyes) && DARKEST_SKIN.includes(skin) ? 'warm' : known(EYES, config.eyes, 'warm');
+    const crop = view === 'tight' ? tightCrop(hair) : view === 'same' ? FULL : CLOSE_HAIR.includes(hair) ? CLOSE : FULL_HAIR.includes(hair) ? FULL : MEDIUM;
+    const eyes = known(EYES, config.eyes, 'warm');
     return {
         skin,
         hair,
@@ -88,21 +94,21 @@ function toDrawing(config: AvatarConfig, reply: boolean, threadPx: number, sameS
     };
 }
 
-// `sameSize`: the editor keeps one crop, so the character doesn't jump as hair changes
+// `view`: 'tight' for small pictures, 'full' for the whole character on a profile, 'same' for the editor's fixed crop
 const starterPicture = (tone: string, reply: boolean, sameSize = false) => {
     const crop: Crop = sameSize ? FULL : [22, 38, 216];
     return drawStarter({ tone, crop, thread: reply ? tone : undefined, threadWidth: (2 * crop[2]) / 28 });
 };
 
-// `sameSize`: the editor keeps one crop, so the character doesn't jump as hair changes
-export const renderAvatarConfig = (config: AvatarConfig, reply = false, threadPx = 2, sameSize = false) =>
-    STARTERS[config.starter] ? starterPicture(STARTERS[config.starter], reply, sameSize) : drawAvatar(toDrawing(config, reply, threadPx, sameSize));
+// `view`: 'tight' for small pictures, 'full' for the whole character on a profile, 'same' for the editor's fixed crop
+export const renderAvatarConfig = (config: AvatarConfig, reply = false, threadPx = 2, view: 'tight' | 'full' | 'same' = 'tight') =>
+    STARTERS[config.starter] ? starterPicture(STARTERS[config.starter], reply, view === 'same') : drawAvatar(toDrawing(config, reply, threadPx, view));
 
-export function renderAvatar(code: string, reply = false): string | null {
+export function renderAvatar(code: string, reply = false, full = false): string | null {
     const parsed = parseAvatarCode(code);
     if (!parsed) return null;
     if ('starter' in parsed && Object.keys(parsed).length === 1 && !STARTERS[parsed.starter]) return starterPicture(STARTER_TONES[parseInt(parsed.starter, 36) % STARTER_TONES.length], reply);
-    return renderAvatarConfig(parsed as AvatarConfig, reply);
+    return renderAvatarConfig(parsed as AvatarConfig, reply, 2, full ? 'full' : 'tight');
 }
 
 const look = (name: string, hair: string, skin: string, top: string, cloth: string, background: string, extra: AvatarConfig = {}) => ({ name, config: { hair, skin, top, cloth, background, ...extra } });

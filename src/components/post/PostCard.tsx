@@ -1,3 +1,4 @@
+import { anonymousFor } from '@/lib/anonymous';
 import Link from 'next/link';
 import { ExternalLink, Pin } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
@@ -78,7 +79,9 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
     const isLocked = post.status === 'locked';
     // A tombstone: the author deleted it but comments remain. No votes, no menu, "[deleted]" for author and body.
     const isDeleted = post.status === 'deleted';
-    const authorName = post.author?.username ?? hiddenAuthorName(post);
+    const anonymous = anonymousFor(post);
+    const authorName = anonymous.hidden ? (anonymous.mine ? 'Anonymous (you)' : 'Anonymous') : (post.author?.username ?? hiddenAuthorName(post));
+    const pictureOf = anonymous.hidden ? anonymous.picture : post.author;
 
     const badges = (post.flair || post.is_nsfw || isLocked || post.status === 'removed' || post.status === 'pending') && (
         <div className="flex flex-wrap gap-1.5">
@@ -112,7 +115,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
             <article className={twMerge('flex flex-col gap-3 px-4 pb-5 pt-7 sm:px-0', className)}>
                 <header className="flex items-center gap-2">
                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px] text-subtle">
-                        <UserAvatar user={post.author} size={22} className="size-[22px]" />
+                        <UserAvatar user={pictureOf} size={22} className="size-[22px]" />
                         <AuthorLink author={post.author} fallback={authorName} className="font-semibold text-text" />
                         {showCommunity && (
                             <>
@@ -150,7 +153,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
             {/* Whole row is clickable; links and buttons inside sit above this with z-10 */}
             <Link href={postPath} className="absolute inset-0 z-[1]" aria-label={post.title} />
 
-            <AuthorAvatar author={post.author} />
+            {anonymous.hidden ? <UserAvatar user={anonymous.picture} size={36} className="size-9" /> : <AuthorAvatar author={post.author} />}
 
             <div className="relative z-[2] flex min-w-0 flex-col pointer-events-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
                 <div className="flex min-w-0 items-center gap-1.5 text-[13px] leading-[18px] text-muted">

@@ -10,10 +10,10 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { AvatarConfig, avatarUrl, parseAvatarCode } from '@/avatars/code';
-import { AVATAR_LOOKS, AVATAR_OPTIONS, AvatarPart, DARKEST_SKIN, PALE_EYES, renderAvatarConfig, STARTERS } from '@/avatars/parts';
+import { AVATAR_LOOKS, AVATAR_OPTIONS, AvatarPart, renderAvatarConfig, STARTERS } from '@/avatars/parts';
 import { UserResponse } from '@/types/api';
 
-const svgUrl = (config: AvatarConfig, reply = false, threadPx?: number) => `data:image/svg+xml;utf8,${encodeURIComponent(renderAvatarConfig(config, reply, threadPx, true))}`;
+const svgUrl = (config: AvatarConfig, reply = false, threadPx?: number) => `data:image/svg+xml;utf8,${encodeURIComponent(renderAvatarConfig(config, reply, threadPx, 'same'))}`;
 
 // One tab per thing a person thinks about, each holding the choices that belong together
 const GROUPS: { id: string; label: string; parts: AvatarPart[] }[] = [
@@ -85,7 +85,6 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
     const dressed = useMemo(() => Object.fromEntries(Object.entries(config).filter(([part]) => part !== 'starter')), [config]);
     const starters = useMemo(() => Object.keys(STARTERS).map((id) => ({ id, preview: svgUrl({ starter: id }) })), []);
     const looks = useMemo(() => AVATAR_LOOKS.map((look) => ({ ...look, preview: svgUrl(look.config) })), []);
-    const paleBlocked = DARKEST_SKIN.includes(config.skin);
 
     async function save() {
         setSaving(true);
@@ -106,7 +105,7 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
                 <h1 className="self-start text-xl font-semibold">Your avatar</h1>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                    src={untouched ? starter : svgUrl(config, showThread, 2.4)}
+                    src={untouched ? starter : svgUrl(config, showThread, 0.9)}
                     alt="Your avatar"
                     width={200}
                     height={200}
@@ -134,7 +133,7 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
                 </div>
             </aside>
 
-            <section className="flex min-w-0 flex-1 flex-col gap-5 md:h-full md:overflow-y-auto md:pr-2 md:[scrollbar-gutter:stable]">
+            <section className="flex min-w-0 flex-1 flex-col gap-5 md:h-full md:overflow-y-auto md:p-1 md:pr-2 md:[scrollbar-gutter:stable]">
                 <nav aria-label="Avatar choices" className="flex flex-wrap gap-1">
                     {[{ id: 'looks', label: 'Looks' }, { id: 'starters', label: 'Starters' }, ...GROUPS].map(({ id, label }) => (
                         <button
@@ -187,10 +186,9 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
                     return (
                         <div key={part} className="flex flex-col gap-2">
                             {parts.length > 1 && <h2 className="text-[13px] font-semibold text-muted">{label}</h2>}
-                            <div role="radiogroup" aria-label={label} className={swatches ? 'flex flex-wrap gap-2' : 'grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-3'}>
+                            <div role="radiogroup" aria-label={label} className={swatches ? 'flex flex-wrap gap-2.5 p-1' : 'grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-3'}>
                                 {options.map((option) => {
                                     const selected = dressed[part] === option.id;
-                                    const blocked = part === 'eyes' && paleBlocked && PALE_EYES.includes(option.id);
                                     return (
                                         <button
                                             key={option.id}
@@ -198,17 +196,15 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
                                             role="radio"
                                             aria-checked={selected}
                                             aria-label={option.name}
-                                            disabled={blocked}
-                                            title={blocked ? 'Not available with this skin colour' : undefined}
                                             onClick={() => set(part, option.id)}
-                                            className={twMerge('flex cursor-pointer flex-col items-center gap-1 text-xs leading-tight text-muted disabled:cursor-not-allowed disabled:opacity-40', selected && 'text-text')}
+                                            className={twMerge('flex cursor-pointer flex-col items-center gap-1 text-xs leading-tight text-muted', selected && 'text-text')}
                                         >
                                             {swatches ? (
                                                 <span className={twMerge('size-9 rounded-full ring-1 ring-black/10', selected && 'ring-2 ring-text ring-offset-2 ring-offset-bg')} style={{ background: option.swatch }} />
                                             ) : (
                                                 <>
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img src={svgUrl({ ...dressed, [part]: option.id }, part === 'thread_style', 4)} alt="" width={76} height={76} className={twMerge('size-[76px] rounded-full ring-1 ring-border', selected && 'ring-2 ring-text')} />
+                                                    <img src={svgUrl({ ...dressed, [part]: option.id }, part === 'thread_style', 1.3)} alt="" width={76} height={76} className={twMerge('size-[76px] rounded-full ring-1 ring-border', selected && 'ring-2 ring-text')} />
                                                     {option.name}
                                                 </>
                                             )}

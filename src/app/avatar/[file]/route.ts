@@ -1,11 +1,11 @@
 import { renderAvatar } from '@/avatars/parts';
 
-// /avatar/{code}.svg, or {code}.reply.svg with the thread for replies. The code is the picture, so a URL never changes
+// /avatar/{code}.svg fits the head and hair; {code}.reply.svg adds the thread for replies; {code}.full.svg shows the whole character. The code is the picture, so a URL never changes
 // what it shows: browsers and the CDN keep it for a year, and a changed avatar is simply a new URL.
 export async function GET(_request: Request, { params }: { params: Promise<{ file: string }> }) {
     const { file } = await params;
-    const match = /^(.+?)(\.reply)?\.svg$/.exec(file);
-    const picture = match && renderAvatar(match[1], Boolean(match[2]));
+    const match = /^(.+?)(\.reply|\.full)?\.svg$/.exec(file);
+    const picture = match && renderAvatar(match[1], match[2] === '.reply', match[2] === '.full');
     if (!picture) return new Response('Not found', { status: 404 });
     return new Response(picture, {
         headers: {

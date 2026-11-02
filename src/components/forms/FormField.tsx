@@ -18,14 +18,15 @@ export function FormField({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex flex-col gap-1.5">
+        <div className="relative flex flex-col gap-1.5">
             <div className="flex items-baseline justify-between">
                 <label htmlFor={name} className="text-sm font-semibold">
                     {label}
                 </label>
-                {aside}
             </div>
             {children}
+            {/* After the input, so Tab goes from the field above straight into it, but shown beside the label */}
+            {aside && <div className="absolute right-0 top-0">{aside}</div>}
             <p id={messageId(name)} aria-live="polite" className={`min-h-4 text-xs ${error ? 'text-danger' : 'text-muted'}`}>
                 {error ?? hint}
             </p>
