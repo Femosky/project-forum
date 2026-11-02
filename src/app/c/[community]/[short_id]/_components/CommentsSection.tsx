@@ -3,7 +3,7 @@
 import { anonymousFor } from '@/lib/anonymous';
 import { Fragment, createContext, useContext, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Lock, MessagesSquare, Plus } from 'lucide-react';
+import { Lock, MessagesSquare, Plus, Pin } from 'lucide-react';
 import { SortByDropdown } from './SortByDropdown';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import Button from '@/components/ui/Button';
@@ -405,12 +405,14 @@ function TitleSection({
     username,
     profile,
     isOp = false,
+    pinned = false,
     createdAt,
     editedAt,
 }: {
     username: string;
     profile?: string;
     isOp?: boolean;
+    pinned?: boolean;
     createdAt: string;
     editedAt: string | null;
 }) {
@@ -424,6 +426,11 @@ function TitleSection({
                 <span className="font-semibold text-text">{username}</span>
             )}
             {isOp && <span className="rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-muted">OP</span>}
+            {pinned && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-text">
+                    <Pin className="size-3 text-brand" aria-hidden /> Pinned by moderators
+                </span>
+            )}
             {/* Rendered on the server and again in the browser a moment later, so the text may differ slightly */}
             <time dateTime={createdAt} suppressHydrationWarning>
                 {TimeUtility.formatTimeAgo(createdAt)}
@@ -446,6 +453,7 @@ function TextSection({ comment, isOp }: { comment: Comment; isOp: boolean }) {
                 username={getAuthorName(comment)}
                 profile={anonymousFor(comment).hidden ? undefined : comment.author?.username}
                 isOp={isOp}
+                pinned={Boolean(comment.pinned_at)}
                 createdAt={comment.created_at}
                 editedAt={comment.edited_at}
             />
