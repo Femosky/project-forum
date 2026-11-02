@@ -1,50 +1,18 @@
-// Drawn avatars: which part of each list makes up a person's picture, as a short code ("31a702546", one base-36
-// character per part, in PART_COUNTS order). The API keeps the parts someone chose (Backend src/lib/avatars.ts, same
-// order and counts); people who never chose get a picture derived from their username, so everyone looks different
-// without anything stored. Kept tiny: feeds only need this file. The drawings are in parts.ts.
+// Where a person's picture is. The API sends a code: "y1_hair-afro_skin-sienna" for chosen parts, by name, or "s-1a2b3c"
+// for a starter avatar. The code is the picture, so a URL never changes what it shows. Kept tiny: feeds only need this
+// file. The options are in parts.ts and the drawings in art.ts.
 
-export const PART_COUNTS = {
-    face: 4,
-    skin: 10,
-    eyes: 8,
-    mouth: 6,
-    hair: 12,
-    hair_colour: 8,
-    accessory: 6,
-    outfit: 8,
-    background: 8,
-} as const;
+export type AvatarConfig = Record<string, string>;
 
-export type AvatarPart = keyof typeof PART_COUNTS;
-export type AvatarConfig = Record<AvatarPart, number>;
-export const AVATAR_PARTS = Object.keys(PART_COUNTS) as AvatarPart[];
-
-const CODE = new RegExp(`^[0-9a-z]{${AVATAR_PARTS.length}}$`);
-
-export function encodeAvatar(config: AvatarConfig): string {
-    return AVATAR_PARTS.map((part) => config[part].toString(36)).join('');
-}
-
-export function decodeAvatar(code: string): AvatarConfig | null {
-    if (!CODE.test(code)) return null;
-    const config = Object.fromEntries(AVATAR_PARTS.map((part, index) => [part, parseInt(code[index], 36)])) as AvatarConfig;
-    return AVATAR_PARTS.every((part) => config[part] < PART_COUNTS[part]) ? config : null;
-}
-
-// The same picture for a username every time (FNV-1a, then one slice of the hash per part)
-export function avatarFromName(name: string): AvatarConfig {
-    let hash = 2166136261;
-    for (const char of name.toLowerCase()) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
-    const config = {} as AvatarConfig;
-    for (const part of AVATAR_PARTS) {
-        config[part] = hash % PART_COUNTS[part];
-        hash = Math.imul(hash ^ (hash >>> 13), 2654435761) >>> 0;
-    }
+export function parseAvatarCode(code: string): AvatarConfig | { starter: string } | null {
+    if (/^s-[0-9a-z]{1,8}$/.test(code)) return { starter: code.slice(2) };
+    const [version, ...parts] = code.split('_');
+    if (version !== 'y1' || !/^[a-z0-9_-]{1,300}$/.test(code)) return null;
+    // "hair_colour-1c1619" and "thread_style-fire" hold an underscore of their own
+    const config: AvatarConfig = {};
+    for (const piece of parts.join('_').matchAll(/(hair_colour|thread_style|[a-z]+)-([a-z0-9-]+)/g)) config[piece[1]] = piece[2];
     return config;
 }
 
-// Where a person's picture is: an SVG the web app draws and the browser caches for good (the URL changes with it)
-export function avatarUrl(user: { username: string; avatar?: string | null }): string {
-    const code = user.avatar && decodeAvatar(user.avatar) ? user.avatar : encodeAvatar(avatarFromName(user.username));
-    return `/avatar/${code}.svg`;
-}
+// `reply`: the picture a reply uses, with the thread reaching the left edge where the reply line joins it
+export const avatarUrl = (avatar: string, reply = false) => `/avatar/${avatar}${reply ? '.reply' : ''}.svg`;

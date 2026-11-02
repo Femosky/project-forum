@@ -1,125 +1,113 @@
-import { AvatarConfig } from './code';
+import { AvatarConfig, parseAvatarCode } from './code';
+import { BGTONE, Drawing, drawAvatar, drawStarter, EYEWEAR, FACES, HAIR, NECKS, SKIN, TOPS } from './art';
 
-// The drawings behind avatars, on a 64 x 64 grid: friendly and simple, flat colours, no outlines except features.
-// Every list must keep its order (avatars are stored as positions); new options go at the end, and the counts in
-// code.ts and the API's lib/avatars.ts move with them.
+// Every option an avatar can use. Saved avatars keep names, not positions, so options can be added, reordered or
+// retired here at any time, with no API change: a name this file doesn't know simply draws the part's default.
 
-const INK = '#1b1b1f';
+const option = (id: string, name: string, swatch?: string) => ({ id, name, swatch });
+const titled = (id: string) => id.replace(/^./, (first) => first.toUpperCase());
 
-export const COLOURS = {
-    // Light to deep, then two playful ones
-    skin: ['#ffe0c7', '#f9d0b0', '#e8b48f', '#d49a6a', '#b57a4f', '#8d5a3b', '#6b4128', '#4a2c1b', '#c8b6ff', '#9ad0f5'],
-    hair_colour: ['#1b1b1f', '#3b2417', '#6b4226', '#a0522d', '#e2b66b', '#b8b8c0', '#e879f9', '#60a5fa'],
-    outfit: ['#5b5bd6', '#1f2937', '#e11d48', '#f59e0b', '#0ea5e9', '#8b5cf6', '#f472b6', '#64748b'],
-    background: ['#e8e6ff', '#ffe3e3', '#dcebff', '#fff1d6', '#2b2d42', '#5b5bd6', '#ffd1c2', '#d9dee6'],
+const CLOTH = ['27242c', 'f4f4f6', 'ff3b30', 'c8362e', 'e4572e', 'f2b134', 'e8982e', '2f5be0', '1e2a6b', '17243f', '3f6da8', '12a8bd', '6c3fd1', 'd42e8a', '7a1f3a', '7a4b2a'];
+const HAIR_COLOURS = ['1c1619', '2d1b14', '4a2b1c', '7a3b1e', 'b9722f', 'dba544', 'ececf0', 'e23d8a', '3f6df0', '8a4de8', 'ff5a3c'];
+const THREADS = ['f2b134', 'ff3b30', '2f5be0', '12a8bd', '6c3fd1', 'd42e8a', 'f4f4f6'];
+const BACKGROUNDS: Record<string, string> = { blue: '#a9d4ff', coral: '#ffc9a8', violet: '#d9b8ff', amber: '#ffd978', teal: '#8fdde6', pink: '#ffb3c1', slate: '#b5b8ff' };
+const STARTER_TONES = ['#12a8bd', '#2b5fe6', '#6a3fd9', '#d42e8a', '#ec4a32', '#f09a14', '#566784', '#a4552a'];
+const THREAD_STYLES = ['fire', 'lightning', 'river', 'iron', 'beads'];
+
+const NATURAL_SKIN = ['umber', 'walnut', 'chestnut', 'sienna', 'caramel', 'honey'];
+const FANTASY_SKIN = ['blue', 'purple', 'pink', 'teal', 'gold', 'terracotta', 'bronze', 'iron', 'coralred'];
+
+const EYES: Record<string, Pick<Drawing, 'eyes' | 'eyestyle' | 'glow'>> = {
+    warm: {},
+    almond: { eyestyle: 'almond' },
+    sleepy: { eyestyle: 'sleepy' },
+    happy: { eyes: 'happy' },
+    wink: { eyes: 'wink' },
+    gold: { eyestyle: 'blank', glow: '#ffd35a' },
+    white: { eyestyle: 'blank', glow: '#ffffff' },
+    ember: { eyestyle: 'blank', glow: '#ff7a2a' },
+    sky: { eyestyle: 'blank', glow: '#6fd3ff' },
+    cowrie: { eyestyle: 'cowrie' },
+    ring: { eyestyle: 'ring' },
+    star: { eyestyle: 'star' },
+    nok: { eyestyle: 'nok' },
+};
+// Pale eyes on the darkest skin come too close to the caricatures this design rules out
+const PALE_EYES = ['white', 'cowrie'];
+const DARKEST_SKIN = ['umber', 'walnut'];
+
+export const AVATAR_OPTIONS = {
+    skin: { label: 'Skin', options: [...NATURAL_SKIN, ...FANTASY_SKIN].map((id) => option(id, titled(id), SKIN[id])) },
+    hair: { label: 'Hair', options: Object.entries(HAIR).map(([id, style]) => option(id, style.name)) },
+    hair_colour: { label: 'Hair colour', options: HAIR_COLOURS.map((id) => option(id, id, `#${id}`)) },
+    top: { label: 'Wears', options: Object.entries(TOPS).map(([id, style]) => option(id, style.name)) },
+    cloth: { label: 'Colour', options: CLOTH.map((id) => option(id, id, `#${id}`)) },
+    neck: { label: 'Neck', options: [option('none', 'None'), ...Object.keys(NECKS).filter((id) => id !== 'none').map((id) => option(id, titled(id)))] },
+    eyewear: { label: 'Glasses', options: [option('none', 'None'), ...Object.keys(EYEWEAR).map((id) => option(id, titled(id)))] },
+    eyes: { label: 'Eyes', options: Object.keys(EYES).map((id) => option(id, titled(id))) },
+    mouth: { label: 'Mouth', options: Object.entries(FACES).map(([id, face]) => option(id, face[0])) },
+    beard: { label: 'Beard', options: [option('none', 'None'), option('full', 'Beard')] },
+    background: { label: 'Background', options: Object.entries(BACKGROUNDS).map(([id, colour]) => option(id, titled(id), BGTONE[colour])) },
+    thread: { label: 'Thread', options: THREADS.map((id) => option(id, id, `#${id}`)) },
+    thread_style: { label: 'Thread style', options: [option('plain', 'Plain'), ...THREAD_STYLES.map((id) => option(id, titled(id)))] },
 };
 
-const FACES = [
-    (skin: string) => `<circle cx="32" cy="29" r="13" fill="${skin}"/>`,
-    (skin: string) => `<rect x="19" y="16" width="26" height="27" rx="11" fill="${skin}"/>`,
-    (skin: string) => `<ellipse cx="32" cy="29" rx="12" ry="14.5" fill="${skin}"/>`,
-    (skin: string) => `<path d="M19 26a13 13 0 0 1 26 0v4c0 8-6 13-13 13s-13-5-13-13z" fill="${skin}"/>`,
-];
+export type AvatarPart = keyof typeof AVATAR_OPTIONS;
 
-const stroke = `stroke="${INK}" stroke-width="1.6" stroke-linecap="round" fill="none"`;
+const known = <T>(list: Record<string, T>, id: string | undefined, fallback: string) => (id && Object.hasOwn(list, id) ? id : fallback);
 
-const EYES = [
-    // Dots
-    `<circle cx="27" cy="29" r="1.6" fill="${INK}"/><circle cx="37" cy="29" r="1.6" fill="${INK}"/>`,
-    // Tall ovals
-    `<ellipse cx="27" cy="29" rx="1.4" ry="2" fill="${INK}"/><ellipse cx="37" cy="29" rx="1.4" ry="2" fill="${INK}"/>`,
-    // Happy
-    `<path d="M25 29.5q2-2.4 4 0M35 29.5q2-2.4 4 0" ${stroke}/>`,
-    // Wink
-    `<circle cx="27" cy="29" r="1.6" fill="${INK}"/><path d="M35 29.5q2-2.4 4 0" ${stroke}/>`,
-    // Sleepy
-    `<path d="M25 29.6h4M35 29.6h4" ${stroke}/>`,
-    // Bright, with a shine
-    `<circle cx="27" cy="29" r="2.2" fill="${INK}"/><circle cx="37" cy="29" r="2.2" fill="${INK}"/><circle cx="27.8" cy="28.2" r=".7" fill="#fff"/><circle cx="37.8" cy="28.2" r=".7" fill="#fff"/>`,
-    // Lashes
-    `<circle cx="27" cy="29.4" r="1.5" fill="${INK}"/><circle cx="37" cy="29.4" r="1.5" fill="${INK}"/><path d="M25.4 27.4l-1-1M38.6 27.4l1-1" ${stroke}/>`,
-    // Looking aside
-    `<circle cx="28.2" cy="29" r="1.6" fill="${INK}"/><circle cx="38.2" cy="29" r="1.6" fill="${INK}"/>`,
-];
-
-const MOUTHS = [
-    `<path d="M28.5 34.5q3.5 3 7 0" ${stroke}/>`,
-    `<path d="M28 34h8q0 4.5-4 4.5T28 34z" fill="${INK}"/><path d="M30 37.6q2-1.2 4 0" stroke="#f472b6" stroke-width="1.4" fill="none" stroke-linecap="round"/>`,
-    `<path d="M29 35.5h6" ${stroke}/>`,
-    `<circle cx="32" cy="35.6" r="1.4" ${stroke}/>`,
-    `<path d="M29 35.6q3 1.6 6-1.2" ${stroke}/>`,
-    `<path d="M30.5 35q1.5 1.2 3 0" ${stroke}/>`,
-];
-
-type Hair = { back?: string; front?: string };
-const HAIR: ((colour: string) => Hair)[] = [
-    // None
-    () => ({}),
-    // Short crop
-    (c) => ({ front: `<path d="M19 27c0-9 6-14 13-14s13 5 13 14c-3-4-7-6-13-6s-10 2-13 6z" fill="${c}"/>` }),
-    // Side part
-    (c) => ({ front: `<path d="M19 28c-1-10 6-15 14-15 7 0 12 5 12 12-5 0-12-1-17-6-2 4-5 7-9 9z" fill="${c}"/>` }),
-    // Curls
-    (c) => ({ front: [[21, 22], [26, 17.5], [32, 16], [38, 17.5], [43, 22]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5" fill="${c}"/>`).join('') }),
-    // Big round puff
-    (c) => ({ back: `<circle cx="32" cy="24" r="19" fill="${c}"/>`, front: `<path d="M20 24c2-6 7-9 12-9s10 3 12 9c-4-2-8-3-12-3s-8 1-12 3z" fill="${c}"/>` }),
-    // Top bun
-    (c) => ({ front: `<circle cx="32" cy="12" r="5" fill="${c}"/><path d="M19 27c0-9 6-14 13-14s13 5 13 14c-3-4-7-6-13-6s-10 2-13 6z" fill="${c}"/>` }),
-    // Long
-    (c) => ({
-        back: `<path d="M17 28c0-10 6-16 15-16s15 6 15 16v18H17z" fill="${c}"/>`,
-        front: `<path d="M19 26c2-7 7-10 13-10s11 3 13 10c-6-2-10-5-13-7-3 2-7 5-13 7z" fill="${c}"/>`,
-    }),
-    // Bob
-    (c) => ({ back: `<path d="M17 30c0-11 7-17 15-17s15 6 15 17v6h-5V26H22v10h-5z" fill="${c}"/>`, front: `<path d="M20 25c2-6 7-9 12-9s10 3 12 9z" fill="${c}"/>` }),
-    // Beanie
-    (c) => ({ front: `<path d="M18 25c0-9 6-14 14-14s14 5 14 14z" fill="${c}"/><rect x="17" y="22.5" width="30" height="5" rx="2.5" fill="${c}"/><rect x="17" y="22.5" width="30" height="5" rx="2.5" fill="#000" opacity=".15"/>` }),
-    // Cap
-    (c) => ({ front: `<path d="M19 25c0-8 6-12 13-12s13 4 13 12z" fill="${c}"/><path d="M32 22.6h16q0 3.4-3 3.4H32z" fill="${c}"/><path d="M32 22.6h16q0 3.4-3 3.4H32z" fill="#000" opacity=".18"/>` }),
-    // Crop with a headband
-    (c) => ({ front: `<path d="M19 27c0-9 6-14 13-14s13 5 13 14c-3-4-7-6-13-6s-10 2-13 6z" fill="${c}"/><rect x="19.5" y="19.5" width="25" height="3" rx="1.5" fill="#fff" opacity=".85"/>` }),
-    // Spiky
-    (c) => ({ front: `<path d="M19 26l2-8 3 4 2-7 3 5 3-7 3 6 3-5 2 6 3-3 1 9c-4-3-8-4-13-4s-9 1-13 4z" fill="${c}"/>` }),
-];
-
-const ACCESSORIES = [
-    '',
-    `<g stroke="${INK}" stroke-width="1.2" fill="none"><circle cx="27" cy="29" r="3.6"/><circle cx="37" cy="29" r="3.6"/><path d="M30.6 29h2.8"/></g>`,
-    `<g stroke="${INK}" stroke-width="1.2" fill="none"><rect x="23" y="26" width="8" height="6" rx="1.5"/><rect x="33" y="26" width="8" height="6" rx="1.5"/><path d="M31 29h2"/></g>`,
-    `<circle cx="19.4" cy="33" r="1.4" fill="#f5c542"/><circle cx="44.6" cy="33" r="1.4" fill="#f5c542"/>`,
-    `<path d="M17 30a15 15 0 0 1 30 0" stroke="${INK}" stroke-width="2.4" fill="none"/><rect x="15" y="27" width="5" height="9" rx="2.5" fill="${INK}"/><rect x="44" y="27" width="5" height="9" rx="2.5" fill="${INK}"/>`,
-    `<g fill="#a0522d" opacity=".55"><circle cx="24.5" cy="33" r=".7"/><circle cx="26.5" cy="34" r=".7"/><circle cx="25" cy="35" r=".7"/><circle cx="39.5" cy="33" r=".7"/><circle cx="37.5" cy="34" r=".7"/><circle cx="39" cy="35" r=".7"/></g>`,
-];
-
-// The whole picture as an SVG document (square; pages round it)
-export function renderAvatar(config: AvatarConfig): string {
-    const skin = COLOURS.skin[config.skin];
-    const hair = HAIR[config.hair](COLOURS.hair_colour[config.hair_colour]);
-    return [
-        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">`,
-        `<rect width="64" height="64" fill="${COLOURS.background[config.background]}"/>`,
-        hair.back ?? '',
-        `<path d="M12 64c0-11 9-18 20-18s20 7 20 18z" fill="${COLOURS.outfit[config.outfit]}"/>`,
-        `<rect x="28" y="38" width="8" height="9" rx="2" fill="${skin}"/>`,
-        `<path d="M28.5 46h7l-3.5 4z" fill="${skin}"/>`,
-        FACES[config.face](skin),
-        hair.front ?? '',
-        EYES[config.eyes],
-        MOUTHS[config.mouth],
-        ACCESSORIES[config.accessory],
-        `</svg>`,
-    ].join('');
+function toDrawing(config: AvatarConfig, reply: boolean): Drawing {
+    const skin = known(SKIN, config.skin, 'chestnut');
+    const eyes = PALE_EYES.includes(config.eyes) && DARKEST_SKIN.includes(skin) ? 'warm' : known(EYES, config.eyes, 'warm');
+    return {
+        skin,
+        hair: known(HAIR, config.hair, 'fade'),
+        hc: HAIR_COLOURS.includes(config.hair_colour) ? `#${config.hair_colour}` : undefined,
+        top: known(TOPS, config.top, 'tee'),
+        cloth: CLOTH.includes(config.cloth) ? `#${config.cloth}` : '#2f5be0',
+        neck: known(NECKS, config.neck, 'none'),
+        eyewear: known(EYEWEAR, config.eyewear, '') || undefined,
+        ...EYES[eyes],
+        mouth: known(FACES, config.mouth, 'smile'),
+        beard: config.beard === 'full',
+        bg: BACKGROUNDS[config.background] ?? BACKGROUNDS.blue,
+        thread: reply ? (THREADS.includes(config.thread) ? `#${config.thread}` : '#f2b134') : undefined,
+        threadStyle: THREAD_STYLES.includes(config.thread_style) ? config.thread_style : undefined,
+        threadWidth: THREAD_WIDTH,
+    };
 }
 
-// What each option is called in the editor
-export const PART_LABELS: Record<keyof AvatarConfig, string> = {
-    face: 'Face',
-    skin: 'Skin',
-    eyes: 'Eyes',
-    mouth: 'Mouth',
-    hair: 'Hair',
-    hair_colour: 'Hair colour',
-    accessory: 'Extras',
-    outfit: 'Top',
-    background: 'Background',
-};
+// Replies show at 28px on a 272 grid and their line is 2px, so the two read as one thread
+const THREAD_WIDTH = 19;
+
+export const renderAvatarConfig = (config: AvatarConfig, reply = false) => drawAvatar(toDrawing(config, reply));
+
+export function renderAvatar(code: string, reply = false): string | null {
+    const parsed = parseAvatarCode(code);
+    if (!parsed) return null;
+    if (!('starter' in parsed)) return renderAvatarConfig(parsed, reply);
+    const tone = STARTER_TONES[parseInt(parsed.starter, 36) % STARTER_TONES.length];
+    return drawStarter({ tone, thread: reply ? tone : undefined, threadWidth: THREAD_WIDTH });
+}
+
+const look = (name: string, hair: string, skin: string, top: string, cloth: string, background: string, extra: AvatarConfig = {}) => ({ name, config: { hair, skin, top, cloth, background, ...extra } });
+
+// Ready-made looks in the editor: heritage first, then modern
+export const AVATAR_LOOKS = [
+    look('Nok topknot', 'nokknot', 'chestnut', 'hoodie', '27242c', 'violet', { neck: 'nokbeads' }),
+    look('Fulani braids', 'fulani', 'sienna', 'tee', 'e8982e', 'blue', { neck: 'cowries' }),
+    look('Hausa indigo', 'cowrieband', 'walnut', 'indigo', '1e2a6b', 'coral', { eyes: 'happy' }),
+    look('Ife crown', 'ifecrown', 'caramel', 'strip', 'c8362e', 'teal'),
+    look('Benin coral', 'benincap', 'umber', 'blazer', '27242c', 'amber', { neck: 'coral' }),
+    look('Yoruba threading', 'threaded', 'chestnut', 'strip', '2f5be0', 'blue'),
+    look('Uli lines', 'noklobes', 'sienna', 'uli', '6c3fd1', 'pink', { eyes: 'happy' }),
+    look('Suku', 'suku', 'chestnut', 'strip', 'c8362e', 'blue'),
+    look('Senator', 'taper', 'chestnut', 'senator', '17243f', 'blue', { beard: 'full' }),
+    look('Isi agu', 'flattop', 'walnut', 'isiagu', 'c8362e', 'pink'),
+    look('Babban riga', 'manbun', 'sienna', 'babbanriga', '1e2a6b', 'amber', { beard: 'full' }),
+    look('Iro and buba', 'gele', 'sienna', 'bubairo', 'f2b134', 'teal', { neck: 'amber' }),
+    look('Ankara gown', 'silkpress', 'caramel', 'ankaragown', 'd42e8a', 'teal'),
+    look('Weekend', 'cap', 'chestnut', 'jersey', '2f5be0', 'teal', { eyewear: 'shades' }),
+    look('Office', 'afro', 'chestnut', 'blazer', '17243f', 'violet', { eyewear: 'round' }),
+    look('Blue fantasy', 'threaded', 'blue', 'strip', '2f5be0', 'coral', { hair_colour: '1c1619' }),
+];

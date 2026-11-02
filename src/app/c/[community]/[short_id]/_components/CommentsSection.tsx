@@ -324,7 +324,7 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
                     onClick={collapse}
                 />
             )}
-            <UserAvatar user={comment.author} size={28} className="size-7" />
+            <UserAvatar user={comment.author} size={28} className="size-7" reply={comment.depth > thread.baseDepth} />
 
             <div className="flex min-w-0 flex-col">
                 {isEditing ? (

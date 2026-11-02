@@ -1,6 +1,5 @@
 import { communityHandle } from '@/lib/communityName';
 import { ImageResponse } from 'next/og';
-import { avatarUrl, decodeAvatar } from '@/avatars/code';
 import { renderAvatar } from '@/avatars/parts';
 import { APP_NAME, BRAND_COLORS, REPUTATION_LABEL } from '@/lib/constants';
 import { publicApi } from '@/lib/api/server';
@@ -47,7 +46,7 @@ async function cardFor(kind: string, id: string): Promise<Card | null> {
             title: data.user.display_name ?? `u/${data.user.username}`,
             stats: [plural(data.user.karma, `${REPUTATION_LABEL} point`)],
             // The drawn avatar as a data URL (the image renderer can't fetch our own SVG route mid-render)
-            avatar: `data:image/svg+xml;base64,${Buffer.from(renderAvatar(decodeAvatar(avatarUrl(data.user).slice(8, -4))!)).toString('base64')}`,
+            avatar: `data:image/svg+xml;base64,${Buffer.from(renderAvatar(data.user.avatar ?? '') ?? '').toString('base64')}`,
         };
     }
     return null;

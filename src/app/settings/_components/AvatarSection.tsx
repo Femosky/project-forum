@@ -3,6 +3,7 @@
 import { lazy, Suspense, useState, useSyncExternalStore } from 'react';
 import Button from '@/components/ui/Button';
 import UserAvatar from '@/components/ui/UserAvatar';
+import { parseAvatarCode } from '@/avatars/code';
 import { PrivateUser } from '@/types/api';
 
 const noSubscription = () => () => undefined;
@@ -20,12 +21,14 @@ export default function AvatarSection({ user }: { user: PrivateUser }) {
     const fromLink = useSyncExternalStore(noSubscription, () => location.hash === '#avatar', () => false);
     const editing = choice ?? fromLink;
 
+    const parsed = avatar ? parseAvatarCode(avatar) : null;
+    const saved = parsed && !('starter' in parsed) ? parsed : null;
+
     if (editing) {
         return (
             <Suspense fallback={<div className="h-[420px]" />}>
                 <AvatarEditor
-                    username={user.username}
-                    initial={avatar}
+                    initial={saved}
                     onDone={(code) => {
                         if (code !== undefined) setAvatar(code);
                         setEditing(false);

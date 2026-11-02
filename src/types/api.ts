@@ -211,7 +211,7 @@ export interface PrivateUser {
     avatar_id: string;
     // Drawn avatar: its code (/avatar/{code}.svg) and the parts chosen (null = derived from the username), for the editor
     avatar: string | null;
-    avatar_config: Record<string, number> | null;
+    avatar_config: Record<string, string> | null;
     role: string;
     karma: number;
     is_email_verified: boolean;
