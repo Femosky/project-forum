@@ -16,5 +16,5 @@ export function parseAvatarCode(code: string): AvatarConfig | { starter: string 
 
 // `reply`: with the thread reaching the left edge, where the reply line joins it. `full`: the whole character, for large pictures
 // Pictures are cached for a year, so bump ART_VERSION whenever the drawings change or browsers keep showing old ones
-const ART_VERSION = 5;
+const ART_VERSION = 6;
 export const avatarUrl = (avatar: string, variant?: 'reply' | 'full') => `/avatar/${avatar}${variant ? `.${variant}` : ''}.svg?v=${ART_VERSION}`;

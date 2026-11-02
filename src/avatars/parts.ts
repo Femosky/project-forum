@@ -1,5 +1,5 @@
 import { AvatarConfig, parseAvatarCode } from './code';
-import { BGTONE, Crop, Drawing, drawAvatar, drawStarter, EYEWEAR, FACES, HAIR, NECKS, SKIN, TOPS } from './art';
+import { BGTONE, Crop, Drawing, drawAvatar, mix, drawStarter, EYEWEAR, FACES, HAIR, NECKS, SKIN, TOPS } from './art';
 
 // Every option an avatar can use. Saved avatars keep names, not positions, so options can be added, reordered or
 // retired here at any time, with no API change: a name this file doesn't know simply draws the part's default.
@@ -91,13 +91,14 @@ function toDrawing(config: AvatarConfig, reply: boolean, threadPx: number, view:
         thread: reply ? (THREADS.includes(config.thread) ? `#${config.thread}` : '#f2b134') : undefined,
         threadStyle: THREAD_STYLES.includes(config.thread_style) ? config.thread_style : undefined,
         threadWidth: (threadPx * crop[2]) / 28,
+        hand: reply && view === 'tight' ? [crop[0] + crop[2] * 0.24, crop[1] + crop[2] * 0.8] : undefined,
     };
 }
 
 // `view`: 'tight' for small pictures, 'full' for the whole character on a profile, 'same' for the editor's fixed crop
 const starterPicture = (tone: string, reply: boolean, sameSize = false) => {
     const crop: Crop = sameSize ? FULL : [22, 38, 216];
-    return drawStarter({ tone, crop, thread: reply ? tone : undefined, threadWidth: (2 * crop[2]) / 28 });
+    return drawStarter({ tone, crop, thread: reply ? mix(tone, '#120a1c', 0.3) : undefined, threadWidth: (2 * crop[2]) / 28 });
 };
 
 // `view`: 'tight' for small pictures, 'full' for the whole character on a profile, 'same' for the editor's fixed crop
