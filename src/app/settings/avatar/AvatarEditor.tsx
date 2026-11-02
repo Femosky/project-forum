@@ -83,10 +83,8 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
     const set = (part: AvatarPart, id: string) => setConfig({ ...dressed, [part]: id });
 
     // Choosing any part turns a starter into a dressed character
-    const dressed = useMemo(() => {
-        const parts = Object.fromEntries(Object.entries(config).filter(([part]) => part !== 'starter'));
-        return Object.keys(parts).length > 0 ? parts : PLAIN_AVATAR;
-    }, [config]);
+    const chosen = Object.fromEntries(Object.entries(config).filter(([part]) => part !== 'starter'));
+    const dressed = Object.keys(chosen).length > 0 ? chosen : PLAIN_AVATAR;
     const starters = useMemo(() => Object.keys(STARTERS).map((id) => ({ id, preview: svgUrl({ starter: id }) })), []);
     const looks = useMemo(() => AVATAR_LOOKS.map((look) => ({ ...look, preview: svgUrl(look.config) })), []);
 
