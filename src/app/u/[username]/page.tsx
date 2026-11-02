@@ -89,7 +89,7 @@ export default async function ProfilePage({ params, searchParams }: PageProps) {
                 <header className="flex flex-col gap-5 border-b border-border px-4 pb-6 pt-7 sm:px-0">
                     <div className="flex items-center gap-4">
                         {isMe ? (
-                            <Link href="/settings#avatar" title="Edit avatar" aria-label="Edit avatar" className="rounded-full transition-opacity hover:opacity-80">
+                            <Link href="/settings/avatar" title="Edit avatar" aria-label="Edit avatar" className="rounded-full transition-opacity hover:opacity-80">
                                 <UserAvatar user={user} size={56} className="size-14" />
                             </Link>
                         ) : (

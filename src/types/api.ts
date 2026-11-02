@@ -13,6 +13,8 @@ export interface AuthorRef {
     username: string;
     display_name: string | null;
     avatar_id: string;
+    // Moderates the community this post or comment is in
+    is_moderator?: boolean;
 }
 
 export interface CommunityRef {
@@ -61,6 +63,8 @@ export interface Post {
     image: PostImage | null;
     ai_summary: string | null;
     is_anonymous: boolean;
+    // Anonymous posts and comments: the starter shown in place of the person's avatar
+    anon_avatar?: string | null;
     // Mature: marked so itself or by its community. Shown blurred unless the viewer switched on "Show mature
     // content" (blur_mature says which, per viewer; always true for guests)
     is_nsfw: boolean;
@@ -92,6 +96,7 @@ export interface Comment {
     depth: number;
     body: string;
     is_anonymous: boolean;
+    anon_avatar?: string | null;
     is_sponsored: boolean;
     status: ContentStatus;
     held_reason: string | null;
@@ -211,7 +216,7 @@ export interface PrivateUser {
     avatar_id: string;
     // Drawn avatar: its code (/avatar/{code}.svg) and the parts chosen (null = derived from the username), for the editor
     avatar: string | null;
-    avatar_config: Record<string, number> | null;
+    avatar_config: Record<string, string> | null;
     role: string;
     karma: number;
     is_email_verified: boolean;
