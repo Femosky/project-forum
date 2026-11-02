@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
-import { AvatarConfig, avatarUrl, parseAvatarCode } from '@/avatars/code';
+import { AvatarConfig, parseAvatarCode } from '@/avatars/code';
 import { AVATAR_LOOKS, AVATAR_OPTIONS, AvatarPart, renderAvatarConfig, STARTERS } from '@/avatars/parts';
 import { UserResponse } from '@/types/api';
 
@@ -25,11 +25,12 @@ const GROUPS: { id: string; label: string; parts: AvatarPart[] }[] = [
     { id: 'background', label: 'Background', parts: ['background'] },
 ];
 
-// The starter the API gives this username (Backend src/lib/avatars.ts)
-function starterCode(name: string) {
+// The starter this username was given (same hash as the API's, Backend src/lib/avatars.ts)
+function starterName(name: string) {
     let hash = 2166136261;
     for (const char of name.toLowerCase()) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
-    return `s-${hash.toString(36)}`;
+    const names = Object.keys(STARTERS);
+    return names[parseInt(hash.toString(36), 36) % names.length];
 }
 
 const one = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
@@ -76,7 +77,7 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
 
     // Nothing chosen means the member's starter avatar
     const untouched = Object.keys(config).length === 0;
-    const starter = avatarUrl(starterCode(username));
+    const assigned = starterName(username);
     const showThread = group === 'thread';
     const parts = GROUPS.find(({ id }) => id === group)?.parts ?? [];
     const set = (part: AvatarPart, id: string) => setConfig({ ...dressed, [part]: id });
@@ -105,7 +106,7 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
                 <h1 className="self-start text-xl font-semibold">Your avatar</h1>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                    src={untouched ? starter : svgUrl(config, showThread, 0.9)}
+                    src={svgUrl(untouched ? { starter: assigned } : config, showThread, 0.9)}
                     alt="Your avatar"
                     width={200}
                     height={200}
@@ -165,15 +166,10 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
 
                 {group === 'starters' && (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-3">
-                        <button type="button" onClick={() => setConfig({})} className="flex cursor-pointer flex-col items-center gap-1.5 text-xs text-muted hover:text-text">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={starter} alt="" width={88} height={88} className={twMerge('size-[88px] rounded-full ring-1 ring-border', untouched && 'ring-2 ring-text')} />
-                            Original
-                        </button>
                         {starters.map(({ id, preview }) => (
                             <button key={id} type="button" onClick={() => setConfig({ starter: id })} className="flex cursor-pointer flex-col items-center gap-1.5 text-xs capitalize text-muted hover:text-text">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={preview} alt="" width={88} height={88} className={twMerge('size-[88px] rounded-full ring-1 ring-border', config.starter === id && 'ring-2 ring-text')} />
+                                <img src={preview} alt="" width={88} height={88} className={twMerge('size-[88px] rounded-full ring-1 ring-border', (config.starter ?? (untouched ? assigned : '')) === id && 'ring-2 ring-text')} />
                                 {id}
                             </button>
                         ))}
