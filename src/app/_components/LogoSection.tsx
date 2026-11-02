@@ -20,8 +20,8 @@ export function LogoMark({ className }: { className?: string }) {
 export function LogoSection() {
     return (
         <Link href="/" className="flex shrink-0 items-center gap-2 rounded-lg">
-            <LogoMark className="h-6 w-auto" />
-            <span className="text-[17px] font-semibold tracking-tight">{APP_NAME}</span>
+            <LogoMark className="h-7 w-auto" />
+            <span className="text-[20px] font-semibold tracking-tight">{APP_NAME}</span>
         </Link>
     );
 }
