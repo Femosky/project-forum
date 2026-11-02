@@ -10,7 +10,7 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { AvatarConfig, avatarUrl, parseAvatarCode } from '@/avatars/code';
-import { AVATAR_LOOKS, AVATAR_OPTIONS, AvatarPart, DARKEST_SKIN, PALE_EYES, renderAvatarConfig } from '@/avatars/parts';
+import { AVATAR_LOOKS, AVATAR_OPTIONS, AvatarPart, DARKEST_SKIN, PALE_EYES, renderAvatarConfig, STARTERS } from '@/avatars/parts';
 import { UserResponse } from '@/types/api';
 
 const svgUrl = (config: AvatarConfig, reply = false, threadPx?: number) => `data:image/svg+xml;utf8,${encodeURIComponent(renderAvatarConfig(config, reply, threadPx, true))}`;
@@ -49,7 +49,8 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
     const router = useRouter();
     const [config, setPresent] = useState<AvatarConfig>(() => {
         const parsed = code ? parseAvatarCode(code) : null;
-        return parsed && !('starter' in parsed) ? parsed : {};
+        // A starter assigned from the username has a number, not a name: nothing was chosen
+        return parsed && (!('starter' in parsed) || STARTERS[parsed.starter]) ? (parsed as AvatarConfig) : {};
     });
     const [past, setPast] = useState<AvatarConfig[]>([]);
     const [future, setFuture] = useState<AvatarConfig[]>([]);
@@ -78,8 +79,11 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
     const starter = avatarUrl(starterCode(username));
     const showThread = group === 'thread';
     const parts = GROUPS.find(({ id }) => id === group)?.parts ?? [];
-    const set = (part: AvatarPart, id: string) => setConfig({ ...config, [part]: id });
+    const set = (part: AvatarPart, id: string) => setConfig({ ...dressed, [part]: id });
 
+    // Choosing any part turns a starter into a dressed character
+    const dressed = useMemo(() => Object.fromEntries(Object.entries(config).filter(([part]) => part !== 'starter')), [config]);
+    const starters = useMemo(() => Object.keys(STARTERS).map((id) => ({ id, preview: svgUrl({ starter: id }) })), []);
     const looks = useMemo(() => AVATAR_LOOKS.map((look) => ({ ...look, preview: svgUrl(look.config) })), []);
     const paleBlocked = DARKEST_SKIN.includes(config.skin);
 
@@ -132,7 +136,7 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
 
             <section className="flex min-w-0 flex-1 flex-col gap-5 md:h-full md:overflow-y-auto md:pr-2 md:[scrollbar-gutter:stable]">
                 <nav aria-label="Avatar choices" className="flex flex-wrap gap-1">
-                    {[{ id: 'looks', label: 'Looks' }, ...GROUPS].map(({ id, label }) => (
+                    {[{ id: 'looks', label: 'Looks' }, { id: 'starters', label: 'Starters' }, ...GROUPS].map(({ id, label }) => (
                         <button
                             key={id}
                             type="button"
@@ -150,16 +154,28 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
 
                 {group === 'looks' && (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-3">
-                        <button type="button" onClick={() => setConfig({})} className="flex cursor-pointer flex-col items-center gap-1.5 text-xs text-muted hover:text-text">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={starter} alt="" width={88} height={88} className="size-[88px] rounded-full ring-1 ring-border" />
-                            Your starter
-                        </button>
                         {looks.map((look) => (
                             <button key={look.name} type="button" onClick={() => setConfig(look.config)} className="flex cursor-pointer flex-col items-center gap-1.5 text-xs text-muted hover:text-text">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={look.preview} alt="" width={88} height={88} className="size-[88px] rounded-full ring-1 ring-border" />
                                 {look.name}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {group === 'starters' && (
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-3">
+                        <button type="button" onClick={() => setConfig({})} className="flex cursor-pointer flex-col items-center gap-1.5 text-xs text-muted hover:text-text">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={starter} alt="" width={88} height={88} className={twMerge('size-[88px] rounded-full ring-1 ring-border', untouched && 'ring-2 ring-text')} />
+                            Original
+                        </button>
+                        {starters.map(({ id, preview }) => (
+                            <button key={id} type="button" onClick={() => setConfig({ starter: id })} className="flex cursor-pointer flex-col items-center gap-1.5 text-xs capitalize text-muted hover:text-text">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={preview} alt="" width={88} height={88} className={twMerge('size-[88px] rounded-full ring-1 ring-border', config.starter === id && 'ring-2 ring-text')} />
+                                {id}
                             </button>
                         ))}
                     </div>
@@ -173,7 +189,7 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
                             {parts.length > 1 && <h2 className="text-[13px] font-semibold text-muted">{label}</h2>}
                             <div role="radiogroup" aria-label={label} className={swatches ? 'flex flex-wrap gap-2' : 'grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-3'}>
                                 {options.map((option) => {
-                                    const selected = config[part] === option.id;
+                                    const selected = dressed[part] === option.id;
                                     const blocked = part === 'eyes' && paleBlocked && PALE_EYES.includes(option.id);
                                     return (
                                         <button
@@ -192,7 +208,7 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
                                             ) : (
                                                 <>
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img src={svgUrl({ ...config, [part]: option.id }, part === 'thread_style', 4)} alt="" width={76} height={76} className={twMerge('size-[76px] rounded-full ring-1 ring-border', selected && 'ring-2 ring-text')} />
+                                                    <img src={svgUrl({ ...dressed, [part]: option.id }, part === 'thread_style', 4)} alt="" width={76} height={76} className={twMerge('size-[76px] rounded-full ring-1 ring-border', selected && 'ring-2 ring-text')} />
                                                     {option.name}
                                                 </>
                                             )}

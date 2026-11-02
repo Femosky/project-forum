@@ -11,7 +11,8 @@ const CLOTH = ['27242c', 'f4f4f6', 'ff3b30', 'c8362e', 'e4572e', 'f2b134', 'e898
 const HAIR_COLOURS = ['1c1619', '2d1b14', '4a2b1c', '7a3b1e', 'b9722f', 'dba544', 'ececf0', 'e23d8a', '3f6df0', '8a4de8', 'ff5a3c'];
 const THREADS = ['f2b134', 'ff3b30', '2f5be0', '12a8bd', '6c3fd1', 'd42e8a', 'f4f4f6'];
 const BACKGROUNDS: Record<string, string> = { blue: '#a9d4ff', coral: '#ffc9a8', violet: '#d9b8ff', amber: '#ffd978', teal: '#8fdde6', pink: '#ffb3c1', slate: '#b5b8ff' };
-const STARTER_TONES = ['#12a8bd', '#2b5fe6', '#6a3fd9', '#d42e8a', '#ec4a32', '#f09a14', '#566784', '#a4552a'];
+export const STARTERS: Record<string, string> = { teal: '#12a8bd', blue: '#2b5fe6', violet: '#6a3fd9', pink: '#d42e8a', coral: '#ec4a32', amber: '#f09a14', slate: '#566784', brown: '#a4552a' };
+const STARTER_TONES = Object.values(STARTERS);
 const THREAD_STYLES = ['fire', 'lightning', 'river', 'iron', 'beads'];
 
 const NATURAL_SKIN = ['midnight', 'espresso', 'ebony', 'umber', 'walnut', 'chestnut', 'sienna', 'caramel', 'honey'];
@@ -88,15 +89,20 @@ function toDrawing(config: AvatarConfig, reply: boolean, threadPx: number, sameS
 }
 
 // `sameSize`: the editor keeps one crop, so the character doesn't jump as hair changes
-export const renderAvatarConfig = (config: AvatarConfig, reply = false, threadPx = 2, sameSize = false) => drawAvatar(toDrawing(config, reply, threadPx, sameSize));
+const starterPicture = (tone: string, reply: boolean, sameSize = false) => {
+    const crop: Crop = sameSize ? FULL : [22, 38, 216];
+    return drawStarter({ tone, crop, thread: reply ? tone : undefined, threadWidth: (2 * crop[2]) / 28 });
+};
+
+// `sameSize`: the editor keeps one crop, so the character doesn't jump as hair changes
+export const renderAvatarConfig = (config: AvatarConfig, reply = false, threadPx = 2, sameSize = false) =>
+    STARTERS[config.starter] ? starterPicture(STARTERS[config.starter], reply, sameSize) : drawAvatar(toDrawing(config, reply, threadPx, sameSize));
 
 export function renderAvatar(code: string, reply = false): string | null {
     const parsed = parseAvatarCode(code);
     if (!parsed) return null;
-    if (!('starter' in parsed)) return renderAvatarConfig(parsed, reply);
-    const tone = STARTER_TONES[parseInt(parsed.starter, 36) % STARTER_TONES.length];
-    const crop: Crop = [22, 38, 216];
-    return drawStarter({ tone, crop, thread: reply ? tone : undefined, threadWidth: (2 * crop[2]) / 28 });
+    if ('starter' in parsed && Object.keys(parsed).length === 1 && !STARTERS[parsed.starter]) return starterPicture(STARTER_TONES[parseInt(parsed.starter, 36) % STARTER_TONES.length], reply);
+    return renderAvatarConfig(parsed as AvatarConfig, reply);
 }
 
 const look = (name: string, hair: string, skin: string, top: string, cloth: string, background: string, extra: AvatarConfig = {}) => ({ name, config: { hair, skin, top, cloth, background, ...extra } });
