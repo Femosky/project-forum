@@ -36,9 +36,9 @@ const EYES: Record<string, Pick<Drawing, 'eyes' | 'eyestyle' | 'glow'>> = {
 
 export const AVATAR_OPTIONS = {
     skin: { label: 'Skin', options: [...NATURAL_SKIN, ...FANTASY_SKIN].map((id) => option(id, titled(id), SKIN[id])) },
-    hair: { label: 'Hair', options: Object.entries(HAIR).map(([id, style]) => option(id, style.name)) },
+    hair: { label: 'Hair', options: Object.entries(HAIR).sort(([a], [b]) => Number(b === 'bare') - Number(a === 'bare')).map(([id, style]) => option(id, style.name)) },
     hair_colour: { label: 'Hair colour', options: HAIR_COLOURS.map((id) => option(id, id, `#${id}`)) },
-    top: { label: 'Wears', options: Object.entries(TOPS).map(([id, style]) => option(id, style.name)) },
+    top: { label: 'Wears', options: Object.entries(TOPS).sort(([a], [b]) => Number(b === 'none') - Number(a === 'none')).map(([id, style]) => option(id, style.name)) },
     cloth: { label: 'Colour', options: CLOTH.map((id) => option(id, id, `#${id}`)) },
     neck: { label: 'Neck', options: [option('none', 'None'), ...Object.keys(NECKS).filter((id) => id !== 'none').map((id) => option(id, titled(id)))] },
     eyewear: { label: 'Glasses', options: [option('none', 'None'), ...Object.keys(EYEWEAR).map((id) => option(id, titled(id)))] },
@@ -110,6 +110,9 @@ export function renderAvatar(code: string, reply = false, full = false): string 
     if ('starter' in parsed && Object.keys(parsed).length === 1 && !STARTERS[parsed.starter]) return starterPicture(STARTER_TONES[parseInt(parsed.starter, 36) % STARTER_TONES.length], reply);
     return renderAvatarConfig(parsed as AvatarConfig, reply, 2, full ? 'full' : 'tight');
 }
+
+// Where customising starts: the bare character, ready to be dressed
+export const PLAIN_AVATAR: AvatarConfig = { hair: 'bare', skin: 'chestnut', top: 'none', background: 'blue' };
 
 const look = (name: string, hair: string, skin: string, top: string, cloth: string, background: string, extra: AvatarConfig = {}) => ({ name, config: { hair, skin, top, cloth, background, ...extra } });
 

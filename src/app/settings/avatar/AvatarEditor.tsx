@@ -3,14 +3,14 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Redo2, Shuffle, Undo2 } from 'lucide-react';
+import { Redo2, RotateCcw, Shuffle, Undo2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import Button from '@/components/ui/Button';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { AvatarConfig, parseAvatarCode } from '@/avatars/code';
-import { AVATAR_LOOKS, AVATAR_OPTIONS, AvatarPart, renderAvatarConfig, STARTERS } from '@/avatars/parts';
+import { AVATAR_LOOKS, AVATAR_OPTIONS, AvatarPart, PLAIN_AVATAR, renderAvatarConfig, STARTERS } from '@/avatars/parts';
 import { UserResponse } from '@/types/api';
 
 const svgUrl = (config: AvatarConfig, reply = false, threadPx?: number) => `data:image/svg+xml;utf8,${encodeURIComponent(renderAvatarConfig(config, reply, threadPx, 'same'))}`;
@@ -83,7 +83,10 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
     const set = (part: AvatarPart, id: string) => setConfig({ ...dressed, [part]: id });
 
     // Choosing any part turns a starter into a dressed character
-    const dressed = useMemo(() => Object.fromEntries(Object.entries(config).filter(([part]) => part !== 'starter')), [config]);
+    const dressed = useMemo(() => {
+        const parts = Object.fromEntries(Object.entries(config).filter(([part]) => part !== 'starter'));
+        return Object.keys(parts).length > 0 ? parts : PLAIN_AVATAR;
+    }, [config]);
     const starters = useMemo(() => Object.keys(STARTERS).map((id) => ({ id, preview: svgUrl({ starter: id }) })), []);
     const looks = useMemo(() => AVATAR_LOOKS.map((look) => ({ ...look, preview: svgUrl(look.config) })), []);
 
@@ -123,6 +126,9 @@ export default function AvatarEditor({ code, username }: { code: string | null; 
                         <Redo2 className="size-4" />
                     </Button>
                 </div>
+                <Button variant="ghost" size="sm" onClick={() => setConfig(PLAIN_AVATAR)}>
+                    <RotateCcw className="size-4" /> Reset to plain
+                </Button>
                 {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
                 <div className="flex w-full gap-2">
                     <Button className="flex-1" onClick={save} disabled={saving}>
