@@ -4,7 +4,9 @@
 
 // Branding lives here: renaming the site means changing this block (the logo is drawn in src/app/_components/LogoSection.tsx). Page titles, share
 // previews, generated images, structured data, robots.txt and llms.txt all read from it.
-export const APP_NAME = 'yarnter';
+export const APP_NAME = 'Yarnter';
+// The logo writes the name in lowercase; everywhere else (titles, metadata, copy) uses APP_NAME as is
+export const LOGO_TEXT = APP_NAME.toLowerCase();
 export const APP_DESCRIPTION =
     'Ask questions, share what you know and get real answers from people who have been there.';
 export const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');

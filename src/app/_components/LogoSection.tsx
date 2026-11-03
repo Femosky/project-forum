@@ -1,4 +1,4 @@
-import { APP_NAME } from '@/lib/constants';
+import { LOGO_TEXT } from '@/lib/constants';
 import Link from 'next/link';
 
 // The mark: a bare Yarner in the brand red. Drawn inline (no image request) so it follows light and dark mode.
@@ -21,7 +21,7 @@ export function LogoSection() {
     return (
         <Link href="/" className="flex shrink-0 items-center gap-2 rounded-lg">
             <LogoMark className="h-7 w-auto" />
-            <span className="text-[20px] font-semibold tracking-tight">{APP_NAME}</span>
+            <span className="text-[20px] font-semibold tracking-tight">{LOGO_TEXT}</span>
         </Link>
     );
 }

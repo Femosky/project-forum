@@ -7,7 +7,7 @@ import IconButton from '@/components/ui/IconButton';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/Dialog';
 import SidebarList from '@/components/common/SidebarList';
 import { LogoMark } from '@/app/_components/LogoSection';
-import { APP_NAME } from '@/lib/constants';
+import { APP_NAME, LOGO_TEXT } from '@/lib/constants';
 
 export function MobileNav() {
     const [isOpen, setIsOpen] = useState(false);
@@ -28,7 +28,7 @@ export function MobileNav() {
             >
                 <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2.5 px-6 pb-6 pt-6 text-[22px] font-semibold tracking-tight">
                     <LogoMark className="h-8 w-auto" />
-                    {APP_NAME}
+                    {LOGO_TEXT}
                 </Link>
                 <SidebarList large onNavigate={() => setIsOpen(false)} />
             </SheetContent>
