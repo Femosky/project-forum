@@ -21,7 +21,7 @@ export const BRAND_COLORS = { background: '#0e0e10', text: '#f4f4f5', muted: '#8
 // used on profiles and share images; change it here to rename it everywhere.
 export const REPUTATION_LABEL = 'reputation';
 // Where legal requests, takedown notices and appeals go (shown on the policy pages)
-export const LEGAL_EMAIL = process.env.NEXT_PUBLIC_LEGAL_EMAIL || 'legal@forum.oskeylabs.com';
+export const LEGAL_EMAIL = process.env.NEXT_PUBLIC_LEGAL_EMAIL || 'legal@yarnter.com';
 export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:3001';
 export const THEME_STORAGE_KEY = 'theme';
 // Runs before paint: a guest's stored theme, unless the server already set one from a cookie

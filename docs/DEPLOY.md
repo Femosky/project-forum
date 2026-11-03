@@ -1,6 +1,6 @@
 # Deploying the web app
 
-Private testing runs on **Vercel Hobby** (free) at `https://forum.oskeylabs.com`, talking to the API at `https://api.forum.oskeylabs.com` (see `docs/DEPLOY.md` in the API repo). Functions run in `fra1` (Frankfurt, `vercel.json`), next to the API and database once they move to Frankfurt (project-root `docs/LAUNCH.md`, "Moving to Frankfurt"). Until that move they sat in `cle1` (Cleveland), next to Ohio.
+Private testing runs on **Vercel Hobby** (free) at `https://yarnter.com`, talking to the API at `https://api.yarnter.com` (see `docs/DEPLOY.md` in the API repo). Functions run in `fra1` (Frankfurt, `vercel.json`), next to the API and database once they move to Frankfurt (project-root `docs/LAUNCH.md`, "Moving to Frankfurt"). Until that move they sat in `cle1` (Cleveland), next to Ohio.
 
 Vercel Hobby is for non-commercial use. Before ads go live, move to Vercel Pro or to Cloudflare (docs/ROADMAP.md, decision 5).
 
@@ -12,7 +12,7 @@ Vercel's GitHub integration builds every push. `main` goes to production; every 
 
 1. vercel.com → Add New → Project → import `Femosky/project-forum`. Framework is detected; leave build settings alone.
 2. Add the variables below for **Production** (and Preview if you like), then deploy.
-3. Project → Settings → Domains → add `forum.oskeylabs.com`. At the DNS host add a CNAME `forum` → `cname.vercel-dns.com` (on Cloudflare, **DNS only**, grey cloud).
+3. Project → Settings → Domains → add `yarnter.com`. In Cloudflare add the A record Vercel shows for `@` and the CNAME it shows for `www` (both **DNS only**, grey cloud).
 4. Settings → Billing has no spend on Hobby; nothing to cap.
 
 ## Settings
@@ -21,9 +21,9 @@ Vercel's GitHub integration builds every push. `main` goes to production; every 
 
 | Variable | Value for testing | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_BACKEND_API` | `https://api.forum.oskeylabs.com` | No `/v1` |
-| `NEXT_PUBLIC_APP_URL` | `https://forum.oskeylabs.com` | Canonical links, sitemaps, share cards |
-| `NEXT_PUBLIC_LEGAL_EMAIL` | an address that reaches you | Shown on every policy page. `legal@forum.oskeylabs.com` works once email forwarding is set up (Cloudflare Email Routing is free) |
+| `NEXT_PUBLIC_BACKEND_API` | `https://api.yarnter.com` | No `/v1` |
+| `NEXT_PUBLIC_APP_URL` | `https://yarnter.com` | Canonical links, sitemaps, share cards |
+| `NEXT_PUBLIC_LEGAL_EMAIL` | an address that reaches you | Shown on every policy page. `legal@yarnter.com` works once email forwarding is set up (Cloudflare Email Routing is free) |
 | `PRIVATE_SITE` | `true` | robots.txt blocks every crawler and every page is sent `noindex`. Remove at public launch |
 | `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project key (EU) | Page views and shares. Same project as the API's `POSTHOG_API_KEY` |
 | `POSTHOG_HOST` | leave unset | Defaults to `https://eu.i.posthog.com` |
@@ -39,7 +39,7 @@ Vercel's GitHub integration builds every push. `main` goes to production; every 
 
 Logged-out visitors to `/`, `/trending`, `/c/{name}` and post pages get HTML that is the same for every guest, so `src/proxy.ts` marks it `Vercel-CDN-Cache-Control: public, s-maxage=60, stale-while-revalidate=300`: Vercel's CDN keeps it for a minute and serves it stale for five more while it re-renders. Browsers get `Cache-Control: public, max-age=0, must-revalidate` and the response carries `X-Guest-Cache: <variant>`. Requests with sign-in cookies are never cached (Next's `private, no-store`), and guest copies are keyed separately per theme and data-saver setting (`?__guest=` on the internal rewrite). Guest HTML contains nothing personal, so even a cache mistake could only show someone the signed-out page. Ads in cached pages ignore the per-reader frequency cookie for up to a minute.
 
-To check after a deploy: `curl -sI https://forum.oskeylabs.com/trending | grep -i -E 'x-vercel-cache|cache-control|x-guest'` twice (the second says `x-vercel-cache: HIT`), then the same with `-H 'Cookie: refresh_token=x'` (no `X-Guest-Cache`, `private, no-store`).
+To check after a deploy: `curl -sI https://yarnter.com/trending | grep -i -E 'x-vercel-cache|cache-control|x-guest'` twice (the second says `x-vercel-cache: HIT`), then the same with `-H 'Cookie: refresh_token=x'` (no `X-Guest-Cache`, `private, no-store`).
 
 ## Cookies and consent
 
