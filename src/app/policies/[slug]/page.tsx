@@ -48,6 +48,17 @@ export default async function PolicyPage({ params }: PageProps) {
                             ))}
                         </ul>
                     )}
+                    {section.links && (
+                        <ul className="flex flex-col gap-1.5 pl-5 leading-relaxed">
+                            {section.links.map((link) => (
+                                <li key={link.href}>
+                                    <a href={link.href} rel="noopener noreferrer" className="font-semibold text-link hover:underline">
+                                        {link.label}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </section>
             ))}
             <nav aria-label="Other policies" className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-4 text-sm">

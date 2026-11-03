@@ -13,8 +13,8 @@ export default function CookieNotice() {
             className="cookie-notice fixed inset-x-0 bottom-16 z-50 mx-auto flex max-w-content flex-col gap-3 border border-border bg-surface-raised p-4 text-sm shadow-raised sm:bottom-4 sm:rounded-xl md:flex-row md:items-center"
         >
             <p className="flex-1 text-muted">
-                We use cookies to keep you signed in. With your OK we also count visits and let Google show ads that match your
-                interests.{' '}
+                We use cookies to keep you signed in, and count visits without cookies. With your OK, Google can also show ads
+                that match your interests.{' '}
                 <Link href="/policies/cookies" className="font-semibold text-link hover:underline">
                     Cookie policy
                 </Link>
