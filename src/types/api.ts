@@ -231,6 +231,8 @@ export interface PrivateUser {
     links_unlock_at: string | null;
     reputation_needed: number;
     can_post_anonymously: boolean;
+    // Why this account can't start a community yet, or null when it can
+    community_create_block: string | null;
 }
 
 export interface Session {

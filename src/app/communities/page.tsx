@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CloudOff, Search, Users } from 'lucide-react';
+import { CloudOff, Plus, Search, Users } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { APP_NAME } from '@/lib/constants';
 import { pageMetadata } from '@/lib/seo';
@@ -63,7 +63,14 @@ export default async function CommunitiesPage({ searchParams }: PageProps) {
 
     return (
         <div className="mx-auto flex w-full max-w-content flex-col gap-3 py-3 sm:px-4 sm:py-4">
-            <h1 className="px-4 text-2xl font-extrabold sm:px-0">{activeLabel ? `${activeLabel} communities` : 'Communities'}</h1>
+            <div className="flex items-center justify-between gap-3 px-4 sm:px-0">
+                <h1 className="text-2xl font-extrabold">{activeLabel ? `${activeLabel} communities` : 'Communities'}</h1>
+                <Button asChild variant="secondary" size="sm">
+                    <Link href="/communities/new">
+                        <Plus className="size-4" /> Start one
+                    </Link>
+                </Button>
+            </div>
 
             <form action="/communities" method="get" role="search" className="flex gap-2 px-4 sm:px-0">
                 {category && <input type="hidden" name="category" value={category} />}

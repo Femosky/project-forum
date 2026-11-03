@@ -31,10 +31,11 @@ type Draft = {
     image: PostImage | null;
     flairId: string;
     isAnonymous: boolean;
+    isMature: boolean;
 };
 
 const DRAFT_KEY = 'post-draft';
-const EMPTY_DRAFT: Draft = { community: '', type: 'text', title: '', body: '', url: '', image: null, flairId: '', isAnonymous: false };
+const EMPTY_DRAFT: Draft = { community: '', type: 'text', title: '', body: '', url: '', image: null, flairId: '', isAnonymous: false, isMature: false };
 
 // Wait for typing to pause before looking a link up
 const LINK_CHECK_DELAY_MS = 600;
@@ -201,6 +202,7 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
                     ...(draft.type === 'image' && draft.image ? { image: draft.image } : {}),
                     ...(draft.flairId && availableFlairs.some((flair) => flair.id === draft.flairId) ? { flair_id: draft.flairId } : {}),
                     is_anonymous: draft.isAnonymous,
+                    is_nsfw: draft.isMature,
                     turnstile_token: challenge.token,
                 },
             });
@@ -402,6 +404,19 @@ export function PostComposer({ joined, popular, initialCommunity, canPostLinks, 
                             ? "Your username is hidden from everyone except the community's moderators."
                             : 'Available once your account is a day old and your email is verified.'}
                     </span>
+                </span>
+            </label>
+
+            <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+                <input
+                    type="checkbox"
+                    checked={draft.isMature}
+                    onChange={(e) => update('isMature', e.target.checked)}
+                    className="mt-0.5 size-4 accent-accent"
+                />
+                <span>
+                    <span className="font-semibold">Mature (18+)</span>
+                    <span className="block text-muted">Blurred for guests and for anyone who hasn&apos;t chosen to see mature posts, and kept out of search results.</span>
                 </span>
             </label>
 

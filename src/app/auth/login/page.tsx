@@ -89,6 +89,10 @@ function LoginForm() {
                         {notice}
                     </p>
                 )}
+                {/* empty:hidden: no gap when Google sign-in is off */}
+                <div className="mt-6 empty:hidden">
+                    <LazyGoogleSignIn next={next} onLinkRequired={askToLinkGoogle} />
+                </div>
                 <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
                     <FormField name="identifier" label="Email or username" error={errors.identifier}>
                         <InputField
@@ -132,9 +136,6 @@ function LoginForm() {
                     </Button>
                     {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
                 </form>
-                <div className="mt-4">
-                    <LazyGoogleSignIn next={next} onLinkRequired={askToLinkGoogle} />
-                </div>
 
                 <p className="mt-6 text-center text-sm text-muted">
                     New here?{' '}

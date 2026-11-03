@@ -46,7 +46,7 @@ export function PostOptions({ post, leaveOnDelete, isModerator }: { post: Post; 
             // The page re-renders from the server to show the new status, pin or lock
             moderation={
                 isModerator
-                    ? { status: post.status, pinned: Boolean(post.pinned_at), canPin: true, onModerated: () => router.refresh() }
+                    ? { status: post.status, pinned: Boolean(post.pinned_at), canPin: true, mature: post.is_nsfw, onModerated: () => router.refresh() }
                     : undefined
             }
         />

@@ -68,6 +68,7 @@ async function postGoogle(body: Record<string, unknown>) {
     );
 }
 
+// Shown above the email form, so the "or" divider goes under the button
 export function GoogleSignIn({ next, onLinkRequired }: { next: string; onLinkRequired: (email: string) => void }) {
     const router = useRouter();
     const login = useAuthStateStore((state) => state.login);
@@ -159,15 +160,15 @@ export function GoogleSignIn({ next, onLinkRequired }: { next: string; onLinkReq
     if (!CLIENT_ID) return null;
     return (
         <div className="flex flex-col gap-3">
+            {/* Same height as Google's button, so nothing moves when it appears */}
+            {/* color-scheme: in dark mode a mismatch with the iframe's page paints a white box behind the button */}
+            <div ref={container} className="flex h-10 w-full justify-center [color-scheme:light]" />
+            {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
             <div className="flex items-center gap-3 text-xs text-muted">
                 <span className="h-px flex-1 bg-border" />
                 or
                 <span className="h-px flex-1 bg-border" />
             </div>
-            {/* Same height as Google's button, so nothing moves when it appears */}
-            {/* color-scheme: in dark mode a mismatch with the iframe's page paints a white box behind the button */}
-            <div ref={container} className="flex h-10 w-full justify-center [color-scheme:light]" />
-            {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
             {details && GoogleDetails && (
                 <GoogleDetails
                     postGoogle={postGoogle}

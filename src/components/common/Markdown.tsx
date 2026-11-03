@@ -17,38 +17,59 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
     );
 }
 
-function renderInline(text: string, keyPrefix = 'i'): ReactNode[] {
+// @name and u/name link to the profile, matched like the API's mention notifications (notifications/service.ts)
+const MENTION = /(?<![\w/@])(?:@|u\/)([A-Za-z][A-Za-z0-9_]{2,19})\b/g;
+
+function withMentions(text: string, keyPrefix: string): ReactNode[] {
+    const nodes: ReactNode[] = [];
+    let last = 0;
+    for (const match of text.matchAll(MENTION)) {
+        if (match.index > last) nodes.push(text.slice(last, match.index));
+        nodes.push(
+            <a key={`${keyPrefix}-m${match.index}`} href={`/u/${match[1].toLowerCase()}`} className="relative z-10 font-semibold text-link hover:underline">
+                {match[0]}
+            </a>
+        );
+        last = match.index + match[0].length;
+    }
+    if (last < text.length) nodes.push(text.slice(last));
+    return nodes;
+}
+
+// mentions: false inside a link's text, so a link never holds another link
+function renderInline(text: string, keyPrefix = 'i', mentions = true): ReactNode[] {
     const nodes: ReactNode[] = [];
     let last = 0;
     let index = 0;
     const pattern = new RegExp(INLINE.source, 'g');
+    const plain = (value: string, key: string) => (mentions ? withMentions(value, key) : [value]);
 
     for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
-        if (match.index > last) nodes.push(text.slice(last, match.index));
+        if (match.index > last) nodes.push(...plain(text.slice(last, match.index), `${keyPrefix}-${index}t`));
         const key = `${keyPrefix}-${index++}`;
         const [, , code, linkText, linkUrl, bold, boldAlt, strike, italic, italicAlt, bareUrl, escaped, spoiler, supPhrase, supWord, sub] =
             match;
 
         if (code !== undefined) nodes.push(<code key={key}>{code}</code>);
-        else if (linkText !== undefined) nodes.push(<ExternalLink key={key} href={linkUrl}>{renderInline(linkText, key)}</ExternalLink>);
-        else if (bold !== undefined || boldAlt !== undefined) nodes.push(<strong key={key}>{renderInline(bold ?? boldAlt, key)}</strong>);
-        else if (strike !== undefined) nodes.push(<del key={key}>{renderInline(strike, key)}</del>);
-        else if (italic !== undefined || italicAlt !== undefined) nodes.push(<em key={key}>{renderInline(italic ?? italicAlt, key)}</em>);
+        else if (linkText !== undefined) nodes.push(<ExternalLink key={key} href={linkUrl}>{renderInline(linkText, key, false)}</ExternalLink>);
+        else if (bold !== undefined || boldAlt !== undefined) nodes.push(<strong key={key}>{renderInline(bold ?? boldAlt, key, mentions)}</strong>);
+        else if (strike !== undefined) nodes.push(<del key={key}>{renderInline(strike, key, mentions)}</del>);
+        else if (italic !== undefined || italicAlt !== undefined) nodes.push(<em key={key}>{renderInline(italic ?? italicAlt, key, mentions)}</em>);
         else if (bareUrl !== undefined) nodes.push(<ExternalLink key={key} href={bareUrl}>{bareUrl}</ExternalLink>);
         else if (escaped !== undefined) nodes.push(escaped);
         else if (spoiler !== undefined)
             // Hidden until tapped or focused (CSS only, see .spoiler in globals.css)
             nodes.push(
                 <span key={key} className="spoiler" tabIndex={0} role="button" aria-label="Spoiler, select to reveal">
-                    {renderInline(spoiler, key)}
+                    {renderInline(spoiler, key, mentions)}
                 </span>
             );
-        else if (supPhrase !== undefined || supWord !== undefined) nodes.push(<sup key={key}>{renderInline(supPhrase ?? supWord, key)}</sup>);
-        else if (sub !== undefined) nodes.push(<sub key={key}>{renderInline(sub, key)}</sub>);
+        else if (supPhrase !== undefined || supWord !== undefined) nodes.push(<sup key={key}>{renderInline(supPhrase ?? supWord, key, mentions)}</sup>);
+        else if (sub !== undefined) nodes.push(<sub key={key}>{renderInline(sub, key, mentions)}</sub>);
 
         last = match.index + match[0].length;
     }
-    if (last < text.length) nodes.push(text.slice(last));
+    if (last < text.length) nodes.push(...plain(text.slice(last), `${keyPrefix}-end`));
     return nodes;
 }
 
