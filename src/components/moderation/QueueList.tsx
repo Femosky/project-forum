@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { CircleCheck, EyeOff, Flag, Gavel, Inbox, MessageSquare, ShieldAlert, ShieldX, UserX, VolumeX } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -24,8 +25,13 @@ export function QueueList({ initialItems, site = false }: { initialItems: QueueI
     const [items, setItems] = useState(initialItems);
     const [pending, setPending] = useState<Pending | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
-    const done = (item: QueueItem) => setItems((current) => current.filter((other) => other !== item));
+    // The refresh updates the queue count on the tab above
+    const done = (item: QueueItem) => {
+        setItems((current) => current.filter((other) => other !== item));
+        router.refresh();
+    };
 
     async function run(item: QueueItem, action: () => Promise<unknown>) {
         setError(null);

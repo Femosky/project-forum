@@ -9,6 +9,20 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 
+// What the link stops, read from the token's unsigned part (the API checks the signature). Kinds as in the API's
+// lib/emailTokens.ts.
+function whatStops(token: string): string {
+    try {
+        const [kind, , ref] = atob(token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/')).split(':');
+        if (kind === 'hide' && ref) return `Hide c/${ref} from your digest?`;
+        const label = ({ digest: 'digest emails', replies: 'reply emails', mentions: 'mention emails', mod: 'moderator emails' } as Record<string, string>)[kind];
+        if (label) return `Stop ${label}?`;
+    } catch {
+        // Not a token we can read; the API will say so
+    }
+    return 'Stop these emails?';
+}
+
 // From the link in an email. It asks for a click, so mail scanners that open links don't unsubscribe anyone.
 function Unsubscribe() {
     const token = useSearchParams().get('token') ?? '';
@@ -39,7 +53,7 @@ function Unsubscribe() {
         );
     }
     return (
-        <AuthCard title="Stop these emails?" subtitle="You'll still see what's waiting on the site.">
+        <AuthCard title={whatStops(token)} subtitle="You'll still see what's waiting on the site.">
             <div className="mt-6 flex flex-col gap-3">
                 <Button size="lg" className="w-full" onClick={confirm} disabled={!token}>
                     Yes, stop them

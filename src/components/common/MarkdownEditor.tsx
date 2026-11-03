@@ -69,6 +69,8 @@ export function MarkdownEditor({
     const [RichEditor, setRichEditor] = useState<RichEditorComponent | null>(null);
     const [linkDraft, setLinkDraft] = useState<(LinkDraft & { start: number; end: number }) | null>(null);
     const textarea = useRef<HTMLTextAreaElement>(null);
+    // The stand-in box had focus when the editor arrived, so the editor takes it over
+    const [focusedEarly, setFocusedEarly] = useState(false);
     const isCompact = variant === 'compact';
     const minHeight = isCompact ? 'min-h-24' : 'min-h-40';
 
@@ -244,16 +246,29 @@ export function MarkdownEditor({
                     placeholder={placeholder}
                     label={placeholder}
                     maxLength={maxLength}
-                    autoFocus={autoFocus}
+                    autoFocus={autoFocus || focusedEarly}
                     minHeightClass={minHeight}
                     onSubmitShortcut={onSubmitShortcut}
                     menu={menu}
                 />
             ) : mode === 'rich' ? (
-                // Same size as the editor, for the moment it takes to load
+                // Same size as the editor, for the moment it takes to load. A plain box, so what someone types on a
+                // slow phone before the editor arrives isn't lost: the editor opens with it and the cursor at the end
                 <>
                     <div className="h-9 border-b border-border" />
-                    <div className={twMerge('px-3 py-2.5 text-[15px] leading-6 text-subtle', minHeight)}>{placeholder}</div>
+                    <TextArea
+                        variant="bare"
+                        name={name}
+                        aria-label={placeholder}
+                        placeholder={placeholder}
+                        maxLength={maxLength}
+                        autoFocus={autoFocus}
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        onFocus={() => setFocusedEarly(true)}
+                        onBlur={() => setFocusedEarly(false)}
+                        className={twMerge('px-3 py-2.5', minHeight)}
+                    />
                 </>
             ) : (
                 <>
