@@ -84,3 +84,14 @@ describe('Markdown through the editor', () => {
         expect(docToMarkdown(doc)).toBe('**a _b_ c** d');
     });
 });
+
+describe('mentions', () => {
+    it('links @name and u/name to the profile, but not emails, code or link text', () => {
+        expect(html('thanks @Ada_L and u/tunde')).toContain('<a href="/u/ada_l"');
+        expect(html('thanks @Ada_L and u/tunde')).toContain('href="/u/tunde"');
+        expect(html('mail me@example.com')).not.toContain('/u/');
+        expect(html('`@ada` in code')).not.toContain('/u/');
+        expect(html('[ask @ada](https://example.com)')).not.toContain('/u/');
+        expect(html('**@ada**')).toContain('<strong><a href="/u/ada"');
+    });
+});

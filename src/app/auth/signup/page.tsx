@@ -90,6 +90,13 @@ function SignupForm() {
                 <h1 className="text-2xl font-extrabold">Create an account</h1>
                 <p className="mt-1 text-sm text-muted">Ask questions, share what you know, and vote on the best answers.</p>
 
+                {/* empty:hidden: no gap when Google sign-in is off */}
+                <div className="mt-6 empty:hidden">
+                    <LazyGoogleSignIn
+                        next={next}
+                        onLinkRequired={() => router.push(`/auth/login${next === '/' ? '' : `?next=${encodeURIComponent(next)}`}`)}
+                    />
+                </div>
                 <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
                     <FormField name="email" label="Email" error={fieldErrors.email}>
                         <InputField
@@ -175,12 +182,6 @@ function SignupForm() {
                         .
                     </p>
                 </form>
-                <div className="mt-4">
-                    <LazyGoogleSignIn
-                        next={next}
-                        onLinkRequired={() => router.push(`/auth/login${next === '/' ? '' : `?next=${encodeURIComponent(next)}`}`)}
-                    />
-                </div>
 
                 <p className="mt-6 text-center text-sm text-muted">
                     Already have an account?{' '}

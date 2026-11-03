@@ -50,6 +50,8 @@ const ACTION_LABELS: Record<string, string> = {
     unlock_post: 'unlocked a post',
     pin_post: 'pinned a post',
     unpin_post: 'unpinned a post',
+    mark_mature_post: 'marked a post mature',
+    unmark_mature_post: 'unmarked a mature post',
     sponsor_post: 'marked a post sponsored',
     unsponsor_post: 'unmarked a sponsored post',
     remove_comment: 'removed a comment',

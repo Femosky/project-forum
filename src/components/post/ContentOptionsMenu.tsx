@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Bookmark, BookmarkCheck, CircleCheck, Ellipsis, Flag, Lock, LockOpen, Pencil, Pin, PinOff, ShieldX, Trash2 } from 'lucide-react';
+import { Bookmark, BookmarkCheck, CircleCheck, Ellipsis, Eye, EyeOff, Flag, Lock, LockOpen, Pencil, Pin, PinOff, ShieldX, Trash2 } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import Button from '@/components/ui/Button';
 import ErrorMessage from '@/components/ui/ErrorMessage';
@@ -32,18 +32,21 @@ type Moderation = {
     status: ContentStatus;
     pinned: boolean;
     canPin: boolean;
+    // Posts only: whether it's marked mature, so moderators can mark or unmark it
+    mature?: boolean;
     // Gets the API's response body after an action succeeds
     onModerated: (body: unknown) => void;
 };
 
-type ModAction = 'remove' | 'approve' | 'lock' | 'unlock' | 'pin' | 'unpin';
+type ModAction = 'remove' | 'approve' | 'lock' | 'unlock' | 'pin' | 'unpin' | 'mark_mature' | 'unmark_mature';
 
-function moderationItems({ status, pinned, canPin }: Moderation): { action: ModAction; label: string; icon: typeof Pin; destructive?: boolean }[] {
+function moderationItems({ status, pinned, canPin, mature }: Moderation): { action: ModAction; label: string; icon: typeof Pin; destructive?: boolean }[] {
     const isVisible = status === 'active' || status === 'locked';
     return [
         ...(canPin && isVisible ? [pinned ? { action: 'unpin' as const, label: 'Unpin', icon: PinOff } : { action: 'pin' as const, label: 'Pin', icon: Pin }] : []),
         ...(status === 'active' ? [{ action: 'lock' as const, label: 'Lock replies', icon: Lock }] : []),
         ...(status === 'locked' ? [{ action: 'unlock' as const, label: 'Unlock replies', icon: LockOpen }] : []),
+        ...(mature === undefined ? [] : [mature ? { action: 'unmark_mature' as const, label: 'Unmark mature', icon: Eye } : { action: 'mark_mature' as const, label: 'Mark mature', icon: EyeOff }]),
         ...(isVisible ? [{ action: 'remove' as const, label: 'Remove', icon: ShieldX, destructive: true }] : []),
         ...(status === 'removed' || status === 'pending' ? [{ action: 'approve' as const, label: 'Approve', icon: CircleCheck }] : []),
     ];

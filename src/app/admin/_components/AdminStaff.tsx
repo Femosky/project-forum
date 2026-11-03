@@ -11,6 +11,7 @@ import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import { StaffAccount, StaffAuditEntry, StaffRole } from '@/types/api';
+import { APP_NAME } from '@/lib/constants';
 
 const ROLES: { id: StaffRole; label: string; description: string }[] = [
     { id: 'owner', label: 'Owner', description: 'Everything, including admin accounts' },
@@ -77,7 +78,7 @@ export function AdminStaff({ me, initial }: { me: StaffAccount; initial: StaffAc
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm text-muted">Admin accounts are separate from forum accounts. Everyone signs in at /admin/login with a password and an authenticator app.</p>
+                <p className="text-sm text-muted">Admin accounts are separate from {APP_NAME} accounts. Everyone signs in at /admin/login with a password and an authenticator app.</p>
                 <Button size="sm" onClick={() => setInviting(!inviting)}>
                     <Plus className="size-4" /> Invite an admin
                 </Button>

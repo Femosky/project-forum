@@ -28,6 +28,7 @@ export function CommunitySettingsForm({ community }: { community: Community }) {
     const styleError = nameStyled.trim().toLowerCase() === community.name ? null : `Only capital letters can change: it must spell "${community.name}".`;
     const [description, setDescription] = useState(community.description ?? '');
     const [category, setCategory] = useState(community.category ?? '');
+    const [isMature, setIsMature] = useState(community.is_nsfw);
     const [rules, setRules] = useState<CommunityRule[]>(community.rules ?? []);
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const [error, setError] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export function CommunitySettingsForm({ community }: { community: Community }) {
                     display_name: displayName.trim() || null,
                     description: description.trim() || null,
                     category: category || null,
+                    is_nsfw: isMature,
                     rules: rules
                         .map((rule) => ({ title: rule.title.trim(), description: rule.description.trim() }))
                         .filter((rule) => rule.title),
@@ -162,6 +164,14 @@ export function CommunitySettingsForm({ community }: { community: Community }) {
                     ))}
                 </select>
             </div>
+
+            <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+                <input type="checkbox" checked={isMature} onChange={(e) => setIsMature(e.target.checked)} className="mt-0.5 size-4 accent-accent" />
+                <span>
+                    <span className="font-semibold">Mature community (18+)</span>
+                    <span className="block text-muted">Every post is blurred for guests and for anyone who hasn&apos;t chosen to see mature posts, and the community stays out of search results and ads.</span>
+                </span>
+            </label>
 
             <fieldset className="flex flex-col gap-3">
                 <legend className="mb-1 text-sm font-semibold">Rules</legend>

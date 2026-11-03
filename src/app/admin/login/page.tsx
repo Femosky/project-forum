@@ -14,6 +14,7 @@ import { useFieldErrors } from '@/components/forms/useFieldErrors';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { StaffAccount } from '@/types/api';
+import { APP_NAME } from '@/lib/constants';
 
 type Step = 'password' | 'setup_2fa' | 'verify_2fa' | 'recovery_codes' | 'new_password';
 type Setup = { secret: string; otpauth_url: string; qr_svg: string };
@@ -128,7 +129,7 @@ export default function AdminLoginPage() {
 
     if (step === 'password') {
         return (
-            <AuthCard title="Admin sign-in" subtitle="For staff accounts. Your forum account doesn't work here.">
+            <AuthCard title="Admin sign-in" subtitle={`For staff accounts. Your ${APP_NAME} account doesn't work here.`}>
                 <form onSubmit={submitPassword} className={field} noValidate>
                     <FormField name="email" label="Email" error={errors.email}>
                         <InputField

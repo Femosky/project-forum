@@ -31,6 +31,12 @@ const nextConfig: NextConfig = {
         return [
             { source: '/community/:name', destination: '/c/:name', permanent: true },
             { source: '/community/:name/replies/:shortId', destination: '/c/:name/:shortId', permanent: true },
+            // Addresses people type by hand
+            { source: '/about', destination: '/policies/about', permanent: true },
+            { source: '/login', destination: '/auth/login', permanent: true },
+            { source: '/signin', destination: '/auth/login', permanent: true },
+            { source: '/signup', destination: '/auth/signup', permanent: true },
+            { source: '/register', destination: '/auth/signup', permanent: true },
         ];
     },
     images: {
