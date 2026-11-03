@@ -14,6 +14,7 @@ import { NotificationPoller } from '@/components/notifications/NotificationBadge
 import CookieGate from '@/components/consent/CookieGate';
 import CookieNotice from '@/components/consent/CookieNotice';
 import { CONSENT_DEFAULTS_SCRIPT } from '@/lib/consentDefaults';
+import { adsensePublisherId } from '@/lib/adsense';
 import PageViews from '@/components/common/PageViews';
 import ErrorReporter from '@/components/common/ErrorReporter';
 import { getTheme } from '@/components/theme/getTheme';
@@ -29,10 +30,14 @@ const hanken = Hanken_Grotesk({
     display: 'optional',
 });
 
-// Search Console and Bing Webmaster Tools ownership tags, set from the deploy environment
+// Search Console, Bing Webmaster Tools and AdSense ownership tags, set from the deploy environment
+const adsensePublisher = adsensePublisherId();
 const verification: Metadata['verification'] = {
     google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
-    other: process.env.BING_SITE_VERIFICATION ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION } : undefined,
+    other: {
+        ...(process.env.BING_SITE_VERIFICATION ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION } : {}),
+        ...(adsensePublisher ? { 'google-adsense-account': `ca-${adsensePublisher}` } : {}),
+    },
 };
 
 // Defaults for every page; pages override title, description, canonical and share tags with pageMetadata()

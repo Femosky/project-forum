@@ -146,6 +146,8 @@ const FOOTER_LINKS = [
     { href: '/policies/terms', label: 'Terms' },
     { href: '/policies/privacy', label: 'Privacy' },
     { href: '/policies/cookies', label: 'Cookies' },
+    { href: '/policies/ads', label: 'Ads' },
+    { href: '/policies/about', label: 'About and contact' },
 ];
 
 const MODERATION_ROUTE = { href: '/moderation', label: 'Moderation', icon: ShieldCheck } as NavRoute;
