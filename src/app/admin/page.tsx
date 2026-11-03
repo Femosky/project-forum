@@ -7,6 +7,7 @@ import QueueList from '@/components/moderation/QueueList';
 import ModLog from '@/components/moderation/ModLog';
 import ToolTabs from '@/components/moderation/ToolTabs';
 import AlertEmailToggle from './_components/AlertEmailToggle';
+import ErrorTest from './_components/ErrorTest';
 import { AdminCommunities, AdminUsers, Blocklist } from './_components/AdminPanels';
 import { AdminAds, AdminCampaign } from './_components/AdminAds';
 import type { AdsOverview, CampaignDetail } from '@/ads/types';
@@ -128,7 +129,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 ) : tab === 'blocklist' ? (
                     <Blocklist initialTerms={(section.data as { terms: BlockedTerm[] }).terms} />
                 ) : tab === 'admins' ? (
-                    <AdminStaff me={staff} initial={(section.data as { staff: StaffAccount[] }).staff} />
+                    <>
+                        <AdminStaff me={staff} initial={(section.data as { staff: StaffAccount[] }).staff} />
+                        <ErrorTest />
+                    </>
                 ) : tab === 'audit' ? (
                     <AuditLog initial={section.data as { entries: StaffAuditEntry[]; next_cursor: string | null }} />
                 ) : (
