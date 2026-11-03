@@ -1,7 +1,7 @@
 import { twMerge } from 'tailwind-merge';
 import { cva, VariantProps } from 'class-variance-authority';
 import { ComponentProps } from 'react';
-import { Slot } from 'radix-ui';
+import { Slot } from './Slot';
 
 const iconButtonStyles = cva(
     [
@@ -36,7 +36,7 @@ export function IconButton({ variant, size, className, asChild = false, type = '
     const classes = twMerge(iconButtonStyles({ variant, size }), className);
 
     if (asChild) {
-        return <Slot.Root {...props} className={classes} />;
+        return <Slot {...props} className={classes} />;
     }
 
     return <button type={type} {...props} className={classes} />;

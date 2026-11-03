@@ -15,8 +15,9 @@ const POST_PATH = process.argv[3] ?? '/c/budget/bdgt0001/what-does-a-month-of-gr
 const KB = 1024;
 // The roadmap's JS target is 120 KB, but Next 16 and React 19 alone ship about 122 KB gzipped before any app code,
 // so JS is a ratchet at today's size: it fails on growth. Lower it whenever client code shrinks. Raised from 205 KB
-// to 210 KB in Oct 2026 for the Next 16.4 security upgrade, which added about 4 KB of framework code.
-const BUDGET = { html: 60 * KB, js: 210 * KB };
+// to 210 KB in Oct 2026 for the Next 16.4 security upgrade, which added about 4 KB of framework code. Lowered to 190 KB
+// in Nov 2026 when in-house menus and dialogs replaced Radix (the biggest page went from 208 KB to 180 KB).
+const BUDGET = { html: 60 * KB, js: 190 * KB };
 
 // A normal phone browser, not a crawler: crawlers get a blocking render, people get the streamed page
 const HEADERS = { 'User-Agent': 'Mozilla/5.0 (Linux; Android 11; moto g power) AppleWebKit/537.36 Chrome/130 Mobile Safari/537.36' };
