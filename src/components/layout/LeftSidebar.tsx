@@ -11,12 +11,12 @@ import SearchBox from '@/components/common/SearchBox';
 type LeftSidebarProps = ComponentProps<'aside'> & { theme: Theme | null };
 
 // Desktop only (it replaces the top header there); on small screens the same list lives in the header's slide-out
-// menu. Logo and new post, search, navigation and communities, then the account at the bottom.
+// menu. Logo and new post, search, navigation and communities, then the account pinned to the bottom.
 export default function LeftSidebar({ className, theme, ...props }: LeftSidebarProps) {
     return (
         <aside
             className={twMerge(
-                'sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col gap-3 overflow-y-auto border-r border-border py-3 pl-4 pr-2 md:flex',
+                'sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col gap-3 border-r border-border py-3 pl-4 pr-2 md:flex',
                 className
             )}
             {...props}
@@ -36,9 +36,12 @@ export default function LeftSidebar({ className, theme, ...props }: LeftSidebarP
             {/* A plain GET form, so search works before scripts load; suggestions appear as you type */}
             <SearchBox placeholder="Search" />
 
-            <SidebarList />
+            {/* Only the list scrolls, so the account row stays in view however many communities you join */}
+            <div className="-mr-2 min-h-0 flex-1 overflow-y-auto pr-2">
+                <SidebarList />
+            </div>
 
-            <div className="mt-auto">
+            <div className="shrink-0">
                 <SidebarAccount initialTheme={theme} />
             </div>
         </aside>
