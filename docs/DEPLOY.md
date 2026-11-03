@@ -34,6 +34,7 @@ Vercel's GitHub integration builds every push. `main` goes to production; every 
 | `NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_LABEL`, `NEXT_PUBLIC_GOOGLE_ADS_POST_LABEL` | with the id above | Each conversion action's label (Google Ads → Goals → Conversions → the action → Tag setup → "send_to": `AW-.../LABEL`) |
 | `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` | at public launch | The `content` value of each verification meta tag |
 | `INDEXNOW_KEY` | at public launch | Same value as the API's |
+| `ADSENSE_PUBLISHER_ID` | when applying to AdSense (site must be public) | AdSense → Account → Settings → Publisher ID (`pub-…`); serves `/ads.txt` and the ownership meta tag |
 
 ## Guest page caching
 
