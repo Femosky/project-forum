@@ -15,8 +15,6 @@ export const SITE_LANG = 'en-NG';
 export const SITE_OG_LOCALE = 'en_NG';
 // The site's X/Twitter account for twitter:site, e.g. '@yarnter'; left out until there is one
 export const TWITTER_HANDLE = process.env.NEXT_PUBLIC_TWITTER_HANDLE || undefined;
-// Colours for generated share images (match --accent and friends in globals.css)
-export const BRAND_COLORS = { background: '#0e0e10', text: '#f4f4f5', muted: '#8a8a94' } as const;
 // What we call the score people earn from votes on their posts and replies (Reddit calls it karma). One word,
 // used on profiles and share images; change it here to rename it everywhere.
 export const REPUTATION_LABEL = 'reputation';
