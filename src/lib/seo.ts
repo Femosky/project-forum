@@ -1,6 +1,6 @@
 import { communityHandle } from '@/lib/communityName';
 import type { Metadata } from 'next';
-import { APP_DESCRIPTION, APP_NAME, APP_URL, SITE_OG_LOCALE, TWITTER_HANDLE } from '@/lib/constants';
+import { APP_DESCRIPTION, APP_NAME, APP_URL, LOGO_TEXT, SITE_OG_LOCALE, TWITTER_HANDLE } from '@/lib/constants';
 import { stripMarkdown } from '@/components/common/Markdown';
 import type { Comment, Community, Post, PublicUser } from '@/types/api';
 
@@ -145,6 +145,8 @@ export function websiteJsonLd() {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         name: APP_NAME,
+        // Lets Google show "Yarnter" as the site name in results instead of the domain
+        alternateName: [LOGO_TEXT, new URL(APP_URL).host],
         description: APP_DESCRIPTION,
         url: absoluteUrl('/'),
         potentialAction: {
