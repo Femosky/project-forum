@@ -132,7 +132,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
             actions={
                 post.status !== 'deleted' && (
                     <>
-                        <ShareButton path={getPostPath(post)} title={post.title} inBar />
+                        <ShareButton path={getPostPath(post)} title={post.title} postId={post.id} inBar />
                         <SaveButton postId={post.id} saved={post.viewer?.saved} />
                     </>
                 )

@@ -5,6 +5,7 @@ import { Check, ChevronDown, Ellipsis, Link2, Mail, Send, Share, Share2 } from '
 import Button from '@/components/ui/Button';
 import { Dropdown, DropdownContent, DropdownItem, DropdownSeparator, DropdownTrigger } from '@/components/ui/Dropdown';
 import { APP_URL } from '@/lib/constants';
+import { api } from '@/lib/api/client';
 import { trackEvent } from '@/lib/analytics';
 
 // Places people share to, most-used first. Each opens the service's own share page in a new tab.
@@ -19,17 +20,23 @@ const TARGETS: { label: string; href: (url: string, title: string) => string }[]
 
 // Our own share menu, the same on every device: copy the link, send it to a common app, or hand it to the device's
 // share sheet ("More options", where the browser has one). In a page's top bar it drops the chevron, and its label on phones.
-export function ShareButton({ path, title, inBar = false }: { path: string; title: string; inBar?: boolean }) {
+// postId: counts the share for the post's insights (no details about who shared)
+export function ShareButton({ path, title, inBar = false, postId }: { path: string; title: string; inBar?: boolean; postId?: string }) {
     const [copied, setCopied] = useState(false);
     const [canShareNatively, setCanShareNatively] = useState(false);
 
     // The menu's links are built during render, which also happens on the server (where there's no window)
     const url = () => new URL(path, typeof window === 'undefined' ? APP_URL : window.location.origin).toString();
 
+    function counted(channel: string) {
+        trackEvent('share', { channel });
+        if (postId) api(`/posts/${postId}/share`, { method: 'POST' }).catch(() => null);
+    }
+
     async function copyLink() {
         try {
             await navigator.clipboard.writeText(url());
-            trackEvent('share', { channel: 'copy_link' });
+            counted('copy_link');
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch {
@@ -40,7 +47,7 @@ export function ShareButton({ path, title, inBar = false }: { path: string; titl
     async function shareNatively() {
         try {
             await navigator.share({ title, url: url() });
-            trackEvent('share', { channel: 'native' });
+            counted('native');
         } catch {
             // The user closed the share sheet
         }
@@ -73,7 +80,7 @@ export function ShareButton({ path, title, inBar = false }: { path: string; titl
                             href={target.href(url(), title)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            onClick={() => trackEvent('share', { channel: target.label.toLowerCase() })}
+                            onClick={() => counted(target.label.toLowerCase())}
                         >
                             {target.label === 'Email' ? <Mail /> : <Send />} {target.label}
                         </a>

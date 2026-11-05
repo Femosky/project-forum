@@ -558,6 +558,15 @@ export interface AdminUsersResponse {
     next_offset: number | null;
 }
 
+export interface PostInsights {
+    totals: { views: number; readers: number; shares: number; comments: number; upvotes: number; downvotes: number; upvote_ratio: number | null };
+    tracked_since: string | null;
+    days: { date: string; views: number; readers: number; shares: number }[];
+    countries: { key: string; views: number; share: number }[];
+    sources: { key: string; views: number; share: number }[];
+    breakdown_days: number;
+}
+
 export interface AdminOverview {
     queue: number;
     users: number;
@@ -630,6 +639,9 @@ export interface AdminStatsResponse {
     today: DailyStats;
     days: DailyStats[];
     top_communities: CommunityStats[];
+    // Where post readers came from (labels such as Google, WhatsApp, Direct), and the most-read posts
+    sources: { source: string; views: number }[];
+    top_posts: { title: string; short_id: string; slug: string; community: string; views: number; readers: number; shares: number }[];
 }
 
 // Admin panel staff accounts (separate from forum accounts)
