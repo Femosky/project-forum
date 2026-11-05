@@ -479,8 +479,17 @@ export interface QueueItem {
     target_id: string;
     updated_at: string;
     held_reason: string | null;
-    reports: { total: number; reasons: Partial<Record<ReportReason, number>>; notes: { note: string; reporter: string; created_at: string }[] };
+    // reasons: site rules; rules: community rules by title; site: how many reports name a site rule
+    reports: {
+        total: number;
+        site: number;
+        reasons: Partial<Record<ReportReason, number>>;
+        rules: Record<string, number>;
+        notes: { note: string; reporter: string; created_at: string }[];
+    };
     report_ids: string[];
+    // Sent on to the site's admins by a community moderator
+    escalation: { at: string; by: string | null; note: string | null } | null;
     post?: Post;
     comment?: ListedComment;
     user?: { username: string; status: string; karma: number; created_at: string };

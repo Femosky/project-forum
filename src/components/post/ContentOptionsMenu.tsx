@@ -17,6 +17,8 @@ import { useSaved } from './SaveButton';
 type ContentOptionsMenuProps = {
     targetType: 'post' | 'comment';
     id: string;
+    // The community it's in, so a report can name one of its rules
+    community?: string;
     saved?: boolean;
     isAuthor?: boolean;
     // Called after the viewer deletes their own post or comment
@@ -56,6 +58,7 @@ function moderationItems({ status, pinned, canPin, mature }: Moderation): { acti
 export function ContentOptionsMenu({
     targetType,
     id,
+    community,
     saved = false,
     isAuthor = false,
     onDeleted,
@@ -156,7 +159,7 @@ export function ContentOptionsMenu({
                 </Dialog>
             )}
 
-            <ReportDialog targetType={targetType} targetId={id} open={isReporting} onOpenChange={setIsReporting} />
+            <ReportDialog targetType={targetType} targetId={id} community={community} open={isReporting} onOpenChange={setIsReporting} />
 
             <Dialog open={isConfirmingDelete} onOpenChange={setIsConfirmingDelete}>
                 <DialogContent

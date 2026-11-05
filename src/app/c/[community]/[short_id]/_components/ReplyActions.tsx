@@ -5,6 +5,7 @@ import VoteControl from '@/components/post/VoteControl';
 import ContentOptionsMenu from '@/components/post/ContentOptionsMenu';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { ComponentProps } from 'react';
+import { useParams } from 'next/navigation';
 import { twMerge } from 'tailwind-merge';
 import { Comment } from '@/types/api';
 import ViewCount from '@/components/post/ViewCount';
@@ -32,6 +33,7 @@ export function ReplyActions({
     ...props
 }: ReplyActionsProps) {
     const requireAuth = useRequireAuth();
+    const { community } = useParams<{ community: string }>();
     const isGone = comment.status === 'deleted' || comment.status === 'removed';
 
     function handleReplyClick() {
@@ -69,6 +71,7 @@ export function ReplyActions({
                 <ContentOptionsMenu
                     targetType="comment"
                     id={comment.id}
+                    community={community}
                     saved={comment.viewer?.saved}
                     isAuthor={comment.viewer?.is_author}
                     onDeleted={onDeleted}

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CircleCheck, EyeOff, Flag, Gavel, Inbox, MessageSquare, ShieldAlert, ShieldX, UserX, VolumeX } from 'lucide-react';
+import { CircleCheck, EyeOff, Flag, Gavel, Inbox, MessageSquare, Send, ShieldAlert, ShieldX, UserX, VolumeX } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
@@ -13,6 +13,7 @@ import { getPostPath } from '@/components/post/PostCard';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { reasonLabel } from '@/lib/moderation';
+import { APP_NAME } from '@/lib/constants';
 import TimeUtility from '@/lib/utils/TimeUtility';
 import { QueueItem, ReportReason } from '@/types/api';
 import ActionDialog, { ActionInput } from './ActionDialog';
@@ -20,8 +21,8 @@ import ActionDialog, { ActionInput } from './ActionDialog';
 type Pending = { title: string; description?: string; confirmLabel: string; withDuration?: boolean; allowPermanent?: boolean; destructive?: boolean; run: (input: ActionInput) => Promise<void> };
 
 // The mod queue: reported and held items with the actions that settle them. `site` adds the admin-only actions
-// (suspend, shadow-ban, takedown) used on the admin panel.
-export function QueueList({ initialItems, site = false }: { initialItems: QueueItem[]; site?: boolean }) {
+// (suspend, shadow-ban, takedown) used on the admin panel; community moderators can send reports on to the admins.
+export function QueueList({ initialItems, site = false, emptyDescription }: { initialItems: QueueItem[]; site?: boolean; emptyDescription?: string }) {
     const [items, setItems] = useState(initialItems);
     const [pending, setPending] = useState<Pending | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -81,6 +82,19 @@ export function QueueList({ initialItems, site = false }: { initialItems: QueueI
         });
     }
 
+    function askEscalate(item: QueueItem) {
+        setPending({
+            title: `Send this to the ${APP_NAME} admins?`,
+            description: 'For things that need more than a removal, like illegal content, threats or scams across communities. It stays in your queue too.',
+            confirmLabel: 'Send to admins',
+            run: async ({ reason }) => {
+                await api(`/reports/${item.report_ids[0]}/escalate`, { method: 'POST', body: { note: reason } });
+                const escalation = { at: new Date().toISOString(), by: null, note: reason ?? null };
+                setItems((current) => current.map((other) => (other === item ? { ...other, escalation } : other)));
+            },
+        });
+    }
+
     function askSuspend(item: QueueItem, username: string) {
         setPending({
             title: `Suspend u/${username}?`,
@@ -119,7 +133,7 @@ export function QueueList({ initialItems, site = false }: { initialItems: QueueI
     }
 
     if (items.length === 0) {
-        return <EmptyState icon={<Inbox />} title="All clear" description="Nothing is waiting for review." />;
+        return <EmptyState icon={<Inbox />} title="All clear" description={emptyDescription ?? 'Nothing is waiting for review.'} />;
     }
 
     return (
@@ -132,7 +146,7 @@ export function QueueList({ initialItems, site = false }: { initialItems: QueueI
                     const status = item.post?.status ?? item.comment?.status;
                     return (
                         <li key={`${item.target_type}:${item.target_id}`} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
-                            <QueueSummary item={item} />
+                            <QueueSummary item={item} site={site} />
                             <QueueTarget item={item} />
                             <div className="flex flex-wrap gap-2">
                                 {(item.post || item.comment) && (
@@ -160,6 +174,12 @@ export function QueueList({ initialItems, site = false }: { initialItems: QueueI
                                             </>
                                         )}
                                     </>
+                                )}
+                                {/* Site-rule reports already reach the admins */}
+                                {!site && (item.post || item.comment) && item.reports.site < item.reports.total && !item.escalation && (
+                                    <Button size="sm" variant="outline" onClick={() => askEscalate(item)}>
+                                        <Send className="size-4" /> Send to admins
+                                    </Button>
                                 )}
                                 {site && author && (
                                     <>
@@ -220,8 +240,9 @@ export function QueueList({ initialItems, site = false }: { initialItems: QueueI
     );
 }
 
-function QueueSummary({ item }: { item: QueueItem }) {
+function QueueSummary({ item, site }: { item: QueueItem; site: boolean }) {
     const reasons = Object.entries(item.reports.reasons) as [ReportReason, number][];
+    const rules = Object.entries(item.reports.rules ?? {});
     return (
         <div className="flex flex-col gap-1.5">
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
@@ -235,9 +256,20 @@ function QueueSummary({ item }: { item: QueueItem }) {
                         <Flag className="size-3.5" /> {item.reports.total} {item.reports.total === 1 ? 'report' : 'reports'}
                     </Badge>
                 )}
+                {item.escalation && (
+                    <Badge variant="highlight">
+                        <Send className="size-3.5" /> {site ? `Sent by ${item.escalation.by ? `@${item.escalation.by}` : 'a moderator'}` : 'Sent to admins'}
+                    </Badge>
+                )}
                 {reasons.map(([reason, count]) => (
-                    <Badge key={reason}>
-                        {reasonLabel(reason)}
+                    <Badge key={reason} title={`${APP_NAME} rule`}>
+                        {APP_NAME}: {reasonLabel(reason)}
+                        {count > 1 ? ` ×${count}` : ''}
+                    </Badge>
+                ))}
+                {rules.map(([rule, count]) => (
+                    <Badge key={`rule-${rule}`} variant="sponsored" title="Community rule">
+                        Rule: {rule}
                         {count > 1 ? ` ×${count}` : ''}
                     </Badge>
                 ))}
@@ -245,6 +277,11 @@ function QueueSummary({ item }: { item: QueueItem }) {
                     {TimeUtility.formatTimeAgo(item.updated_at)}
                 </span>
             </div>
+            {item.escalation?.note && (
+                <p className="rounded-lg bg-surface-muted px-3 py-2 text-sm">
+                    &ldquo;{item.escalation.note}&rdquo; <span className="text-muted">from the moderators</span>
+                </p>
+            )}
             {item.reports.notes.map((note) => (
                 <p key={`${note.reporter}-${note.created_at}`} className="rounded-lg bg-surface-muted px-3 py-2 text-sm">
                     &ldquo;{note.note}&rdquo; <span className="text-muted">from @{note.reporter}</span>

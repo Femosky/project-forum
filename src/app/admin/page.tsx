@@ -18,18 +18,19 @@ import type { AdminStatsResponse } from '@/types/api';
 
 type PageProps = { searchParams: Promise<{ tab?: string; campaign?: string; days?: string; from?: string; to?: string }> };
 
-const TABS = ['queue', 'stats', 'users', 'communities', 'ads', 'blocklist', 'log', 'admins', 'audit'] as const;
+const TABS = ['queue', 'reports', 'stats', 'users', 'communities', 'ads', 'blocklist', 'log', 'admins', 'audit'] as const;
 type Tab = (typeof TABS)[number];
 
 // What each staff role sees (the API enforces the same)
 const ROLE_TABS: Record<StaffRole, Tab[]> = {
     owner: [...TABS],
-    admin: ['queue', 'stats', 'users', 'communities', 'ads', 'blocklist', 'log', 'audit'],
-    moderator: ['queue', 'users', 'communities', 'blocklist', 'log'],
+    admin: ['queue', 'reports', 'stats', 'users', 'communities', 'ads', 'blocklist', 'log', 'audit'],
+    moderator: ['queue', 'reports', 'users', 'communities', 'blocklist', 'log'],
     ads: ['ads', 'stats'],
 };
 const LABELS: Record<Tab, string> = {
     queue: 'Queue',
+    reports: 'All reports',
     stats: 'Stats',
     users: 'Users',
     communities: 'Communities',
@@ -64,6 +65,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
         staffApi<unknown>(
             {
                 queue: '/admin/queue',
+                reports: '/admin/queue?view=reports',
                 stats: `/admin/stats?${statsQuery}`,
                 users: '/admin/users',
                 communities: '/admin/communities',
@@ -112,7 +114,19 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 ) : tab === 'queue' ? (
                     <>
                         {(staff.role === 'owner' || staff.role === 'admin') && <AlertEmailToggle initial={staff.alert_email} />}
+                        <p className="mb-3 text-sm text-muted">
+                            Site-rule reports, reports moderators sent to you, reports about accounts, communities and ads, and held
+                            content. Community-rule reports are in All reports.
+                        </p>
                         <QueueList initialItems={(section.data as QueueResponse).items} site />
+                    </>
+                ) : tab === 'reports' ? (
+                    <>
+                        <p className="mb-3 text-sm text-muted">
+                            Every open report in every community, including community-rule reports that the community&apos;s moderators
+                            handle. Acting here settles it for them too.
+                        </p>
+                        <QueueList initialItems={(section.data as QueueResponse).items} site emptyDescription="No open reports anywhere." />
                     </>
                 ) : tab === 'stats' ? (
                     <AdminStats data={section.data as AdminStatsResponse} days={days} />
