@@ -163,7 +163,9 @@ export function QueueList({ initialItems, site = false, emptyDescription }: { in
                                         >
                                             <CircleCheck className="size-4" /> {status === 'pending' ? 'Approve' : status === 'removed' ? 'Restore' : 'Keep'}
                                         </Button>
-                                        {community && author && (
+                                        {/* Community mutes and bans go through the forum's API, which staff accounts can't use;
+                                            staff have Suspend and Shadow-ban instead */}
+                                        {!site && community && author && (
                                             <>
                                                 <Button size="sm" variant="outline" onClick={() => askRestrict(item, 'mute', community, author)}>
                                                     <VolumeX className="size-4" /> Mute author
