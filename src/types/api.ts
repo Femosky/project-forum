@@ -551,6 +551,13 @@ export interface AdminUser {
     _count: { posts: number; comments: number; reports_sent: number };
 }
 
+export interface AdminUsersResponse {
+    users: AdminUser[];
+    total: number;
+    // Where the next page starts, or null on the last one
+    next_offset: number | null;
+}
+
 export interface AdminOverview {
     queue: number;
     users: number;

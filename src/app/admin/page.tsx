@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import { CloudOff } from 'lucide-react';
 import { staffApi } from '@/lib/api/server';
-import { AdminCommunity, AdminOverview, AdminUser, BlockedTerm, ModLogResponse, QueueResponse, StaffAccount, StaffAuditEntry, StaffRole } from '@/types/api';
+import Link from 'next/link';
+import { AdminCommunity, AdminOverview, AdminUsersResponse, BlockedTerm, ModLogResponse, QueueResponse, StaffAccount, StaffAuditEntry, StaffRole } from '@/types/api';
 import EmptyState from '@/components/ui/EmptyState';
 import QueueList from '@/components/moderation/QueueList';
 import ModLog from '@/components/moderation/ModLog';
@@ -16,7 +17,9 @@ import { AdminStaff, AuditLog, StaffBar } from './_components/AdminStaff';
 import type { AdminStatsResponse } from '@/types/api';
 
 
-type PageProps = { searchParams: Promise<{ tab?: string; campaign?: string; days?: string; from?: string; to?: string }> };
+type PageProps = { searchParams: Promise<{ tab?: string; campaign?: string; days?: string; from?: string; to?: string; filter?: string }> };
+
+const USER_FILTERS = ['all', 'new', 'suspended', 'shadow_banned'];
 
 const TABS = ['queue', 'reports', 'stats', 'users', 'communities', 'ads', 'blocklist', 'log', 'admins', 'audit'] as const;
 type Tab = (typeof TABS)[number];
@@ -53,7 +56,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
     const staff = me.data.staff;
     const allowed = ROLE_TABS[staff.role];
 
-    const { tab: tabParam, campaign, days: daysParam, from, to } = await searchParams;
+    const { tab: tabParam, campaign, days: daysParam, from, to, filter: filterParam } = await searchParams;
+    const userFilter = USER_FILTERS.includes(filterParam ?? '') ? filterParam! : 'all';
     const tab: Tab = allowed.includes(tabParam as Tab) ? (tabParam as Tab) : allowed[0];
     // Stats range: ?days=7|30|90 (default 30) or ?from=&to= (YYYY-MM-DD)
     const isDay = (value?: string) => /^\d{4}-\d{2}-\d{2}$/.test(value ?? '');
@@ -67,7 +71,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 queue: '/admin/queue',
                 reports: '/admin/queue?view=reports',
                 stats: `/admin/stats?${statsQuery}`,
-                users: '/admin/users',
+                users: `/admin/users?filter=${userFilter}`,
                 communities: '/admin/communities',
                 ads: campaign ? `/admin/ads/campaigns/${encodeURIComponent(campaign)}` : '/admin/ads',
                 blocklist: '/admin/blocklist',
@@ -93,14 +97,30 @@ export default async function AdminPage({ searchParams }: PageProps) {
                         ['Posts (24 h)', stats.posts_24h],
                         ['Comments (24 h)', stats.comments_24h],
                         ['Accounts', stats.users],
-                        ['Suspended', stats.suspended],
-                        ['Shadow-banned', stats.shadow_banned],
-                    ].map(([label, value]) => (
-                        <div key={label} className="rounded-xl border border-border bg-surface px-3 py-2">
-                            <dt className="text-xs text-muted">{label}</dt>
-                            <dd className="text-lg font-bold tabular-nums">{value}</dd>
-                        </div>
-                    ))}
+                        ['Suspended', stats.suspended, 'suspended'],
+                        ['Shadow-banned', stats.shadow_banned, 'shadow_banned'],
+                    ].map(([label, value, filter]) => {
+                        const body = (
+                            <>
+                                <dt className="text-xs text-muted">{label}</dt>
+                                <dd className="text-lg font-bold tabular-nums">{value}</dd>
+                            </>
+                        );
+                        // The ban counts open the matching list on the Users tab
+                        return filter && allowed.includes('users') ? (
+                            <Link
+                                key={label}
+                                href={`/admin?tab=users&filter=${filter}`}
+                                className="rounded-xl border border-border bg-surface px-3 py-2 transition-colors hover:border-border-strong"
+                            >
+                                {body}
+                            </Link>
+                        ) : (
+                            <div key={label} className="rounded-xl border border-border bg-surface px-3 py-2">
+                                {body}
+                            </div>
+                        );
+                    })}
                 </dl>
             )}
             <ToolTabs
@@ -131,7 +151,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 ) : tab === 'stats' ? (
                     <AdminStats data={section.data as AdminStatsResponse} days={days} />
                 ) : tab === 'users' ? (
-                    <AdminUsers initialUsers={(section.data as { users: AdminUser[] }).users} canTrust={staff.role === 'owner' || staff.role === 'admin'} />
+                    <AdminUsers
+                        key={userFilter}
+                        initial={section.data as AdminUsersResponse}
+                        initialFilter={userFilter}
+                        canTrust={staff.role === 'owner' || staff.role === 'admin'}
+                    />
                 ) : tab === 'communities' ? (
                     <AdminCommunities initialCommunities={(section.data as { communities: AdminCommunity[] }).communities} />
                 ) : tab === 'ads' ? (
