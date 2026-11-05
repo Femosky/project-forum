@@ -108,7 +108,7 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
                 />
             )}
             <CommentCountButton post={post} href={`${postPath}#comments`} />
-            <ShareButton path={postPath} title={post.title} />
+            <ShareButton path={postPath} title={post.title} postId={post.id} />
             <ViewCount views={post.viewer?.views} />
         </div>
     );

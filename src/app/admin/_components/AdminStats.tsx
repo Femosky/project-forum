@@ -104,6 +104,12 @@ export function AdminStats({ data, days }: { data: AdminStatsResponse; days: num
                     <a href={`${API_BASE}/admin/stats/export?${exportQuery}&kind=communities`} className={buttonStyles({ variant: 'secondary', size: 'sm' })}>
                         <Download className="size-4" /> Communities CSV
                     </a>
+                    <a href={`${API_BASE}/admin/stats/export?${exportQuery}&kind=posts`} className={buttonStyles({ variant: 'secondary', size: 'sm' })}>
+                        <Download className="size-4" /> Posts CSV
+                    </a>
+                    <a href={`${API_BASE}/admin/stats/export?${exportQuery}&kind=sources`} className={buttonStyles({ variant: 'secondary', size: 'sm' })}>
+                        <Download className="size-4" /> Sources CSV
+                    </a>
                 </div>
             </div>
 
@@ -157,6 +163,53 @@ export function AdminStats({ data, days }: { data: AdminStatsResponse; days: num
                     </div>
                 )}
             </section>
+
+            {(data.sources ?? []).length > 0 && (
+                <section className="flex flex-col gap-2">
+                    <h2 className="font-bold">Where post readers came from</h2>
+                    <p className="text-sm text-muted">
+                        {(() => {
+                            const total = data.sources.reduce((sum, row) => sum + row.views, 0);
+                            return data.sources.map((row) => `${row.source} ${Math.round((row.views / total) * 100)}%`).join(' · ');
+                        })()}
+                    </p>
+                </section>
+            )}
+
+            {(data.top_posts ?? []).length > 0 && (
+                <section className="flex flex-col gap-2">
+                    <h2 className="font-bold">Most-read posts</h2>
+                    <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+                        <table className="w-full text-sm tabular-nums">
+                            <thead className="text-left text-xs text-muted">
+                                <tr className="border-b border-border">
+                                    {['Post', 'Views', 'Readers', 'Shares'].map((heading, index) => (
+                                        <th key={heading} className={twMerge('px-3 py-2 font-medium', index > 0 && 'text-right')}>
+                                            {heading}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.top_posts.map((post) => (
+                                    <tr key={post.short_id} className="border-b border-border last:border-0">
+                                        <td className="max-w-80 truncate px-3 py-2">
+                                            <Link href={`/c/${post.community}/${post.short_id}/${post.slug}`} className="font-medium hover:underline" target="_blank">
+                                                {post.title}
+                                            </Link>
+                                        </td>
+                                        {[post.views, post.readers, post.shares].map((value, index) => (
+                                            <td key={index} className="px-3 py-2 text-right">
+                                                {value.toLocaleString()}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            )}
 
             {countries.length > 0 && (
                 <section className="flex flex-col gap-2">

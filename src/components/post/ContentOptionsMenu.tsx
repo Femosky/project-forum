@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Bookmark, BookmarkCheck, CircleCheck, Ellipsis, Eye, EyeOff, Flag, Lock, LockOpen, Pencil, Pin, PinOff, ShieldX, Trash2 } from 'lucide-react';
+import { lazy, Suspense, useState } from 'react';
+import { BarChart3, Bookmark, BookmarkCheck, CircleCheck, Ellipsis, Eye, EyeOff, Flag, Lock, LockOpen, Pencil, Pin, PinOff, ShieldX, Trash2 } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import Button from '@/components/ui/Button';
 import ErrorMessage from '@/components/ui/ErrorMessage';
@@ -12,6 +12,9 @@ import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import ReportDialog from './ReportDialog';
+
+// Loaded on first open, so authors' insights add nothing to every page's JavaScript
+const PostInsightsDialog = lazy(() => import('./PostInsightsDialog'));
 import { useSaved } from './SaveButton';
 
 type ContentOptionsMenuProps = {
@@ -69,6 +72,8 @@ export function ContentOptionsMenu({
     const path = `/${targetType}s/${id}`;
     const { isSaved, toggleSave } = useSaved(path, saved);
     const [isReporting, setIsReporting] = useState(false);
+    // null until first opened, so the dialog's code isn't fetched before then
+    const [insightsOpen, setInsightsOpen] = useState<boolean | null>(null);
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -124,6 +129,11 @@ export function ContentOptionsMenu({
                     )}
                     {isAuthor && (
                         <>
+                            {targetType === 'post' && (
+                                <DropdownItem onSelect={() => setInsightsOpen(true)}>
+                                    <BarChart3 /> Insights
+                                </DropdownItem>
+                            )}
                             {onEdit && (
                                 <DropdownItem onSelect={onEdit}>
                                     <Pencil /> Edit
@@ -157,6 +167,12 @@ export function ContentOptionsMenu({
                         </Button>
                     </DialogContent>
                 </Dialog>
+            )}
+
+            {insightsOpen !== null && (
+                <Suspense fallback={null}>
+                    <PostInsightsDialog postId={id} open={insightsOpen} onOpenChange={setInsightsOpen} />
+                </Suspense>
             )}
 
             <ReportDialog targetType={targetType} targetId={id} community={community} open={isReporting} onOpenChange={setIsReporting} />
