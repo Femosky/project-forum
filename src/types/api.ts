@@ -490,6 +490,8 @@ export interface QueueItem {
     report_ids: string[];
     // Sent on to the site's admins by a community moderator
     escalation: { at: string; by: string | null; note: string | null } | null;
+    // Admin panel only: whether the author (or reported account) is suspended or shadow-banned
+    account?: { suspended: boolean; shadow_banned: boolean } | null;
     post?: Post;
     comment?: ListedComment;
     user?: { username: string; status: string; karma: number; created_at: string };

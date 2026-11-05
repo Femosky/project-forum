@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CircleCheck, EyeOff, Flag, Gavel, Inbox, MessageSquare, Send, ShieldAlert, ShieldX, UserX, VolumeX } from 'lucide-react';
+import { CircleCheck, Eye, EyeOff, Flag, Gavel, Inbox, MessageSquare, Send, ShieldAlert, ShieldX, UserX, VolumeX } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
@@ -26,7 +26,37 @@ export function QueueList({ initialItems, site = false, emptyDescription }: { in
     const [items, setItems] = useState(initialItems);
     const [pending, setPending] = useState<Pending | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
     const router = useRouter();
+
+    const authorOf = (item: QueueItem) => item.post?.author?.username ?? item.comment?.author?.username ?? item.user?.username;
+
+    // After a suspension or shadow-ban, every item by the same account shows its new state
+    function updateAccount(username: string, patch: Partial<NonNullable<QueueItem['account']>>, message: string) {
+        setItems((current) =>
+            current.map((item) =>
+                authorOf(item) === username ? { ...item, account: { suspended: false, shadow_banned: false, ...item.account, ...patch } } : item
+            )
+        );
+        setNotice(message);
+        setError(null);
+        router.refresh();
+    }
+
+    async function lift(username: string, kind: 'shadow_banned' | 'suspended') {
+        setError(null);
+        try {
+            if (kind === 'shadow_banned') {
+                await api(`/admin/users/${username}/shadow-ban`, { method: 'POST', body: { shadow_banned: false } });
+                updateAccount(username, { shadow_banned: false }, `Lifted the shadow-ban on u/${username}. Their posts and comments are visible again.`);
+            } else {
+                await api(`/admin/users/${username}/unsuspend`, { method: 'POST' });
+                updateAccount(username, { suspended: false }, `Lifted the suspension on u/${username}.`);
+            }
+        } catch (error) {
+            setError(errorMessage(error));
+        }
+    }
 
     // The refresh updates the queue count on the tab above
     const done = (item: QueueItem) => {
@@ -103,6 +133,7 @@ export function QueueList({ initialItems, site = false, emptyDescription }: { in
             withDuration: true,
             run: async ({ reason, days }) => {
                 await api(`/admin/users/${username}/suspend`, { method: 'POST', body: { reason, days } });
+                updateAccount(username, { suspended: true }, `Suspended u/${username}. You can lift it here or from the Users tab.`);
                 if (item.target_type === 'user') await dismiss(item);
             },
         });
@@ -115,6 +146,11 @@ export function QueueList({ initialItems, site = false, emptyDescription }: { in
             confirmLabel: 'Shadow-ban',
             run: async ({ reason }) => {
                 await api(`/admin/users/${username}/shadow-ban`, { method: 'POST', body: { shadow_banned: true, reason } });
+                updateAccount(
+                    username,
+                    { shadow_banned: true },
+                    `Shadow-banned u/${username}. Everything they post is now hidden from everyone but them. You can lift it here or from the Users tab.`
+                );
                 if (item.target_type === 'user') await dismiss(item);
             },
         });
@@ -139,6 +175,11 @@ export function QueueList({ initialItems, site = false, emptyDescription }: { in
     return (
         <div className="flex flex-col gap-3">
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
+            {notice && (
+                <p role="status" className="rounded-lg bg-surface-muted px-3 py-2 text-sm">
+                    {notice}
+                </p>
+            )}
             <ul className="flex flex-col gap-3">
                 {items.map((item) => {
                     const community = item.post?.community.name ?? item.comment?.post.community;
@@ -185,12 +226,24 @@ export function QueueList({ initialItems, site = false, emptyDescription }: { in
                                 )}
                                 {site && author && (
                                     <>
-                                        <Button size="sm" variant="outline" onClick={() => askSuspend(item, author)}>
-                                            <UserX className="size-4" /> Suspend account
-                                        </Button>
-                                        <Button size="sm" variant="outline" onClick={() => askShadowBan(item, author)}>
-                                            <EyeOff className="size-4" /> Shadow-ban
-                                        </Button>
+                                        {item.account?.suspended ? (
+                                            <Button size="sm" variant="secondary" onClick={() => lift(author, 'suspended')}>
+                                                <UserX className="size-4" /> Lift suspension
+                                            </Button>
+                                        ) : (
+                                            <Button size="sm" variant="outline" onClick={() => askSuspend(item, author)}>
+                                                <UserX className="size-4" /> Suspend account
+                                            </Button>
+                                        )}
+                                        {item.account?.shadow_banned ? (
+                                            <Button size="sm" variant="secondary" onClick={() => lift(author, 'shadow_banned')}>
+                                                <Eye className="size-4" /> Lift shadow-ban
+                                            </Button>
+                                        ) : (
+                                            <Button size="sm" variant="outline" onClick={() => askShadowBan(item, author)}>
+                                                <EyeOff className="size-4" /> Shadow-ban
+                                            </Button>
+                                        )}
                                     </>
                                 )}
                                 {site && item.community && (
@@ -256,6 +309,16 @@ function QueueSummary({ item, site }: { item: QueueItem; site: boolean }) {
                 {item.reports.total > 0 && (
                     <Badge variant="danger">
                         <Flag className="size-3.5" /> {item.reports.total} {item.reports.total === 1 ? 'report' : 'reports'}
+                    </Badge>
+                )}
+                {item.account?.shadow_banned && (
+                    <Badge variant="danger">
+                        <EyeOff className="size-3.5" /> Author shadow-banned
+                    </Badge>
+                )}
+                {item.account?.suspended && (
+                    <Badge variant="danger">
+                        <UserX className="size-3.5" /> Author suspended
                     </Badge>
                 )}
                 {item.escalation && (
