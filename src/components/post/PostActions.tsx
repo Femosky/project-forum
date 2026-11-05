@@ -38,6 +38,7 @@ export function PostOptions({ post, leaveOnDelete, isModerator }: { post: Post; 
         <ContentOptionsMenu
             targetType="post"
             id={post.id}
+            community={post.community.name}
             saved={post.viewer?.saved}
             isAuthor={post.viewer?.is_author}
             onDeleted={handleDeleted}

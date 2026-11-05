@@ -13,7 +13,7 @@ import ActionDialog, { ActionInput } from '@/components/moderation/ActionDialog'
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import TimeUtility from '@/lib/utils/TimeUtility';
-import { AdminCommunity, AdminUser, BlockedTerm } from '@/types/api';
+import { AdminCommunity, AdminUser, AdminUsersResponse, BlockedTerm } from '@/types/api';
 
 type Pending = { title: string; description?: string; confirmLabel: string; withDuration?: boolean; run: (input: ActionInput) => Promise<void> };
 
@@ -41,19 +41,46 @@ function SearchBar({ placeholder, onSearch, children }: { placeholder: string; o
 // --- Users: find an account, suspend it or shadow-ban it ---
 
 // canTrust: owners and admins can mark an account trusted (it skips the new-account limits; every check still applies)
-export function AdminUsers({ initialUsers, canTrust = false }: { initialUsers: AdminUser[]; canTrust?: boolean }) {
-    const [users, setUsers] = useState(initialUsers);
-    const [filter, setFilter] = useState('all');
+export function AdminUsers({ initial, initialFilter = 'all', canTrust = false }: { initial: AdminUsersResponse; initialFilter?: string; canTrust?: boolean }) {
+    const [users, setUsers] = useState(initial.users);
+    const [total, setTotal] = useState(initial.total);
+    const [nextOffset, setNextOffset] = useState(initial.next_offset);
+    const [query, setQuery] = useState('');
+    const [filter, setFilter] = useState(initialFilter);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [pending, setPending] = useState<Pending | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    const fetchUsers = (q: string, nextFilter: string, offset = 0) =>
+        api<AdminUsersResponse>(`/admin/users?${new URLSearchParams({ filter: nextFilter, offset: String(offset), ...(q ? { q } : {}) })}`);
+
     async function search(q: string, nextFilter = filter) {
         setError(null);
+        setQuery(q);
         try {
-            const query = new URLSearchParams({ filter: nextFilter, ...(q ? { q } : {}) });
-            setUsers((await api<{ users: AdminUser[] }>(`/admin/users?${query}`)).users);
+            const page = await fetchUsers(q, nextFilter);
+            setUsers(page.users);
+            setTotal(page.total);
+            setNextOffset(page.next_offset);
         } catch (error) {
             setError(errorMessage(error));
+        }
+    }
+
+    async function loadMore() {
+        if (nextOffset === null) return;
+        setError(null);
+        setLoadingMore(true);
+        try {
+            const page = await fetchUsers(query, filter, nextOffset);
+            // An account can shift pages while staff act on others; skip any already shown
+            setUsers((current) => [...current, ...page.users.filter((user) => !current.some((shown) => shown.id === user.id))]);
+            setTotal(page.total);
+            setNextOffset(page.next_offset);
+        } catch (error) {
+            setError(errorMessage(error));
+        } finally {
+            setLoadingMore(false);
         }
     }
 
@@ -92,6 +119,12 @@ export function AdminUsers({ initialUsers, canTrust = false }: { initialUsers: A
                 </select>
             </SearchBar>
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
+            {users.length > 0 && (
+                <p className="text-xs text-muted">
+                    Showing {users.length} of {total} {total === 1 ? 'account' : 'accounts'}
+                    {filter === 'shadow_banned' || filter === 'suspended' ? ', latest first' : ''}
+                </p>
+            )}
             {users.length === 0 ? (
                 <p className="text-sm text-muted">No accounts match.</p>
             ) : (
@@ -107,7 +140,11 @@ export function AdminUsers({ initialUsers, canTrust = false }: { initialUsers: A
                                     {user.status === 'suspended' && (
                                         <Badge variant="danger">Suspended{user.suspended_until ? ` until ${new Date(user.suspended_until).toLocaleDateString()}` : ''}</Badge>
                                     )}
-                                    {user.shadow_banned_at && <Badge variant="danger">Shadow-banned</Badge>}
+                                    {user.shadow_banned_at && (
+                                        <Badge variant="danger">
+                                            Shadow-banned <span suppressHydrationWarning>{TimeUtility.formatTimeAgo(user.shadow_banned_at)}</span>
+                                        </Badge>
+                                    )}
                                     {user.is_trusted && <Badge variant="highlight">Trusted</Badge>}
                                     {!user.email_verified_at && <Badge>Email not verified</Badge>}
                                 </p>
@@ -175,6 +212,11 @@ export function AdminUsers({ initialUsers, canTrust = false }: { initialUsers: A
                         </li>
                     ))}
                 </ul>
+            )}
+            {nextOffset !== null && (
+                <Button variant="outline" className="self-center" disabled={loadingMore} onClick={() => void loadMore()}>
+                    {loadingMore ? 'Loading...' : 'Load more'}
+                </Button>
             )}
             {pending && <PendingDialog pending={pending} onClose={() => setPending(null)} />}
         </div>

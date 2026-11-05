@@ -80,6 +80,7 @@ const ACTION_LABELS: Record<string, string> = {
     update_community: 'edited community settings',
     resolve_reports: 'closed reports',
     dismiss_reports: 'dismissed reports',
+    escalate_reports: 'sent reports to the admins',
     suspend_user: 'suspended an account',
     unsuspend_user: 'lifted a suspension',
     shadow_ban_user: 'shadow-banned an account',
