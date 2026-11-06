@@ -173,10 +173,13 @@ export function CommentsSection({
                 useUIStore.getState().setCommentCount(postId, data.comment_count);
                 if (data.comments.length > 0) {
                     newestSeen.current = newestId([...data.comments, ...(after ? [{ id: after }] : [])]);
-                    // Nothing on screen moves when the list starts below the fold (still reading the post), so they go
-                    // straight in; otherwise they wait behind the "new" button
-                    const listTop = listRef.current?.getBoundingClientRect().top ?? 0;
-                    if (listTop > window.innerHeight) setComments((current) => [...unseen(data.comments, current), ...current]);
+                    // They go straight in while the reader can see the top of the replies (or hasn't reached them yet).
+                    // Once they've scrolled down into older replies, they wait behind the "new" button so the reply
+                    // being read doesn't slide away.
+                    const list = listRef.current;
+                    const barsBottom = list ? parseFloat(getComputedStyle(list).scrollMarginTop) || 0 : 0;
+                    const listTop = list?.getBoundingClientRect().top ?? 0;
+                    if (listTop >= barsBottom - 8) setComments((current) => [...unseen(data.comments, current), ...current]);
                     // The reader's own comments are already on their screen
                     else setWaiting((current) => [...unseen(data.comments.filter((comment) => !comment.viewer?.is_author), current), ...current]);
                 }
