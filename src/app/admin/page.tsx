@@ -14,6 +14,7 @@ import { AdminAds, AdminCampaign } from './_components/AdminAds';
 import type { AdsOverview, CampaignDetail } from '@/ads/types';
 import { AdminStats } from './_components/AdminStats';
 import { AdminStaff, AuditLog, StaffBar } from './_components/AdminStaff';
+import { SeedAccount, SeedPost } from './_components/SeedPost';
 import type { AdminStatsResponse } from '@/types/api';
 
 
@@ -21,13 +22,13 @@ type PageProps = { searchParams: Promise<{ tab?: string; campaign?: string; days
 
 const USER_FILTERS = ['all', 'new', 'suspended', 'shadow_banned'];
 
-const TABS = ['queue', 'reports', 'stats', 'users', 'communities', 'ads', 'blocklist', 'log', 'admins', 'audit'] as const;
+const TABS = ['queue', 'reports', 'stats', 'users', 'communities', 'post', 'ads', 'blocklist', 'log', 'admins', 'audit'] as const;
 type Tab = (typeof TABS)[number];
 
 // What each staff role sees (the API enforces the same)
 const ROLE_TABS: Record<StaffRole, Tab[]> = {
     owner: [...TABS],
-    admin: ['queue', 'reports', 'stats', 'users', 'communities', 'ads', 'blocklist', 'log', 'audit'],
+    admin: ['queue', 'reports', 'stats', 'users', 'communities', 'post', 'ads', 'blocklist', 'log', 'audit'],
     moderator: ['queue', 'reports', 'users', 'communities', 'blocklist', 'log'],
     ads: ['ads', 'stats'],
 };
@@ -37,6 +38,7 @@ const LABELS: Record<Tab, string> = {
     stats: 'Stats',
     users: 'Users',
     communities: 'Communities',
+    post: 'Post as',
     ads: 'Ads',
     blocklist: 'Blocklist',
     log: 'Log',
@@ -64,7 +66,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
     const days = isDay(from) ? null : [7, 30, 90].includes(Number(daysParam)) ? Number(daysParam) : 30;
     const statsQuery = new URLSearchParams(days ? { days: String(days) } : { from: from!, ...(isDay(to) ? { to: to! } : {}) });
 
-    const [overview, section] = await Promise.all([
+    const [overview, section, postCommunities] = await Promise.all([
         staffApi<AdminOverview>('/admin/overview'),
         staffApi<unknown>(
             {
@@ -73,6 +75,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 stats: `/admin/stats?${statsQuery}`,
                 users: `/admin/users?filter=${userFilter}`,
                 communities: '/admin/communities',
+                post: '/admin/seed-accounts',
                 ads: campaign ? `/admin/ads/campaigns/${encodeURIComponent(campaign)}` : '/admin/ads',
                 blocklist: '/admin/blocklist',
                 log: '/admin/mod-log',
@@ -80,6 +83,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 audit: '/admin/audit',
             }[tab]
         ),
+        // Post as needs the communities too
+        tab === 'post' ? staffApi<{ communities: AdminCommunity[] }>('/admin/communities') : null,
     ]);
     const stats = overview.data;
 
@@ -159,6 +164,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
                     />
                 ) : tab === 'communities' ? (
                     <AdminCommunities initialCommunities={(section.data as { communities: AdminCommunity[] }).communities} />
+                ) : tab === 'post' ? (
+                    <SeedPost accounts={(section.data as { accounts: SeedAccount[] }).accounts} communities={postCommunities?.data?.communities ?? []} />
                 ) : tab === 'ads' ? (
                     campaign ? (
                         <AdminCampaign key={campaign} initial={section.data as CampaignDetail} />
