@@ -185,7 +185,10 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                         )}
                     </div>
                 )}
+                {/* Keyed on the focused comment: the section copies its comments into state once, so moving between
+                    "All comments", "Parent comment" and a single comment (a soft navigation) must remount it. */}
                 <CommentsSection
+                    key={focusId ?? 'all'}
                     postId={post.id}
                     postPath={canonical}
                     isLocked={post.status === 'locked' || post.status === 'deleted'}
