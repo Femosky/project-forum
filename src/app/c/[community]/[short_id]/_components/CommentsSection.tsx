@@ -25,6 +25,7 @@ import ThreadAdSlot from '@/ads/ThreadAdSlot';
 import { slotAfter } from '@/ads/config';
 import type { AdUnit } from '@/ads/types';
 import UserAvatar from '@/components/ui/UserAvatar';
+import { getAuthorName, shownAvatar } from './commentAuthor';
 
 // Replies nest this deep; below that, "Continue this thread" opens the rest on its own
 const MAX_VISIBLE_DEPTH = 8;
@@ -312,19 +313,6 @@ function newestId(comments: { id: string }[]): string | null {
 function unseen(incoming: Comment[], current: Comment[]): Comment[] {
     const have = new Set(current.map((comment) => comment.id));
     return incoming.filter((comment) => !have.has(comment.id));
-}
-
-// The API drops author for anonymous, deleted and removed comments
-function shownAvatar(comment: Comment) {
-    const anonymous = anonymousFor(comment);
-    return anonymous.hidden ? anonymous.picture : comment.author;
-}
-
-function getAuthorName(comment: Comment): string {
-    const anonymous = anonymousFor(comment);
-    if (anonymous.hidden) return anonymous.mine ? 'Anonymous (you)' : 'Anonymous';
-    if (comment.author?.username) return comment.author.username;
-    return comment.status === 'deleted' || comment.status === 'removed' ? '[deleted]' : 'Anonymous';
 }
 
 function CommentBlock({ initialComment }: { initialComment: Comment }) {

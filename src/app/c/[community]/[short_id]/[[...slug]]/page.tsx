@@ -14,6 +14,7 @@ import JsonLd from '@/components/common/JsonLd';
 import RelatedThreads from '@/components/post/RelatedThreads';
 import { breadcrumbJsonLd, discussionJsonLd, liveBlogJsonLd, noindexMetadata, pageMetadata, postTitle, summarize } from '@/lib/seo';
 import { CommentsSection } from '../_components/CommentsSection';
+import ReplyingTo from '../_components/ReplyingTo';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from '../_components/commentsApi';
 import { loadAds } from '@/ads/server';
 import { slotsBetween } from '@/ads/config';
@@ -62,16 +63,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     });
 }
 
-// One comment with its replies, loaded the same way the thread loads them
-async function loadFocusedThread(commentId: string): Promise<Comment | null> {
+// One comment with its replies, loaded the same way the thread loads them, and the comment it answers (shown above it
+// for context). The parent is asked for as soon as the comment says who it is, alongside the replies.
+async function loadFocusedThread(commentId: string): Promise<{ comment: Comment; parent: Comment | null } | null> {
     const id = encodeURIComponent(commentId);
-    const [single, replies] = await Promise.all([
-        serverApi<SingleCommentResponse>(`/comments/${id}`),
+    const singleRequest = serverApi<SingleCommentResponse>(`/comments/${id}`);
+    const parentRequest = singleRequest.then((single) => {
+        const parentId = single.data?.comment.parent_id;
+        return parentId ? serverApi<SingleCommentResponse>(`/comments/${encodeURIComponent(parentId)}`) : null;
+    });
+    const [single, replies, parent] = await Promise.all([
+        singleRequest,
         serverApi<CommentsResponse>(`/comments/${id}/replies?${commentsQuery(DEFAULT_COMMENT_SORT, COMMENT_PAGE_SIZE)}`),
+        parentRequest,
     ]);
     if (!single.data) return null;
     const loaded = replies.data?.comments ?? [];
-    return { ...single.data.comment, replies: loaded, more_replies: Math.max(single.data.comment.reply_count - loaded.length, 0) };
+    return {
+        comment: { ...single.data.comment, replies: loaded, more_replies: Math.max(single.data.comment.reply_count - loaded.length, 0) },
+        parent: parent?.data?.comment ?? null,
+    };
 }
 
 // Ids of every comment in the loaded tree, for counting which comments were on screen
@@ -114,7 +125,8 @@ export default async function PostPage({ params, searchParams }: PageProps) {
     const isModerator = role === 'owner' || role === 'moderator';
 
     const showingOneThread = Boolean(focusId);
-    const focusedInPost = focused && focused.post_id === post.id ? focused : null;
+    const focusedInPost = focused && focused.comment.post_id === post.id ? focused.comment : null;
+    const parent = focusedInPost ? focused!.parent : null;
 
     // Live threads read newest first. Loaded with the default sort alongside the post (most posts aren't live), then
     // again newest first once the post says it's live.
@@ -185,6 +197,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                         )}
                     </div>
                 )}
+                {parent && <ReplyingTo parent={parent} href={`${canonical}?comment=${parent.short_id}`} />}
                 {/* Keyed on the focused comment: the section copies its comments into state once, so moving between
                     "All comments", "Parent comment" and a single comment (a soft navigation) must remount it. */}
                 <CommentsSection
