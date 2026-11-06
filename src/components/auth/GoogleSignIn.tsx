@@ -69,7 +69,15 @@ async function postGoogle(body: Record<string, unknown>) {
 }
 
 // Shown above the email form, so the "or" divider goes under the button
-export function GoogleSignIn({ next, onLinkRequired }: { next: string; onLinkRequired: (email: string) => void }) {
+export function GoogleSignIn({
+    next,
+    onLinkRequired,
+    onStepChange,
+}: {
+    next: string;
+    onLinkRequired: (email: string) => void;
+    onStepChange?: (open: boolean) => void;
+}) {
     const router = useRouter();
     const login = useAuthStateStore((state) => state.login);
     const container = useRef<HTMLDivElement>(null);
@@ -79,6 +87,9 @@ export function GoogleSignIn({ next, onLinkRequired }: { next: string; onLinkReq
         suggested: string;
     } | null>(null);
     const [GoogleDetails, setGoogleDetails] = useState<typeof import('./GoogleDetails').default | null>(null);
+
+    const stepOpen = details !== null && GoogleDetails !== null;
+    useEffect(() => onStepChange?.(stepOpen), [stepOpen, onStepChange]);
 
     function finish() {
         login();
@@ -162,13 +173,16 @@ export function GoogleSignIn({ next, onLinkRequired }: { next: string; onLinkReq
         <div className="flex flex-col gap-3">
             {/* Same height as Google's button, so nothing moves when it appears */}
             {/* color-scheme: in dark mode a mismatch with the iframe's page paints a white box behind the button */}
-            <div ref={container} className="flex h-10 w-full justify-center [color-scheme:light]" />
+            <div ref={container} hidden={stepOpen} className="flex h-10 w-full justify-center [color-scheme:light]" />
             {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
-            <div className="flex items-center gap-3 text-xs text-muted">
-                <span className="h-px flex-1 bg-border" />
-                or
-                <span className="h-px flex-1 bg-border" />
-            </div>
+            {/* While the new-account step is open the page hides its own form, so there's nothing to say "or" to */}
+            {!stepOpen && (
+                <div className="flex items-center gap-3 text-xs text-muted">
+                    <span className="h-px flex-1 bg-border" />
+                    or
+                    <span className="h-px flex-1 bg-border" />
+                </div>
+            )}
             {details && GoogleDetails && (
                 <GoogleDetails
                     postGoogle={postGoogle}

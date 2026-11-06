@@ -34,6 +34,8 @@ function LoginForm() {
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    // True while Google's new-account step is open: the form below hides so there's one username box, not two
+    const [googleStep, setGoogleStep] = useState(false);
     const challenge = useChallenge(false);
     const [error, setError] = useState<string | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
@@ -91,9 +93,9 @@ function LoginForm() {
                 )}
                 {/* empty:hidden: no gap when Google sign-in is off */}
                 <div className="mt-6 empty:hidden">
-                    <LazyGoogleSignIn next={next} onLinkRequired={askToLinkGoogle} />
+                    <LazyGoogleSignIn onStepChange={setGoogleStep} next={next} onLinkRequired={askToLinkGoogle} />
                 </div>
-                <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
+                <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" hidden={googleStep} noValidate>
                     <FormField name="identifier" label="Email or username" error={errors.identifier}>
                         <InputField
                             autoComplete="username"

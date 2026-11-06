@@ -37,6 +37,8 @@ function SignupForm() {
 
     const [fields, setFields] = useState<Fields>({ email: '', username: '', password: '' });
     const [isAdult, setIsAdult] = useState(false);
+    // True while Google's new-account step is open: the form below hides so there's one username box, not two
+    const [googleStep, setGoogleStep] = useState(false);
     const { errors: fieldErrors, setErrors: setFieldErrors, check, recheck, checkAll } = useFieldErrors({
         email: () => emailError(fields.email),
         username: () => usernameError(fields.username) ?? (availability.state === 'taken' ? availability.message : undefined),
@@ -92,12 +94,12 @@ function SignupForm() {
 
                 {/* empty:hidden: no gap when Google sign-in is off */}
                 <div className="mt-6 empty:hidden">
-                    <LazyGoogleSignIn
+                    <LazyGoogleSignIn onStepChange={setGoogleStep}
                         next={next}
                         onLinkRequired={() => router.push(`/auth/login${next === '/' ? '' : `?next=${encodeURIComponent(next)}`}`)}
                     />
                 </div>
-                <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
+                <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" hidden={googleStep} noValidate>
                     <FormField name="email" label="Email" error={fieldErrors.email}>
                         <InputField
                             type="email"

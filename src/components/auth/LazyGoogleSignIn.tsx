@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-type Props = { next: string; onLinkRequired: (email: string) => void };
+// onStepChange: true while the new-account step (username + 18+) is open, so the page can hide its own form
+type Props = { next: string; onLinkRequired: (email: string) => void; onStepChange?: (open: boolean) => void };
 
 // Loads the Google button's code only on the pages that show it, after they render, so it adds nothing to any page's
 // first load. Keeps the button's space from the start, so nothing moves when it appears.
