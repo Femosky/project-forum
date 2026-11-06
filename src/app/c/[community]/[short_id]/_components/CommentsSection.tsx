@@ -3,6 +3,7 @@
 import { anonymousFor } from '@/lib/anonymous';
 import { Fragment, createContext, useContext, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Lock, MessagesSquare, Plus, Pin } from 'lucide-react';
 import { SortByDropdown } from './SortByDropdown';
 import TimeUtility from '@/lib/utils/TimeUtility';
@@ -107,6 +108,7 @@ export function CommentsSection({
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(loadFailed ? "Couldn't load comments." : null);
     const setCommentCount = useUIStore((state) => state.setCommentCount);
+    const router = useRouter();
 
     async function createComment(body: string, parentId?: string): Promise<Comment> {
         const { comment } = await api<CommentResponse>(`/posts/${postId}/comments`, {
@@ -155,10 +157,9 @@ export function CommentsSection({
     }
 
     // A live thread asks for top-level comments newer than the newest it has, every LIVE_POLL_MS while the tab is
-    // visible (and once straight away when the reader comes back to it). Newest-first only: in other sorts new
-    // comments wouldn't belong at the top.
+    // visible (and once straight away when the reader comes back to it), and notices when the thread ends.
     useEffect(() => {
-        if (!isLive || sort !== 'new') return;
+        if (!isLive) return;
         let timer: ReturnType<typeof setTimeout> | undefined;
         let stopped = false;
         let failures = 0;
@@ -171,7 +172,8 @@ export function CommentsSection({
                 failures = 0;
                 if (stopped) return;
                 useUIStore.getState().setCommentCount(postId, data.comment_count);
-                if (data.comments.length > 0) {
+                // In other sorts new comments wouldn't belong at the top; the poll still watches for the end
+                if (sort === 'new' && data.comments.length > 0) {
                     newestSeen.current = newestId([...data.comments, ...(after ? [{ id: after }] : [])]);
                     // They go straight in while the reader can see the top of the replies (or hasn't reached them yet).
                     // Once they've scrolled down into older replies, they wait behind the "new" button so the reply
@@ -183,7 +185,13 @@ export function CommentsSection({
                     // The reader's own comments are already on their screen
                     else setWaiting((current) => [...unseen(data.comments.filter((comment) => !comment.viewer?.is_author), current), ...current]);
                 }
-                if (!data.live?.is_live) stopped = true;
+                if (!data.live?.is_live || data.status !== 'active') {
+                    // The thread ended (or was locked or removed): redraw the page from the server so the badge,
+                    // reply box and labels catch up. Comments already on screen stay.
+                    stopped = true;
+                    router.refresh();
+                    return;
+                }
             } catch {
                 failures += 1;
             }
@@ -203,7 +211,7 @@ export function CommentsSection({
             clearTimeout(timer);
             document.removeEventListener('visibilitychange', onVisible);
         };
-    }, [isLive, sort, postId]);
+    }, [isLive, sort, postId, router]);
 
     // Going live from this page (the options menu) switches the thread to newest first
     const wasLive = useRef(isLive);
