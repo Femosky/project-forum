@@ -14,7 +14,7 @@ import { pageMetadata, websiteJsonLd } from '@/lib/seo';
 import { loadAds } from '@/ads/server';
 import { slotsBetween } from '@/ads/config';
 import TrendingNow from '@/components/trending/TrendingNow';
-import LiveNow from '@/components/live/LiveNow';
+import LiveNow, { loadLiveNow } from '@/components/live/LiveNow';
 
 type PageProps = { searchParams: Promise<{ sort?: string; cursor?: string }> };
 
@@ -27,13 +27,13 @@ export default async function Home({ searchParams }: PageProps) {
     const { sort: sortParam, cursor } = await searchParams;
     const sort = parsePostSort(sortParam);
     const listQuery = new URLSearchParams({ sort, ...(sort === 'top' ? { t: 'week' } : {}) });
-    const [{ data }, ads, trending, liveNow] = await Promise.all([
+    const [{ data }, ads, trending, live] = await Promise.all([
         serverApi<FeedResponse>(`/feed?${listQuery}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`),
         loadAds('feed', {}, slotsBetween(0, 25, 'feed')),
         // The first page only; rendered with the page, shown in a right rail on wide screens
         cursor ? null : TrendingNow(),
         // Live threads lead the first page
-        cursor ? null : LiveNow(),
+        cursor ? [] : loadLiveNow(),
     ]);
 
     if (!data) {
@@ -52,7 +52,8 @@ export default async function Home({ searchParams }: PageProps) {
             <div className="mx-auto grid w-full max-w-[45rem] grid-cols-1 content-start gap-x-12 pb-8 sm:px-5 xl:max-w-[67rem] xl:grid-cols-[minmax(0,45rem)_16rem]">
             <div className="flex min-w-0 flex-col">
                 <JsonLd data={websiteJsonLd()} />
-                {liveNow}
+                {/* Smaller screens have no right rail, so live threads sit at the top of the feed */}
+                <LiveNow posts={live} variant="feed" className="xl:hidden" />
                 <ComposePrompt />
                 <PostList
                     posts={data.posts}
@@ -74,8 +75,9 @@ export default async function Home({ searchParams }: PageProps) {
             </div>
             {/* Wide screens only: on phones the feed comes first and Trending has its own tab. It stays in view under the
                 page bar while the feed scrolls, with its own scroll if it's ever taller than the window. */}
-            {trending && (
+            {(trending || live.length > 0) && (
                 <div className="hidden xl:sticky xl:top-[calc(var(--spacing-header)+3rem)] xl:block xl:max-h-[calc(100dvh-var(--spacing-header)-3rem)] xl:self-start xl:overflow-y-auto">
+                    <LiveNow posts={live} variant="rail" />
                     {trending}
                 </div>
             )}
