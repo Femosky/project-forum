@@ -41,6 +41,8 @@ export function PostOptions({ post, leaveOnDelete, isModerator }: { post: Post; 
             community={post.community.name}
             saved={post.viewer?.saved}
             isAuthor={post.viewer?.is_author}
+            // On the post's own page, for its moderators and trusted authors
+            live={leaveOnDelete && post.viewer?.can_set_live ? { isLive: Boolean(post.live?.is_live), onChanged: () => router.refresh() } : undefined}
             onDeleted={handleDeleted}
             // Editing happens in place on the post's own page
             onEdit={leaveOnDelete && post.viewer?.is_author ? () => setEditingPost(post.id) : undefined}

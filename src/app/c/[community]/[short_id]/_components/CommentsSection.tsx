@@ -1,8 +1,9 @@
 'use client';
 
 import { anonymousFor } from '@/lib/anonymous';
-import { Fragment, createContext, useContext, useRef, useState } from 'react';
+import { Fragment, createContext, useContext, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Lock, MessagesSquare, Plus, Pin } from 'lucide-react';
 import { SortByDropdown } from './SortByDropdown';
 import TimeUtility from '@/lib/utils/TimeUtility';
@@ -13,7 +14,8 @@ import ContentReplySection from './ContentReplySection';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { useUIStore } from '@/lib/uiStore';
-import { Comment, CommentResponse, CommentSort, CommentsResponse } from '@/types/api';
+import { Comment, CommentResponse, CommentSort, CommentsResponse, LiveUpdatesResponse } from '@/types/api';
+import { LiveDot } from '@/components/post/LiveBadge';
 import Markdown from '@/components/common/Markdown';
 import MarkdownEditor from '@/components/common/LazyMarkdownEditor';
 import { COMMENT_BODY_MAX } from '@/lib/constants';
@@ -38,6 +40,8 @@ interface ThreadContextValue {
     sort: CommentSort;
     // The post's author, for the OP label on their replies (null when the post is anonymous)
     opUsername: string | null;
+    // A live thread (now or before): the author's top-level comments are its updates and say so
+    isLiveThread: boolean;
     createComment: (body: string, parentId?: string) => Promise<Comment>;
 }
 
@@ -65,7 +69,14 @@ type CommentsSectionProps = {
     loadFailed: boolean;
     // Ads for the slots between top-level comments (see ads/config.ts)
     ads?: AdUnit[];
+    // The sort the server loaded initialComments with (live threads open newest first)
+    initialSort?: CommentSort;
+    // Live now: new top-level comments arrive without a reload. Live before: updates are still labelled.
+    live?: { isLive: boolean } | null;
 };
+
+// How often a live thread asks for new comments while the tab is in view
+const LIVE_POLL_MS = 15_000;
 
 export function CommentsSection({
     postId,
@@ -80,13 +91,24 @@ export function CommentsSection({
     initialCursor,
     loadFailed,
     ads = [],
+    initialSort = DEFAULT_COMMENT_SORT,
+    live = null,
 }: CommentsSectionProps) {
     const [comments, setComments] = useState<Comment[]>(initialComments);
     const [cursor, setCursor] = useState<string | null>(initialCursor);
-    const [sort, setSort] = useState<CommentSort>(DEFAULT_COMMENT_SORT);
+    const [sort, setSort] = useState<CommentSort>(initialSort);
+    // New comments in a live thread that arrived while the reader was down in the thread: shown behind a button
+    // instead of pushing what they're reading down the page
+    const [waiting, setWaiting] = useState<Comment[]>([]);
+    const listRef = useRef<HTMLDivElement>(null);
+    // The newest top-level comment the server has shown this page (ids sort by time). The reader's own new comments
+    // don't move it, so comments others wrote just before them still arrive.
+    const newestSeen = useRef<string | null>(newestId(initialComments));
+    const isLive = Boolean(live?.isLive) && !isSingleThread;
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(loadFailed ? "Couldn't load comments." : null);
     const setCommentCount = useUIStore((state) => state.setCommentCount);
+    const router = useRouter();
 
     async function createComment(body: string, parentId?: string): Promise<Comment> {
         const { comment } = await api<CommentResponse>(`/posts/${postId}/comments`, {
@@ -112,6 +134,7 @@ export function CommentsSection({
         try {
             const data = await api<CommentsResponse>(`/posts/${postId}/comments?${commentsQuery(nextSort, COMMENT_PAGE_SIZE, nextCursor)}`);
             setComments((current) => (nextCursor ? [...current, ...data.comments] : data.comments));
+            if (!nextCursor) newestSeen.current = newestId(data.comments);
             setCursor(data.next_cursor);
         } catch (error) {
             setError(errorMessage(error));
@@ -123,12 +146,84 @@ export function CommentsSection({
     function changeSort(nextSort: CommentSort) {
         if (nextSort === sort) return;
         setSort(nextSort);
+        setWaiting([]);
         load(nextSort, null);
     }
 
+    function showWaiting() {
+        setComments((current) => [...unseen(waiting, current), ...current]);
+        setWaiting([]);
+        requestAnimationFrame(() => listRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+    }
+
+    // A live thread asks for top-level comments newer than the newest it has, every LIVE_POLL_MS while the tab is
+    // visible (and once straight away when the reader comes back to it), and notices when the thread ends.
+    useEffect(() => {
+        if (!isLive) return;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let stopped = false;
+        let failures = 0;
+
+        async function poll() {
+            if (stopped || document.visibilityState !== 'visible') return;
+            const after = newestSeen.current;
+            try {
+                const data = await api<LiveUpdatesResponse>(`/posts/${postId}/live-updates${after ? `?after=${after}` : ''}`);
+                failures = 0;
+                if (stopped) return;
+                useUIStore.getState().setCommentCount(postId, data.comment_count);
+                // In other sorts new comments wouldn't belong at the top; the poll still watches for the end
+                if (sort === 'new' && data.comments.length > 0) {
+                    newestSeen.current = newestId([...data.comments, ...(after ? [{ id: after }] : [])]);
+                    // They go straight in while the reader can see the top of the replies (or hasn't reached them yet).
+                    // Once they've scrolled down into older replies, they wait behind the "new" button so the reply
+                    // being read doesn't slide away.
+                    const list = listRef.current;
+                    const barsBottom = list ? parseFloat(getComputedStyle(list).scrollMarginTop) || 0 : 0;
+                    const listTop = list?.getBoundingClientRect().top ?? 0;
+                    if (listTop >= barsBottom - 8) setComments((current) => [...unseen(data.comments, current), ...current]);
+                    // The reader's own comments are already on their screen
+                    else setWaiting((current) => [...unseen(data.comments.filter((comment) => !comment.viewer?.is_author), current), ...current]);
+                }
+                if (!data.live?.is_live || data.status !== 'active') {
+                    // The thread ended (or was locked or removed): redraw the page from the server so the badge,
+                    // reply box and labels catch up. Comments already on screen stay.
+                    stopped = true;
+                    router.refresh();
+                    return;
+                }
+            } catch {
+                failures += 1;
+            }
+            if (!stopped) timer = setTimeout(poll, LIVE_POLL_MS * Math.min(2 ** failures, 8));
+        }
+
+        function onVisible() {
+            if (document.visibilityState !== 'visible' || stopped) return;
+            clearTimeout(timer);
+            void poll();
+        }
+
+        timer = setTimeout(poll, LIVE_POLL_MS);
+        document.addEventListener('visibilitychange', onVisible);
+        return () => {
+            stopped = true;
+            clearTimeout(timer);
+            document.removeEventListener('visibilitychange', onVisible);
+        };
+    }, [isLive, sort, postId, router]);
+
+    // Going live from this page (the options menu) switches the thread to newest first
+    const wasLive = useRef(isLive);
+    useEffect(() => {
+        if (isLive && !wasLive.current && sort !== 'new') changeSort('new');
+        wasLive.current = isLive;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLive]);
+
     return (
         <ThreadContext.Provider
-            value={{ postId, postPath, isLocked, isModerator, baseDepth: initialComments[0]?.depth ?? 0, sort, opUsername, createComment }}
+            value={{ postId, postPath, isLocked, isModerator, baseDepth: initialComments[0]?.depth ?? 0, sort, opUsername, isLiveThread: Boolean(live), createComment }}
         >
             <div className="flex flex-col">
                 {isSingleThread ? null : isPostDeleted ? (
@@ -144,9 +239,26 @@ export function CommentsSection({
                 )}
 
                 {comments.length > 0 && !isSingleThread && (
-                    <div className="flex justify-end pt-3">
+                    <div className="flex items-center justify-end gap-3 pt-3">
+                        {isLive && sort === 'new' && (
+                            <span className="mr-auto inline-flex items-center gap-2 text-[13px] text-muted">
+                                <LiveDot /> New replies appear here as they come in
+                            </span>
+                        )}
                         <SortByDropdown sort={sort} onChange={changeSort} disabled={isLoading} />
                     </div>
+                )}
+
+                {/* Fixed, so it covers nothing in the flow and nothing moves when it appears */}
+                {waiting.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={showWaiting}
+                        className="fixed left-1/2 top-[calc(var(--spacing-header)+3.75rem)] z-30 inline-flex -translate-x-1/2 cursor-pointer items-center gap-2 rounded-full bg-text px-3.5 py-1.5 text-[13px] font-semibold text-bg shadow-lg"
+                    >
+                        <LiveDot />
+                        {waiting.length} new {waiting.length === 1 ? 'reply' : 'replies'}
+                    </button>
                 )}
 
                 {error && <ErrorMessage size="small" errorMessage={error} role="alert" />}
@@ -159,7 +271,7 @@ export function CommentsSection({
                 )}
 
                 {/* Each top-level thread is its own block, set apart by a hairline */}
-                <div className="flex w-full flex-col divide-y divide-border pb-6 [&>*]:py-4" aria-busy={isLoading}>
+                <div ref={listRef} className="flex w-full scroll-mt-[calc(var(--spacing-header)+3.5rem)] flex-col divide-y divide-border pb-6 [&>*]:py-4" aria-busy={isLoading}>
                     {comments.map((comment, index) => {
                         const slot = slotAfter(index, 'thread');
                         return (
@@ -189,6 +301,17 @@ export function CommentsSection({
             </div>
         </ThreadContext.Provider>
     );
+}
+
+// The newest of these comments by id (UUIDv7 ids sort by time)
+function newestId(comments: { id: string }[]): string | null {
+    return comments.reduce<string | null>((max, comment) => (!max || comment.id > max ? comment.id : max), null);
+}
+
+// Comments not already in the list (the reader's own new comment comes back from the poll too)
+function unseen(incoming: Comment[], current: Comment[]): Comment[] {
+    const have = new Set(current.map((comment) => comment.id));
+    return incoming.filter((comment) => !have.has(comment.id));
 }
 
 // The API drops author for anonymous, deleted and removed comments
@@ -341,7 +464,11 @@ function CommentBlock({ initialComment }: { initialComment: Comment }) {
                         <EditBox initialBody={comment.body} onSave={handleEdit} onCancel={() => setIsEditing(false)} />
                     </>
                 ) : (
-                    <TextSection comment={comment} isOp={Boolean(thread.opUsername && comment.author?.username === thread.opUsername)} />
+                    <TextSection
+                        comment={comment}
+                        isOp={Boolean(thread.opUsername && comment.author?.username === thread.opUsername)}
+                        isUpdate={thread.isLiveThread && comment.depth === 0 && Boolean(thread.opUsername && comment.author?.username === thread.opUsername)}
+                    />
                 )}
 
                 {!isEditing && (
@@ -405,6 +532,7 @@ function TitleSection({
     username,
     profile,
     isOp = false,
+    isUpdate = false,
     isMod = false,
     pinned = false,
     createdAt,
@@ -413,6 +541,8 @@ function TitleSection({
     username: string;
     profile?: string;
     isOp?: boolean;
+    // The author's update in a live thread
+    isUpdate?: boolean;
     isMod?: boolean;
     pinned?: boolean;
     createdAt: string;
@@ -427,7 +557,11 @@ function TitleSection({
             ) : (
                 <span className="font-semibold text-text">{username}</span>
             )}
-            {isOp && <span className="rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-muted">OP</span>}
+            {isUpdate ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-1.5 text-[11px] font-semibold leading-[18px] text-brand-text">Update</span>
+            ) : (
+                isOp && <span className="rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-muted">OP</span>
+            )}
             {isMod && <span className="rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-text">Mod</span>}
             {pinned && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-active px-1.5 text-[11px] font-semibold leading-[18px] text-text">
@@ -448,7 +582,7 @@ function TitleSection({
     );
 }
 
-function TextSection({ comment, isOp }: { comment: Comment; isOp: boolean }) {
+function TextSection({ comment, isOp, isUpdate }: { comment: Comment; isOp: boolean; isUpdate: boolean }) {
     const isGone = comment.status === 'deleted' || comment.status === 'removed';
     return (
         <div className="flex flex-col">
@@ -456,6 +590,7 @@ function TextSection({ comment, isOp }: { comment: Comment; isOp: boolean }) {
                 username={getAuthorName(comment)}
                 profile={anonymousFor(comment).hidden ? undefined : comment.author?.username}
                 isOp={isOp}
+                isUpdate={isUpdate}
                 isMod={Boolean(comment.author?.is_moderator)}
                 pinned={Boolean(comment.pinned_at)}
                 createdAt={comment.created_at}
@@ -473,7 +608,7 @@ function TextSection({ comment, isOp }: { comment: Comment; isOp: boolean }) {
             {isGone ? (
                 <p className="text-sm italic text-muted">{comment.body}</p>
             ) : (
-                <Markdown text={comment.body} className="text-sm leading-[21px] text-body" />
+                <Markdown text={comment.body} className={isUpdate ? 'text-[15px] leading-[23px] text-text' : 'text-sm leading-[21px] text-body'} />
             )}
         </div>
     );

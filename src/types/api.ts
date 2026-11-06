@@ -33,6 +33,8 @@ export interface ContentViewer {
     is_author: boolean;
     // How many people opened it; sent to the author only
     views?: number;
+    // Posts on their own page: whether this viewer may start or end a live thread on it
+    can_set_live?: boolean;
 }
 
 export interface UserStatsResponse {
@@ -77,6 +79,9 @@ export interface Post {
     created_at: string;
     edited_at: string | null;
     pinned_at: string | null;
+    // Live thread (match days, events): null for posts that were never live. ended_at is when it ended, or when it
+    // stopped by itself (the API's time limit)
+    live?: PostLive | null;
     upvote_count: number;
     downvote_count: number;
     score: number;
@@ -86,6 +91,16 @@ export interface Post {
     community: CommunityRef;
     author: AuthorRef | null;
     viewer: ContentViewer | null;
+}
+
+export type PostLive = { is_live: boolean; started_at: string; ended_at: string | null };
+
+// GET /posts/:id/live-updates: top-level comments after the newest one the page has
+export interface LiveUpdatesResponse {
+    comments: Comment[];
+    comment_count: number;
+    live: PostLive | null;
+    status: ContentStatus;
 }
 
 export interface Comment {

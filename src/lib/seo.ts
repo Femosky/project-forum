@@ -64,7 +64,9 @@ export const noindexMetadata = (title: string): Metadata => ({ title, robots: NO
 
 // "{post title} : c/{community}" like the big forums, dropping the community when that would run past ~60
 // characters so the post's own words are what show in results
-export function postTitle(post: Pick<Post, 'title' | 'community'>): string {
+export function postTitle(post: Pick<Post, 'title' | 'community' | 'live'>): string {
+    // "Live: " in front while a live thread runs, unless the title already says so
+    if (post.live?.is_live && !/\blive\b/i.test(post.title)) return `Live: ${post.title}`;
     const full = `${post.title} : c/${post.community.name}`;
     return full.length <= 60 ? full : post.title;
 }
@@ -124,6 +126,41 @@ export function discussionJsonLd(post: Post, path: string, comments: Comment[]) 
             .slice(0, 10)
             .map((comment) => commentJsonLd(comment, url))
             .filter(Boolean),
+    };
+}
+
+// A live thread is also a live blog: coverage times, and the author's own top-level comments as its updates
+export function liveBlogJsonLd(post: Post, path: string, comments: Comment[]) {
+    const url = absoluteUrl(path);
+    const author = personFor(post.author, post.is_anonymous);
+    const updates = post.author
+        ? comments.filter((comment) => comment.depth === 0 && comment.status === 'active' && comment.author?.username === post.author!.username)
+        : [];
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'LiveBlogPosting',
+        '@id': `${url}#live`,
+        mainEntityOfPage: url,
+        url,
+        headline: post.title,
+        datePublished: post.created_at,
+        ...(updates[0] ? { dateModified: updates[0].edited_at ?? updates[0].created_at } : {}),
+        author,
+        image: absoluteUrl(`/og/post/${post.short_id}`),
+        coverageStartTime: post.live!.started_at,
+        ...(post.live!.ended_at ? { coverageEndTime: post.live!.ended_at } : {}),
+        liveBlogUpdate: updates.slice(0, 10).map((comment) => {
+            const text = stripMarkdown(comment.body);
+            return {
+                '@type': 'BlogPosting',
+                headline: text.length > 110 ? `${text.slice(0, 107)}...` : text,
+                articleBody: text,
+                datePublished: comment.created_at,
+                ...(comment.edited_at ? { dateModified: comment.edited_at } : {}),
+                url: `${url}#c-${comment.short_id}`,
+                author,
+            };
+        }),
     };
 }
 
