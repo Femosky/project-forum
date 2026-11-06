@@ -18,7 +18,7 @@ export async function loadLiveNow(): Promise<Post[]> {
 // there). Shows nothing when nothing is live.
 function LiveRow({ post, compact }: { post: Post; compact: boolean }) {
     return (
-        <Link href={getPostPath(post)} className={twMerge('group flex flex-col gap-0.5', compact ? 'py-1.5' : 'py-2.5')}>
+        <Link href={getPostPath(post)} className={twMerge('group flex flex-col gap-0.5', compact ? 'py-1.5' : 'h-full justify-center py-2.5')}>
             <span className={twMerge('line-clamp-2 font-medium text-text group-hover:underline', compact ? 'text-sm' : 'text-[15px] leading-[21px]')}>
                 {post.title}
             </span>
@@ -74,7 +74,9 @@ export function LiveNow({ posts, variant, className }: { posts: Post[]; variant:
                         key={page[0].id}
                         aria-label={paged ? `${index + 1} of ${pages.length}` : undefined}
                         className={twMerge(
-                            'flex shrink-0 snap-start flex-col divide-y divide-border rounded-[12px] px-4 py-1 ring-1 ring-inset ring-border',
+                            // Two equal rows on every page, so the line between them sits in the same place on each slide
+                            // (titles hold up to two lines; every page is as tall as the tallest)
+                            'grid shrink-0 snap-start grid-rows-2 divide-y divide-border rounded-[12px] px-4 py-1 ring-1 ring-inset ring-border',
                             paged ? 'w-[86%]' : 'w-full'
                         )}
                     >
