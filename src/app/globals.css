@@ -483,3 +483,31 @@
     }
 }
 
+
+/* Live threads: a soft ring spreading from the red dot. Off for readers who ask for less motion. */
+@layer components {
+    .live-dot::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 9999px;
+        background: var(--brand);
+        animation: live-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .live-dot::after {
+            animation: none;
+        }
+    }
+}
+@keyframes live-ping {
+    0% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    75%,
+    100% {
+        transform: scale(2.6);
+        opacity: 0;
+    }
+}

@@ -16,6 +16,7 @@ import ViewCount from './ViewCount';
 import UserAvatar from '@/components/ui/UserAvatar';
 import MatureBlur from './MatureBlur';
 import PostPicture from './PostPicture';
+import LiveBadge from './LiveBadge';
 
 // How a community is named in the interface (see lib/communityName)
 export { communityLabel };
@@ -86,8 +87,11 @@ export function PostCard({ post, variant = 'compact', showCommunity = true, isMo
     const authorName = anonymous.hidden ? (anonymous.mine ? 'Anonymous (you)' : 'Anonymous') : (post.author?.username ?? hiddenAuthorName(post));
     const pictureOf = anonymous.hidden ? anonymous.picture : post.author;
 
-    const badges = (post.flair || post.is_nsfw || isLocked || post.status === 'removed' || post.status === 'pending') && (
+    // Live threads show "Live" everywhere; "Live ended" only on the post's own page
+    const showsLive = Boolean(post.live && (post.live.is_live || !isCompact));
+    const badges = (showsLive || post.flair || post.is_nsfw || isLocked || post.status === 'removed' || post.status === 'pending') && (
         <div className="flex flex-wrap gap-1.5">
+            <LiveBadge live={post.live} showEnded={!isCompact} />
             {post.flair && <Badge>{post.flair.name}</Badge>}
             {post.is_nsfw && <Badge variant="danger">NSFW · Mature</Badge>}
             {isLocked && <Badge>Locked</Badge>}

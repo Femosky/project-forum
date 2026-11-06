@@ -1,7 +1,7 @@
 'use client';
 
 import { lazy, Suspense, useState } from 'react';
-import { BarChart3, Bookmark, BookmarkCheck, CircleCheck, Ellipsis, Eye, EyeOff, Flag, Lock, LockOpen, Pencil, Pin, PinOff, ShieldX, Trash2 } from 'lucide-react';
+import { BarChart3, Bookmark, BookmarkCheck, CircleCheck, Ellipsis, Eye, EyeOff, Flag, Lock, LockOpen, Pencil, Pin, PinOff, Radio, ShieldX, Trash2 } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import Button from '@/components/ui/Button';
 import ErrorMessage from '@/components/ui/ErrorMessage';
@@ -30,6 +30,8 @@ type ContentOptionsMenuProps = {
     onEdit?: () => void;
     // Moderator tools, shown only to moderators of the community
     moderation?: Moderation;
+    // Posts: start or end a live thread (moderators and trusted authors)
+    live?: { isLive: boolean; onChanged: () => void };
     label?: string;
 };
 
@@ -67,6 +69,7 @@ export function ContentOptionsMenu({
     onDeleted,
     onEdit,
     moderation,
+    live,
     label,
 }: ContentOptionsMenuProps) {
     const path = `/${targetType}s/${id}`;
@@ -91,6 +94,17 @@ export function ContentOptionsMenu({
         try {
             const body = await api(`${path}/moderation`, { method: 'POST', body: { action } });
             moderation?.onModerated(body);
+        } catch (error) {
+            setModError(errorMessage(error));
+        }
+    }
+
+    async function toggleLive() {
+        if (!live) return;
+        setModError(null);
+        try {
+            await api(`${path}/live`, { method: 'PUT', body: { live: !live.isLive } });
+            live.onChanged();
         } catch (error) {
             setModError(errorMessage(error));
         }
@@ -125,6 +139,11 @@ export function ContentOptionsMenu({
                     {!isAuthor && (
                         <DropdownItem destructive onSelect={openReport}>
                             <Flag /> Report
+                        </DropdownItem>
+                    )}
+                    {live && (
+                        <DropdownItem onSelect={toggleLive}>
+                            <Radio /> {live.isLive ? 'End live thread' : 'Start live thread'}
                         </DropdownItem>
                     )}
                     {isAuthor && (

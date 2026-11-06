@@ -14,6 +14,7 @@ import { pageMetadata, websiteJsonLd } from '@/lib/seo';
 import { loadAds } from '@/ads/server';
 import { slotsBetween } from '@/ads/config';
 import TrendingNow from '@/components/trending/TrendingNow';
+import LiveNow from '@/components/live/LiveNow';
 
 type PageProps = { searchParams: Promise<{ sort?: string; cursor?: string }> };
 
@@ -26,11 +27,13 @@ export default async function Home({ searchParams }: PageProps) {
     const { sort: sortParam, cursor } = await searchParams;
     const sort = parsePostSort(sortParam);
     const listQuery = new URLSearchParams({ sort, ...(sort === 'top' ? { t: 'week' } : {}) });
-    const [{ data }, ads, trending] = await Promise.all([
+    const [{ data }, ads, trending, liveNow] = await Promise.all([
         serverApi<FeedResponse>(`/feed?${listQuery}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`),
         loadAds('feed', {}, slotsBetween(0, 25, 'feed')),
         // The first page only; rendered with the page, shown in a right rail on wide screens
         cursor ? null : TrendingNow(),
+        // Live threads lead the first page
+        cursor ? null : LiveNow(),
     ]);
 
     if (!data) {
@@ -49,6 +52,7 @@ export default async function Home({ searchParams }: PageProps) {
             <div className="mx-auto grid w-full max-w-[45rem] grid-cols-1 content-start gap-x-12 pb-8 sm:px-5 xl:max-w-[67rem] xl:grid-cols-[minmax(0,45rem)_16rem]">
             <div className="flex min-w-0 flex-col">
                 <JsonLd data={websiteJsonLd()} />
+                {liveNow}
                 <ComposePrompt />
                 <PostList
                     posts={data.posts}

@@ -12,7 +12,7 @@ import Avatar from '@/components/ui/Avatar';
 import EmptyState from '@/components/ui/EmptyState';
 import JsonLd from '@/components/common/JsonLd';
 import RelatedThreads from '@/components/post/RelatedThreads';
-import { breadcrumbJsonLd, discussionJsonLd, noindexMetadata, pageMetadata, postTitle, summarize } from '@/lib/seo';
+import { breadcrumbJsonLd, discussionJsonLd, liveBlogJsonLd, noindexMetadata, pageMetadata, postTitle, summarize } from '@/lib/seo';
 import { CommentsSection } from '../_components/CommentsSection';
 import { COMMENT_PAGE_SIZE, DEFAULT_COMMENT_SORT, commentsQuery } from '../_components/commentsApi';
 import { loadAds } from '@/ads/server';
@@ -116,7 +116,15 @@ export default async function PostPage({ params, searchParams }: PageProps) {
     const showingOneThread = Boolean(focusId);
     const focusedInPost = focused && focused.post_id === post.id ? focused : null;
 
-    const comments = commentsResult?.data?.comments ?? [];
+    // Live threads read newest first. Loaded with the default sort alongside the post (most posts aren't live), then
+    // again newest first once the post says it's live.
+    const isLive = Boolean(post.live?.is_live);
+    const commentSort = isLive ? 'new' : DEFAULT_COMMENT_SORT;
+    const thread =
+        isLive && !focusId
+            ? await serverApi<CommentsResponse>(`/posts/${encodeURIComponent(short_id)}/comments?${commentsQuery('new', COMMENT_PAGE_SIZE)}`)
+            : commentsResult;
+    const comments = thread?.data?.comments ?? [];
 
     return (
         <>
@@ -142,6 +150,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
             <JsonLd
                 data={[
                     discussionJsonLd(post, canonical, showingOneThread ? [] : comments),
+                    ...(post.live && !showingOneThread ? [liveBlogJsonLd(post, canonical, comments)] : []),
                     breadcrumbJsonLd([
                         { name: APP_NAME, path: '/' },
                         { name: `c/${communityHandle(post.community)}`, path: `/c/${post.community.name}` },
@@ -185,8 +194,10 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                     commentCount={post.comment_count}
                     opUsername={post.author?.username ?? null}
                     initialComments={showingOneThread ? (focusedInPost ? [focusedInPost] : []) : comments}
-                    initialCursor={showingOneThread ? null : (commentsResult?.data?.next_cursor ?? null)}
-                    loadFailed={!showingOneThread && !commentsResult?.data}
+                    initialCursor={showingOneThread ? null : (thread?.data?.next_cursor ?? null)}
+                    loadFailed={!showingOneThread && !thread?.data}
+                    initialSort={commentSort}
+                    live={post.live ? { isLive } : null}
                     isSingleThread={showingOneThread}
                     ads={ads}
                 />
