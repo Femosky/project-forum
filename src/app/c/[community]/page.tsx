@@ -58,7 +58,7 @@ export default async function CommunityPage({ params, searchParams }: PageProps)
     ]);
 
     if (community.status === 404) notFound();
-    // One URL per community: other casings (/c/NaijaTech) and old names (/c/naija_tech) move to /c/naijatech
+    // One URL per community: other casings (/c/LagosRent) and old names (/c/lagos_rent, /c/naijatech) move to the current one
     if (community.data && name !== community.data.community.name) {
         const query = new URLSearchParams({ ...(sortParam ? { sort: sortParam } : {}), ...(cursor ? { cursor } : {}) }).toString();
         permanentRedirect(`/c/${community.data.community.name}${query ? `?${query}` : ''}`);
