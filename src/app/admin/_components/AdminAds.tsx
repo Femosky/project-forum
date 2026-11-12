@@ -663,7 +663,7 @@ export function AdminCampaign({ initial }: { initial: CampaignDetail }) {
                     <InputField
                         name="communities"
                         aria-label="Communities"
-                        placeholder="Communities, separated by commas (e.g. lagosrent, naijatech)"
+                        placeholder="Communities, separated by commas (e.g. lagosrent, tech)"
                         autoCapitalize="none"
                         value={fields.communities}
                         onChange={(e) => set('communities', e.target.value)}
