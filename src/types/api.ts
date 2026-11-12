@@ -146,6 +146,8 @@ export interface Community {
     is_nsfw: boolean;
     member_count: number;
     post_count: number;
+    // false while the community has too few threads for search engines (noindex, left out of the sitemap)
+    is_indexable?: boolean;
     created_at: string;
 }
 
@@ -274,6 +276,8 @@ export interface PublicUser {
     avatar: string | null;
     karma: number;
     is_suspended: boolean;
+    // false for seed accounts and profiles with too little to read (noindex, left out of the sitemap)
+    is_indexable?: boolean;
     created_at: string;
 }
 

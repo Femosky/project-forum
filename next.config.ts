@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
             { source: '/community/:name/replies/:shortId', destination: '/c/:name/:shortId', permanent: true },
             // Addresses people type by hand
             { source: '/about', destination: '/policies/about', permanent: true },
+            { source: '/contact', destination: '/policies/about', statusCode: 301 },
             { source: '/login', destination: '/auth/login', permanent: true },
             { source: '/signin', destination: '/auth/login', permanent: true },
             { source: '/signup', destination: '/auth/signup', permanent: true },

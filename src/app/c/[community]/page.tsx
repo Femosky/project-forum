@@ -36,8 +36,9 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
         description: communityDescription(community),
         path: `/c/${community.name}`,
         image: `/og/c/${community.name}`,
-        // Sorted and later pages are for people; crawlers follow their links but index the community once
-        noindex: community.visibility === 'private' || Boolean(sort || cursor),
+        // Sorted and later pages are for people; crawlers follow their links but index the community once, and
+        // only after it has a few threads (the API decides: is_indexable)
+        noindex: community.visibility === 'private' || community.is_indexable === false || Boolean(sort || cursor),
         mature: community.is_nsfw,
     });
 }

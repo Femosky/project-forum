@@ -39,7 +39,8 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
         description: `Posts and comments by u/${user.username} on ${APP_NAME}. Joined ${JOINED_FORMAT.format(new Date(user.created_at))}.`,
         path: `/u/${user.username}`,
         image: `/og/u/${user.username}`,
-        noindex: user.is_suspended || Boolean(tab || cursor),
+        // Seed accounts and near-empty profiles stay out of search (the API decides: is_indexable)
+        noindex: user.is_suspended || user.is_indexable === false || Boolean(tab || cursor),
         openGraph: { type: 'profile', username: user.username },
     });
 }
